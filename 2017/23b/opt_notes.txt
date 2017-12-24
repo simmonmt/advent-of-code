@@ -1,0 +1,38 @@
+ 0 set b 81
+ 1 set c b
+ 2 jnz a 2
+ 3 jnz 1 5
+ 4 mul b 100
+ 5 sub b -100000
+ 6 set c b
+ 7 sub c -17000
+ 
+ 8 set f 1
+ 9 set d 2
+10 set e 2
+
+11 set g b				g=b                       // 11-15 if d*e=b { f=0 }               // g=d*e-b; if g == 0 { f=0 }
+12 mod g d				g=g%d
+13 nop 1 1				nop
+14 jnz g 2				if g != 0 goto 16
+15 set f 0
+
+16 nop 1 1				nop
+17 nop 1 1				nop
+18 nop 1 1				nop
+19 nop 1 1				nop
+
+20 sub d -1             d++                       // 20-23 d++; if d != b { goto 10 }.    // d++; if d-b != 0 { goto 10 }
+21 set g d              g=d                       
+22 sub g b              g=g-b
+23 jnz g -13			if g != 0 goto 10
+
+24 jnz f 2				if f != 0 goto 26         // 24-25 if f == 0 { h-- }
+25 sub h -1
+
+26 set g b                                        // 26-31 if b == 125100 { goto end } else { b+= 17 ; goto 8 }
+27 sub g c              
+28 jnz g 2				if g != 0 goto 30
+29 jnz 1 3				goto end
+30 sub b -17
+31 jnz 1 -23			goto 8
