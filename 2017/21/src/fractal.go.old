@@ -1,0 +1,258 @@
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"io"
+	"os"
+	"strings"
+)
+
+func twoDump(enc int, out io.Writer) {
+	if enc&8 != 0 {
+		fmt.Fprintf(out, "#")
+	} else {
+		fmt.Fprintf(out, ".")
+	}
+	if enc&4 != 0 {
+		fmt.Fprintf(out, "#")
+	} else {
+		fmt.Fprintf(out, ".")
+	}
+	fmt.Fprintf(out, "\n")
+	if enc&2 != 0 {
+		fmt.Fprintf(out, "#")
+	} else {
+		fmt.Fprintf(out, ".")
+	}
+	if enc&1 != 0 {
+		fmt.Fprintf(out, "#")
+	} else {
+		fmt.Fprintf(out, ".")
+	}
+	fmt.Fprintf(out, "\n")
+}
+
+func twoEncode(pat [2][2]bool) int {
+	val := 0
+	if pat[0][0] {
+		val |= 8
+	}
+	if pat[0][1] {
+		val |= 4
+	}
+	if pat[1][0] {
+		val |= 2
+	}
+	if pat[1][1] {
+		val |= 1
+	}
+	return val
+}
+
+func twoMakePat(a, b, c, d bool) [2][2]bool {
+	return [2][2]bool{[2]bool{a, b}, [2]bool{c, d}}
+}
+
+func twoRotations(pat [2][2]bool) [][2][2]bool {
+	rots := [][2][2]bool{}
+
+	// 12  31  43  24
+	// 34  42  21  13
+	rots = append(rots, twoMakePat(pat[0][0], pat[0][1], pat[1][0], pat[1][1]))
+	rots = append(rots, twoMakePat(pat[1][0], pat[0][0], pat[1][1], pat[0][1]))
+	rots = append(rots, twoMakePat(pat[1][1], pat[1][0], pat[0][1], pat[0][0]))
+	rots = append(rots, twoMakePat(pat[0][1], pat[1][1], pat[0][0], pat[1][0]))
+
+	return rots
+}
+
+func twoFlips(pat [2][2]bool) [][2][2]bool {
+	flips := [][2][2]bool{}
+
+	// 12  H: 21   V: 34
+	// 34     43      12
+	flips = append(flips, twoMakePat(pat[0][1], pat[0][0], pat[1][1], pat[1][0]))
+	flips = append(flips, twoMakePat(pat[1][0], pat[1][1], pat[0][0], pat[0][1]))
+
+	return flips
+}
+
+func makeTwoPats(pat [2][2]bool) []int {
+	patsMap := map[int]bool{}
+
+	rots := twoRotations(pat)
+	for _, rot := range rots {
+		patsMap[twoEncode(rot)] = true
+		for _, flip := range twoFlips(rot) {
+			patsMap[twoEncode(flip)] = true
+		}
+	}
+
+	pats := []int{}
+	for p, _ := range patsMap {
+		pats = append(pats, p)
+	}
+
+	return pats
+}
+
+func threeDump(enc int, out io.Writer) {
+	str := []rune(".........")
+
+	for i := uint(0); i < 9; i++ {
+		mask := 1 << i
+		// fmt.Printf("i %d mask 0x%x enc 0x%x result %v\n", i, mask, enc,
+		// 	(enc & mask))
+
+		if (enc & mask) != 0 {
+			str[i] = '#'
+		}
+	}
+
+	fmt.Fprintf(out, "%v\n%v\n%v\n",
+		string(str[0:3]), string(str[3:6]), string(str[6:9]))
+}
+
+func threeEncode(pat [3][3]bool) int {
+	var val int
+	if pat[0][0] {
+		val |= 0x001
+	}
+	if pat[0][1] {
+		val |= 0x002
+	}
+	if pat[0][2] {
+		val |= 0x004
+	}
+	if pat[1][0] {
+		val |= 0x008
+	}
+	if pat[1][1] {
+		val |= 0x010
+	}
+	if pat[1][2] {
+		val |= 0x020
+	}
+	if pat[2][0] {
+		val |= 0x040
+	}
+	if pat[2][1] {
+		val |= 0x080
+	}
+	if pat[2][2] {
+		val |= 0x100
+	}
+
+	//fmt.Printf("encoded %v as %v\n", pat, val)
+	return val
+}
+
+func threeMakePat(a, b, c, d, e, f, g, h, i bool) [3][3]bool {
+	return [3][3]bool{[3]bool{a, b, c}, [3]bool{d, e, f}, [3]bool{g, h, i}}
+}
+
+func threeRotations(pat [3][3]bool) [][3][3]bool {
+	rots := [][3][3]bool{}
+
+	// 123  741  987  369
+	// 456  852  654  258
+	// 789  963  321  147
+
+	rots = append(rots, threeMakePat(
+		pat[2][0], pat[1][0], pat[0][0],
+		pat[2][1], pat[1][1], pat[0][1],
+		pat[2][2], pat[1][2], pat[0][2]))
+
+	rots = append(rots, threeMakePat(
+		pat[2][2], pat[2][1], pat[2][0],
+		pat[1][2], pat[1][1], pat[1][0],
+		pat[0][2], pat[0][1], pat[0][0]))
+
+	rots = append(rots, threeMakePat(
+		pat[0][2], pat[1][2], pat[2][2],
+		pat[0][1], pat[1][1], pat[2][1],
+		pat[0][0], pat[1][0], pat[2][0]))
+
+	return rots
+}
+
+func threeFlips(pat [3][3]bool) [][3][3]bool {
+	flips := [][3][3]bool{}
+
+	// 123 H: 321 V: 789
+	// 456    654    456
+	// 789    987    123
+	flips = append(flips, threeMakePat(
+		pat[0][2], pat[0][1], pat[0][0],
+		pat[1][2], pat[1][1], pat[1][0],
+		pat[2][2], pat[2][1], pat[2][0]))
+
+	flips = append(flips, threeMakePat(
+		pat[2][0], pat[2][1], pat[2][2],
+		pat[1][0], pat[1][1], pat[1][2],
+		pat[0][0], pat[0][1], pat[0][2]))
+
+	return flips
+}
+
+func makeThreePats(pat [3][3]bool) []int {
+	patsMap := map[int]bool{}
+
+	rots := threeRotations(pat)
+	for _, rot := range rots {
+		patsMap[threeEncode(rot)] = true
+		for _, flip := range threeFlips(rot) {
+			patsMap[threeEncode(flip)] = true
+		}
+	}
+
+	pats := []int{}
+	for p, _ := range patsMap {
+		pats = append(pats, p)
+	}
+
+	return pats
+}
+
+func parseLine(line string) ([]string, []string) {
+	parts := strings.Split(line, " => ")
+	matches, outputs := parts[0], parts[1]
+	return strings.Split(matches, "/"), strings.Split(outputs, "/")
+}
+
+func readPatterns(in io.Reader) (twoPats map[int]int, threePats map[int]int) {
+	twoPats = map[int]int{}
+	threePats = map[int]int{}
+
+	reader := bufio.NewReader()
+	for {
+		line, err := reader.ReadString('\n')
+		line = strings.TrimSpace(line)
+
+		matchLines, outputLines := parseLine(line)
+
+		if len(matchLines) == 2 {
+
+		} else if len(matchLines) == 3 {
+		} else {
+			panic(fmt.Sprintf("unexpected len(matchLines) %v",
+				len(matchLines)))
+		}
+
+	}
+
+	return
+}
+
+func main() {
+	encPats := makeThreePats([3][3]bool{
+		[3]bool{true, true, false},
+		[3]bool{false, true, false},
+		[3]bool{false, true, false}})
+
+	for _, encPat := range encPats {
+		threeDump(encPat, os.Stdout)
+		fmt.Println()
+	}
+}
