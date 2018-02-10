@@ -85,14 +85,10 @@ func countCals(qtys []int, ings []*Ingredient) int {
 	return cals
 }
 
-func eval(qtys []int, ings []*Ingredient) int {
-	cals := countCals(qtys, ings)
-	if cals > 500 {
-		fmt.Printf(">500: qtys %v\n", qtys)
-		return 0
-	}
+func eval(qtys []int, ings []*Ingredient) (score, cals int) {
+	cals = countCals(qtys, ings)
 
-	points := 1
+	score = 1
 	for coeffNum := 0; coeffNum < len(ings[0].Coeffs); coeffNum++ {
 		sum := 0
 		for ingNum, ing := range ings {
@@ -103,47 +99,53 @@ func eval(qtys []int, ings []*Ingredient) int {
 			sum = 0
 		}
 
-		fmt.Printf("coeffNum %d sum %d\n", coeffNum, sum)
-		points *= sum
+		//fmt.Printf("coeffNum %d sum %d\n", coeffNum, sum)
+		score *= sum
 	}
 
-	return cals*100000000 + points
+	return
 }
 
-func toCheck(qtys []int) [][]int {
-	isok := func(qtys []int) bool {
-		for _, q := range qtys {
-			if q < 0 {
-				return false
-			}
-		}
-		return true
+type QuantityIterator struct {
+	Num, Max int
+	Last     []int
+}
+
+func NewQuantityIterator(num, max int) *QuantityIterator {
+	return &QuantityIterator{Num: num, Max: max}
+}
+
+func (q *QuantityIterator) isValid() bool {
+	sum := 0
+	for _, val := range q.Last {
+		sum += val
 	}
+	return sum == q.Max
+}
 
-	out := [][]int{}
-	for toIncIdx := range qtys {
-		for toDecIdx := range qtys {
-			if toDecIdx == toIncIdx {
-				continue
-			}
-
-			cand := []int{}
-			for i, qty := range qtys {
-				newQty := qty
-				if i == toIncIdx {
-					newQty = qty + 1
-				} else if i == toDecIdx {
-					newQty = qty - 1
+func (q *QuantityIterator) Next() []int {
+	for {
+		if q.Last == nil {
+			q.Last = make([]int, q.Num)
+		} else {
+			for i := range q.Last {
+				if i == 0 {
+					q.Last[i]++
 				}
-				cand = append(cand, newQty)
-			}
-
-			if isok(cand) {
-				out = append(out, cand)
+				if q.Last[i] > q.Max {
+					if i == len(q.Last)-1 {
+						return nil
+					}
+					q.Last[i] = 0
+					q.Last[i+1]++
+				}
 			}
 		}
+
+		if q.isValid() {
+			return q.Last
+		}
 	}
-	return out
 }
 
 func main() {
@@ -152,58 +154,24 @@ func main() {
 		log.Fatalf("failed to read input: %v", err)
 	}
 
-	// for _, ing := range ings {
-	// 	fmt.Println(*ing)
-	// }
+	bestScore := -1
 
-	if len(os.Args) != len(ings)+1 {
-		log.Fatalf("expected %d quantities, got %d", len(ings), len(os.Args)-1)
-	}
-
-	qtys := []int{}
-	for _, qtyStr := range os.Args[1:] {
-		qty, err := strconv.Atoi(qtyStr)
-		if err != nil {
-			log.Fatalf("failed to parse quantity '%v'", qty)
-		}
-		qtys = append(qtys, qty)
-	}
-
-	// for i := 0; i <= 100; i++ {
-	// 	tq := []int{i, 100 - i}
-	// 	fmt.Printf("%v: %v\n", tq, eval(tq, ings))
-	// }
-	// log.Fatalf("exit")
-
-	best := eval(qtys, ings)
-	fmt.Printf("initial: %v\n", best)
-
-	for i := 0; i < 2000; i++ {
-		checks := toCheck(qtys)
-		fmt.Println(checks)
-
-		newBestIdx := -1
-		newBestVal := 0
-		for checkIdx, check := range checks {
-			checkVal := eval(check, ings)
-			fmt.Printf("%v: %v\n", check, checkVal)
-
-			if newBestIdx == -1 || checkVal > newBestVal {
-				newBestIdx = checkIdx
-				newBestVal = checkVal
-			}
-		}
-
-		if newBestVal < best {
-			fmt.Printf("no new best; best is %v (cals %v) for %v\n",
-				best, countCals(checks[newBestIdx], ings), qtys)
+	qtyIter := NewQuantityIterator(len(ings), 100)
+	for {
+		qtys := qtyIter.Next()
+		if qtys == nil {
 			break
 		}
 
-		fmt.Printf("new best is %v (cals %v) for %v\n",
-			newBestVal, countCals(checks[newBestIdx], ings), checks[newBestIdx])
+		score, cals := eval(qtys, ings)
+		if cals != 500 {
+			continue
+		}
 
-		qtys = checks[newBestIdx]
-		best = newBestVal
+		if score > bestScore {
+			bestScore = score
+		}
 	}
+
+	fmt.Println(bestScore)
 }
