@@ -43,67 +43,6 @@ func readInput(r io.Reader, d *chem.Dict) (*chem.Mappings, []byte, error) {
 	return mappings, molecule, nil
 }
 
-// func doReplacement(in []string, from string, to []string) [][]string {
-// 	ret := [][]string{}
-
-// 	for i, a := range in {
-// 		if a == from {
-// 			// fmt.Printf("matched %v to %v at %v\n", from, to, i)
-// 			out := make([]string, len(in)+len(to)-1)
-// 			off := 0
-// 			if i > 0 {
-// 				copy(out[off:i], in[0:i])
-// 				off += i
-// 				// fmt.Printf("first %v\n", out)
-// 			}
-// 			copy(out[off:off+len(to)], to)
-// 			off += len(to)
-// 			// fmt.Printf("mid %v\n", out)
-
-// 			if i < len(in) {
-// 				copy(out[off:], in[i+1:])
-// 				// fmt.Printf("end %v\n", out)
-// 			}
-
-// 			// fmt.Printf("out %v\n", out)
-// 			ret = append(ret, out)
-// 		}
-// 	}
-
-// 	return ret
-// }
-
-// func doReplacements(in []string, repls map[string][][]string) map[string][]string {
-// 	//fmt.Printf("doReplacements in %v\n", in)
-
-// 	allResults := map[string][]string{}
-// 	for from, tos := range repls {
-// 		for _, to := range tos {
-// 			// fmt.Printf("%v %v\n", from, to)
-// 			results := doReplacement(in, from, to)
-// 			for _, result := range results {
-// 				key := strings.Join(result, " ")
-// 				// fmt.Println(key)
-// 				allResults[key] = result
-// 			}
-// 		}
-// 	}
-
-// 	return allResults
-// }
-
-// func same(a, b []string) bool {
-// 	if len(a) != len(b) {
-// 		return false
-// 	}
-// 	for i, v := range a {
-// 		if v != b[i] {
-// 			return false
-// 		}
-// 	}
-// 	return true
-// }
-
 func replace(molecule []byte, start int, mapping *chem.Mapping, dict *chem.Dict) []byte {
 	newLen := len(molecule) - len(mapping.From) + len(mapping.To)
 	out := make([]byte, newLen)
