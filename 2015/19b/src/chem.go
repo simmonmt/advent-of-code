@@ -7,47 +7,14 @@ import (
 	"log"
 	"os"
 	"strings"
-	"unicode"
+
+	"chem"
 )
 
-type Dict struct {
-	from map[string]byte
-	to map[byte]string
-	last uint16
-}
-
-func NewDict() *Dict {
-	return &Dict{
-		from: map[string]byte[},
-		to :map[byte]string{},
-		last: 0,
-	}
-}
-
-func (d *Dict) Add(s string) byte {
-	d.last++
-	if d.last > 0xff {
-		panic("too many")
-	}
-	return byte(d.last)
-}
-
-func parseMolecule(in string) []string {
-	out := []string{}
-	for _, c := range in {
-		if unicode.IsUpper(c) {
-			out = append(out, string(c))
-		} else {
-			out[len(out)-1] += string(c)
-		}
-	}
-	return out
-}
-
-func readInput(r io.Reader) (map[string][][]string, []string, error) {
+func readInput(r io.Reader, d *chem.Dict) (*chem.Mappings, []byte, error) {
 	reader := bufio.NewReader(r)
 
-	repls := map[string][][]string{}
+	mappings := chem.NewMappings()
 	for {
 		line, err := reader.ReadString('\n')
 		if err != nil {
@@ -60,12 +27,9 @@ func readInput(r io.Reader) (map[string][][]string, []string, error) {
 		}
 
 		pairs := strings.SplitN(line, " => ", 2)
-		from, to := pairs[0], pairs[1]
-
-		if _, found := repls[from]; !found {
-			repls[from] = [][]string{}
-		}
-		repls[from] = append(repls[from], parseMolecule(to))
+		from := chem.ParseMolecule(pairs[0], d)
+		to := chem.ParseMolecule(pairs[1], d)
+		mappings.Add(to, from)
 	}
 
 	line, err := reader.ReadString('\n')
@@ -74,116 +38,145 @@ func readInput(r io.Reader) (map[string][][]string, []string, error) {
 	}
 	line = strings.TrimSpace(line)
 
-	molecule := parseMolecule(line)
+	molecule := chem.ParseMolecule(line, d)
 
-	return repls, molecule, nil
+	return mappings, molecule, nil
 }
 
-func doReplacement(in []string, from string, to []string) [][]string {
-	ret := [][]string{}
+// func doReplacement(in []string, from string, to []string) [][]string {
+// 	ret := [][]string{}
 
-	for i, a := range in {
-		if a == from {
-			// fmt.Printf("matched %v to %v at %v\n", from, to, i)
-			out := make([]string, len(in)+len(to)-1)
-			off := 0
-			if i > 0 {
-				copy(out[off:i], in[0:i])
-				off += i
-				// fmt.Printf("first %v\n", out)
-			}
-			copy(out[off:off+len(to)], to)
-			off += len(to)
-			// fmt.Printf("mid %v\n", out)
+// 	for i, a := range in {
+// 		if a == from {
+// 			// fmt.Printf("matched %v to %v at %v\n", from, to, i)
+// 			out := make([]string, len(in)+len(to)-1)
+// 			off := 0
+// 			if i > 0 {
+// 				copy(out[off:i], in[0:i])
+// 				off += i
+// 				// fmt.Printf("first %v\n", out)
+// 			}
+// 			copy(out[off:off+len(to)], to)
+// 			off += len(to)
+// 			// fmt.Printf("mid %v\n", out)
 
-			if i < len(in) {
-				copy(out[off:], in[i+1:])
-				// fmt.Printf("end %v\n", out)
-			}
+// 			if i < len(in) {
+// 				copy(out[off:], in[i+1:])
+// 				// fmt.Printf("end %v\n", out)
+// 			}
 
-			// fmt.Printf("out %v\n", out)
-			ret = append(ret, out)
-		}
+// 			// fmt.Printf("out %v\n", out)
+// 			ret = append(ret, out)
+// 		}
+// 	}
+
+// 	return ret
+// }
+
+// func doReplacements(in []string, repls map[string][][]string) map[string][]string {
+// 	//fmt.Printf("doReplacements in %v\n", in)
+
+// 	allResults := map[string][]string{}
+// 	for from, tos := range repls {
+// 		for _, to := range tos {
+// 			// fmt.Printf("%v %v\n", from, to)
+// 			results := doReplacement(in, from, to)
+// 			for _, result := range results {
+// 				key := strings.Join(result, " ")
+// 				// fmt.Println(key)
+// 				allResults[key] = result
+// 			}
+// 		}
+// 	}
+
+// 	return allResults
+// }
+
+// func same(a, b []string) bool {
+// 	if len(a) != len(b) {
+// 		return false
+// 	}
+// 	for i, v := range a {
+// 		if v != b[i] {
+// 			return false
+// 		}
+// 	}
+// 	return true
+// }
+
+func replace(molecule []byte, start int, mapping *chem.Mapping, dict *chem.Dict) []byte {
+	newLen := len(molecule) - len(mapping.From) + len(mapping.To)
+	out := make([]byte, newLen)
+
+	moleculeCur := 0
+	outCur := 0
+	if start > 0 {
+		copy(out, molecule[0:start])
+		moleculeCur = start
+		outCur = start
 	}
 
-	return ret
+	copy(out[outCur:], mapping.To)
+	moleculeCur += len(mapping.From)
+	outCur += len(mapping.To)
+
+	if moleculeCur < len(molecule) {
+		copy(out[outCur:], molecule[moleculeCur:])
+	}
+
+	// fmt.Printf("applied %v at %d\n", mapping.ToString(dict), start)
+	// fmt.Printf("was: %v\n", chem.MoleculeToString(molecule, dict))
+	// fmt.Printf("is : %v\n", chem.MoleculeToString(out, dict))
+
+	return out
 }
 
-func doReplacements(in []string, repls map[string][][]string) map[string][]string {
-	//fmt.Printf("doReplacements in %v\n", in)
+func reduce(molecule []byte, mappings *chem.Mappings, d *chem.Dict, results *chem.Results) {
+	for i := 0; i < len(molecule); i++ {
+		foundMappings := mappings.Find(molecule[i:], d)
+		// for _, mapping := range foundMappings {
+		// 	fmt.Printf("found mapping %v\n", mapping.ToString(d))
+		// }
 
-	allResults := map[string][]string{}
-	for from, tos := range repls {
-		for _, to := range tos {
-			// fmt.Printf("%v %v\n", from, to)
-			results := doReplacement(in, from, to)
-			for _, result := range results {
-				key := strings.Join(result, " ")
-				// fmt.Println(key)
-				allResults[key] = result
-			}
+		for _, mapping := range foundMappings {
+			results.Add(replace(molecule, i, mapping, d))
 		}
 	}
-
-	return allResults
-}
-
-func same(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i, v := range a {
-		if v != b[i] {
-			return false
-		}
-	}
-	return true
 }
 
 func main() {
-	repls, goal, err := readInput(os.Stdin)
+	dict := chem.NewDict()
+
+	mappings, initial, err := readInput(os.Stdin, dict)
 	if err != nil {
 		log.Fatalf("failed to read input: %v", err)
 	}
 
-	// fmt.Println(repls)
-	fmt.Printf("%d: %v\n", len(goal), goal)
+	// mappings.Dump(dict)
+	// fmt.Println(initial)
 
-	// for r := range allResults {
-	// 	fmt.Println(r)
-	// }
+	eByte := dict.StrToByte("e")
 
-	molecules := map[string][]string{"e": []string{"e"}}
-	for i := 0; ; i++ {
-		allResults := map[string][]string{}
-
-		maxLen := -1
-		droppedTooBig := 0
+	molecules := [][]byte{initial}
+	for i := 1; ; i++ {
+		results := chem.NewResults()
 
 		for _, molecule := range molecules {
-			results := doReplacements(molecule, repls)
-			//fmt.Printf("got results %v\n", results)
+			reduce(molecule, mappings, dict, results)
+		}
 
-			for k, v := range results {
-				if maxLen == -1 || len(v) > maxLen {
-					maxLen = len(v)
-				}
+		molecules = results.Get()
+		var shortest int
+		for j, molecule := range molecules {
+			if j == 0 || len(molecule) < shortest {
+				shortest = len(molecule)
+			}
 
-				if len(v) > len(goal) {
-					droppedTooBig++
-					continue
-				} else if len(v) == len(goal) {
-					if same(v, goal) {
-						log.Fatalf("found it at i=%d", i)
-					}
-				}
-
-				allResults[k] = v
+			if len(molecule) == 1 && molecule[0] == eByte {
+				log.Fatalf("found match")
 			}
 		}
 
-		fmt.Printf("i=%d, num=%d, maxLen=%d, tooBig=%d\n",
-			i, len(allResults), maxLen, droppedTooBig)
-		molecules = allResults
+		fmt.Printf("round %d: num=%d, shortest=%d\n", i, len(molecules), shortest)
 	}
 }
