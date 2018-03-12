@@ -70,17 +70,36 @@ func replace(molecule []byte, start int, mapping *chem.Mapping, dict *chem.Dict)
 	return out
 }
 
-func reduce(molecule []byte, mappings *chem.Mappings, d *chem.Dict, results *chem.Results) {
-	for i := 0; i < len(molecule); i++ {
-		foundMappings := mappings.Find(molecule[i:], d)
-		// for _, mapping := range foundMappings {
-		// 	fmt.Printf("found mapping %v\n", mapping.ToString(d))
-		// }
+func reduce(molecule []byte, mappings *chem.Mappings, dict *chem.Dict, results *chem.Results) bool {
+	foundReplacement := false
 
-		for _, mapping := range foundMappings {
-			results.Add(replace(molecule, i, mapping, d))
+	i := 0
+	for i < len(molecule) {
+		foundMappings := mappings.Find(molecule[i:], dict)
+		if len(foundMappings) == 0 {
+			i++
+			continue
+		} else if len(foundMappings) != 1 {
+			panic(fmt.Sprintf("found >1 mappings at %v",
+				chem.MoleculeToString(molecule[i:], dict)))
 		}
+		foundMapping := foundMappings[0]
+		foundReplacement = true
+
+		replaced := replace(molecule, i, foundMapping, dict)
+
+		fmt.Printf("%v => %v @ %v; was %v now %v\n",
+			chem.MoleculeToString(foundMapping.From, dict),
+			chem.MoleculeToString(foundMapping.To, dict), i,
+			chem.MoleculeToString(molecule, dict),
+			chem.MoleculeToString(replaced, dict))
+
+		i += len(foundMapping.To)
+		molecule = replaced
 	}
+
+	results.Add(molecule)
+	return foundReplacement
 }
 
 func main() {
@@ -100,8 +119,17 @@ func main() {
 	for i := 1; ; i++ {
 		results := chem.NewResults()
 
+		foundReplacement := false
 		for _, molecule := range molecules {
-			reduce(molecule, mappings, dict, results)
+			if reduce(molecule, mappings, dict, results) {
+				foundReplacement = true
+			}
+		}
+
+		if !foundReplacement {
+			fmt.Printf("round %d: no replacement; molecules[0] %v\n",
+				i, chem.MoleculeToString(molecules[0], dict))
+			break
 		}
 
 		molecules = results.Get()
