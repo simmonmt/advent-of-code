@@ -5,11 +5,42 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"os"
 	"strings"
 
 	"chem"
 )
+
+type NextPolicy interface {
+	PickNext(cands []*chem.Mapping, dict *chem.Dict) int
+}
+
+type LongestNextPolicy struct{}
+
+func (p *LongestNextPolicy) PickNext(cands []*chem.Mapping, dict *chem.Dict) int {
+	longestIdx := -1
+	var longestMapping *chem.Mapping
+
+	for i, cand := range cands {
+		fmt.Printf("cand %d: %v\n", i, cand.ToString(dict))
+
+		if longestMapping == nil || len(cand.From) > len(longestMapping.From) {
+			longestIdx = i
+			longestMapping = cand
+		}
+	}
+
+	fmt.Printf("#cands %v res %v\n", len(cands), longestIdx)
+
+	return longestIdx
+}
+
+type RandNextPolicy struct{}
+
+func (p *RandNextPolicy) PickNext(cands []*chem.Mapping, dict *chem.Dict) int {
+	return rand.Intn(len(cands))
+}
 
 func readInput(r io.Reader, d *chem.Dict) (*chem.Mappings, []byte, error) {
 	reader := bufio.NewReader(r)
@@ -70,11 +101,11 @@ func replace(molecule []byte, start int, mapping *chem.Mapping, dict *chem.Dict)
 	return out
 }
 
-func reduce(molecule []byte, mappings *chem.Mappings, dict *chem.Dict, results *chem.Results) bool {
-	foundReplacement := false
+func reduce(molecule []byte, mappings *chem.Mappings, dict *chem.Dict, nextPolicy NextPolicy) []byte {
+	allFoundMappings := []*chem.Mapping{}
+	allFoundMappingIdxes := []int{}
 
-	i := 0
-	for i < len(molecule) {
+	for i := 0; i < len(molecule); i++ {
 		foundMappings := mappings.Find(molecule[i:], dict)
 		if len(foundMappings) == 0 {
 			i++
@@ -83,27 +114,42 @@ func reduce(molecule []byte, mappings *chem.Mappings, dict *chem.Dict, results *
 			panic(fmt.Sprintf("found >1 mappings at %v",
 				chem.MoleculeToString(molecule[i:], dict)))
 		}
-		foundMapping := foundMappings[0]
-		foundReplacement = true
-
-		replaced := replace(molecule, i, foundMapping, dict)
-
-		fmt.Printf("%v => %v @ %v; was %v now %v\n",
-			chem.MoleculeToString(foundMapping.From, dict),
-			chem.MoleculeToString(foundMapping.To, dict), i,
-			chem.MoleculeToString(molecule, dict),
-			chem.MoleculeToString(replaced, dict))
-
-		i += len(foundMapping.To)
-		molecule = replaced
+		allFoundMappings = append(allFoundMappings, foundMappings[0])
+		allFoundMappingIdxes = append(allFoundMappingIdxes, i)
 	}
 
-	results.Add(molecule)
-	return foundReplacement
+	if len(allFoundMappings) == 0 {
+		return nil
+	}
+
+	chosenIdx := nextPolicy.PickNext(allFoundMappings, dict)
+	return replace(molecule, allFoundMappingIdxes[chosenIdx], allFoundMappings[chosenIdx], dict)
+}
+
+func doSearch(molecule []byte, mappings *chem.Mappings, dict *chem.Dict, nextPolicy NextPolicy, finishByte byte) (int, bool) {
+	for i := 1; ; i++ {
+		replacement := reduce(molecule, mappings, dict, nextPolicy)
+		if replacement == nil {
+			return i, false
+		}
+
+		if len(replacement) == 1 && replacement[0] == finishByte {
+			return i, true
+		}
+
+		//fmt.Printf("round %d: len=%d\n", i, len(replacement))
+		molecule = replacement
+	}
 }
 
 func main() {
 	dict := chem.NewDict()
+
+	// reduce finds all candidate mappings in a given molecule. Choose the
+	// next one at random. Choosing longest doesn't work for whatever
+	// reason, as it doesn't converge. Oddly if we choose at random we tend
+	// to get the shortest-length convergence almost immediately.
+	nextPolicy := &RandNextPolicy{}
 
 	mappings, initial, err := readInput(os.Stdin, dict)
 	if err != nil {
@@ -115,35 +161,26 @@ func main() {
 
 	eByte := dict.StrToByte("e")
 
-	molecules := [][]byte{initial}
-	for i := 1; ; i++ {
-		results := chem.NewResults()
-
-		foundReplacement := false
-		for _, molecule := range molecules {
-			if reduce(molecule, mappings, dict, results) {
-				foundReplacement = true
-			}
+	// We're picking candidates at random (see above), so we need to keep
+	// trying again and again.
+	shortest := -1
+	for i := 0; ; i++ {
+		if i != 0 && i%1000 == 0 {
+			fmt.Printf("iter %v\n", i)
 		}
 
-		if !foundReplacement {
-			fmt.Printf("round %d: no replacement; molecules[0] %v\n",
-				i, chem.MoleculeToString(molecules[0], dict))
-			break
+		numRounds, found := doSearch(initial, mappings, dict, nextPolicy, eByte)
+		if !found {
+			continue
 		}
 
-		molecules = results.Get()
-		var shortest int
-		for j, molecule := range molecules {
-			if j == 0 || len(molecule) < shortest {
-				shortest = len(molecule)
-			}
-
-			if len(molecule) == 1 && molecule[0] == eByte {
-				log.Fatalf("found match")
+		if shortest == -1 {
+			if numRounds < shortest {
+				shortest = numRounds
+				fmt.Printf("new shortest %v at iter %v\n", shortest, i)
+			} else {
+				fmt.Printf("converged at %v at iter %v\n", numRounds, i)
 			}
 		}
-
-		fmt.Printf("round %d: num=%d, shortest=%d\n", i, len(molecules), shortest)
 	}
 }
