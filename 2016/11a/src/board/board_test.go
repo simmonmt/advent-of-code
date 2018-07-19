@@ -1,0 +1,132 @@
+package board
+
+import (
+	"flag"
+	"os"
+	"reflect"
+	"strconv"
+	"testing"
+
+	"logger"
+	"object"
+)
+
+func TestValidMove(t *testing.T) {
+	type TestCase struct {
+		onSrcFloor, onDestFloor []object.Object
+		cands                   []object.Object
+		expectedResult          bool
+	}
+
+	testCases := []TestCase{
+		TestCase{
+			onSrcFloor:     []object.Object{object.Microchip(1)},
+			onDestFloor:    []object.Object{object.Generator(1)},
+			cands:          []object.Object{object.Microchip(1)},
+			expectedResult: true,
+		},
+		TestCase{
+			onSrcFloor:     []object.Object{object.Microchip(1)},
+			onDestFloor:    []object.Object{},
+			cands:          []object.Object{object.Microchip(1)},
+			expectedResult: true,
+		},
+		TestCase{
+			onSrcFloor:     []object.Object{object.Generator(1)},
+			onDestFloor:    []object.Object{object.Microchip(1)},
+			cands:          []object.Object{object.Generator(1)},
+			expectedResult: true,
+		},
+		TestCase{
+			onSrcFloor:     []object.Object{object.Microchip(1)},
+			onDestFloor:    []object.Object{object.Generator(2)},
+			cands:          []object.Object{object.Microchip(1)},
+			expectedResult: false,
+		},
+		TestCase{
+			onSrcFloor:     []object.Object{object.Microchip(1), object.Microchip(2)},
+			onDestFloor:    []object.Object{object.Generator(1)},
+			cands:          []object.Object{object.Microchip(1), object.Microchip(2)},
+			expectedResult: false,
+		},
+		TestCase{
+			onSrcFloor:     []object.Object{object.Microchip(1), object.Generator(2)},
+			onDestFloor:    []object.Object{},
+			cands:          []object.Object{object.Microchip(1), object.Generator(2)},
+			expectedResult: false,
+		},
+		TestCase{
+			onSrcFloor:     []object.Object{object.Microchip(1), object.Generator(1)},
+			onDestFloor:    []object.Object{},
+			cands:          []object.Object{object.Microchip(1), object.Generator(1)},
+			expectedResult: true,
+		},
+		TestCase{
+			onSrcFloor:     []object.Object{object.Microchip(1), object.Generator(1)},
+			onDestFloor:    []object.Object{},
+			cands:          []object.Object{object.Microchip(1)},
+			expectedResult: true,
+		},
+		TestCase{
+			onSrcFloor:     []object.Object{object.Microchip(1), object.Generator(1), object.Generator(2)},
+			onDestFloor:    []object.Object{},
+			cands:          []object.Object{object.Generator(1)},
+			expectedResult: false,
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			r := validMove(tc.onSrcFloor, tc.onDestFloor, tc.cands...)
+			if r != tc.expectedResult {
+				t.Errorf("validMove(%v, %v, %v) = %v, want %v",
+					tc.onSrcFloor, tc.onDestFloor, tc.cands, r, tc.expectedResult)
+			}
+		})
+	}
+}
+
+func TestBoard(t *testing.T) {
+	type TestCase struct {
+		board         *Board
+		expectedMoves []*Move
+	}
+
+	testCases := []TestCase{
+		TestCase{
+			board: New(map[object.Object]uint8{
+				object.Microchip(1): 1,
+				object.Generator(1): 1,
+				object.Microchip(2): 1,
+				object.Generator(2): 1,
+			}),
+			expectedMoves: []*Move{
+				newMove(2, object.Microchip(1)),
+				newMove(2, object.Microchip(2)),
+				newMove(2, object.Generator(2), object.Generator(1)),
+				newMove(2, object.Generator(2), object.Microchip(2)),
+				newMove(2, object.Generator(1), object.Microchip(1)),
+				newMove(2, object.Microchip(1), object.Microchip(2)),
+				// Does not include G2=>2 or G1=>2, both of
+				// which would leave their respective microchips
+				// without protection.
+			},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			moves := tc.board.AllMoves()
+			if !reflect.DeepEqual(moves, tc.expectedMoves) {
+				t.Errorf("move mismatch: got %+v, want %+v", moves, tc.expectedMoves)
+			}
+		})
+	}
+}
+
+func TestMain(m *testing.M) {
+	flag.Parse()
+	logger.Init(true)
+
+	os.Exit(m.Run())
+}

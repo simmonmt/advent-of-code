@@ -1,0 +1,100 @@
+1B3A2a1b1
+
+F4 .  .  .  .  .
+F3 .  2G .  .  .
+F2 .  .  1G .  .
+F1 E  .  .  1M 2M
+
+Then, to get everything up to the assembling machine on the fourth floor, the following steps could be taken:
+
+Bring the Hydrogen-compatible Microchip to the second floor, which is safe because it can get power from the Hydrogen Generator:
+
+2B3A2a2b1
+
+F4 .  .  .  .  .
+F3 .  2G .  .  .
+F2 E  .  1G 1M .
+F1 .  .  .  . 2M
+
+Bring both Hydrogen-related items to the third floor, which is safe because the Hydrogen-compatible microchip is getting power from its generator:
+
+3B3A3a3b1
+
+F4 .  .  .  .  .
+F3 E  2G 1G 1M .
+F2 .  .  .  .  .
+F1 .  .  .  .  2M
+Leave the Hydrogen Generator on floor three, but bring the Hydrogen-compatible Microchip back down with you so you can still use the elevator:
+
+2B3A3a2b1
+
+F4 .  .  .  .  .
+F3 .  2G 1G .  .
+F2 E  .  .  1M .
+F1 .  .  .  .  2M
+
+At the first floor, grab the Lithium-compatible Microchip, which is safe because Microchips don't affect each other:
+
+1B3A3a1b1
+
+F4 .  .  .  .  .
+F3 .  2G 1G .  .
+F2 .  .  .  .  .
+F1 E  .  .  1M 2M
+
+Bring both Microchips up one floor, where there is nothing to fry them:
+
+2B3A3a2b2
+
+F4 .  .  .  .  .
+F3 .  2G 1G .  .
+F2 E  .  .  1M 2M
+F1 .  .  .  .  .
+Bring both Microchips up again to floor three, where they can be temporarily connected to their corresponding generators while the elevator recharges, preventing either of them from being fried:
+
+3B3A3a3b3
+
+F4 .  .  .  .  .
+F3 E  2G 1G 1M 2M
+F2 .  .  .  .  .
+F1 .  .  .  .  .
+Bring both Microchips to the fourth floor:
+
+4B3A3a4b4
+
+F4 E  .  .  1M 2M
+F3 .  2G 1G .  .
+F2 .  .  .  .  .
+F1 .  .  .  .  .
+Leave the Lithium-compatible microchip on the fourth floor, but bring the Hydrogen-compatible one so you can still use the elevator; this is safe because although the Lithium Generator is on the destination floor, you can connect Hydrogen-compatible microchip to the Hydrogen Generator there:
+
+3B3A3a3b4
+
+F4 .  .  .  .  2M
+F3 E  2G 1G 1M .
+F2 .  .  .  .  .
+F1 .  .  .  .  .
+Bring both Generators up to the fourth floor, which is safe because you can connect the Lithium-compatible Microchip to the Lithium Generator upon arrival:
+
+4B4A4a3b4
+
+F4 E  2G 1G . 2M
+F3 .  .  .  1M .
+F2 .  .  .  .  .
+F1 .  .  .  .  .
+Bring the Lithium Microchip with you to the third floor so you can use the elevator:
+
+3B4A4a3b3
+
+F4 .  2G 1G .  .
+F3 E  .  .  1M 2M
+F2 .  .  .  .  .
+F1 .  .  .  .  .
+Bring both Microchips to the fourth floor:
+
+4B4A4a4b4
+
+F4 E  1G 1M 2G 2M
+F3 .  .  .  .  .
+F2 .  .  .  .  .
+F1 .  .  .  .  .
