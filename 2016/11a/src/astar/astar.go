@@ -100,6 +100,16 @@ func AStar(start, goal string, neighborDiscoverer NeighborDiscoverer, distanceEs
 	fScore := newFScoreMap()
 	fScore.Set(start, distanceEstimator.Estimate(start, goal))
 
+	// A subset of fScore that contains only the nodes currently in openSet.
+	//
+	// One of the most expensive parts of this algorithm is searching fScore
+	// for the item from openSet that has the lowest value. The pseudocode
+	// from Wikipedia has a single fScore map that contains values from all
+	// nodes -- open and not open. If there are a lot of not open nodes
+	// whose scores are lower than those of the open nodes, the search for
+	// the open nodes with the lowest score will take longer and longer each
+	// time. This map stores only the scores that are part of openSet. It is
+	// a subset of fScore.
 	openFScore := newFScoreMap()
 	openFScore.Set(start, distanceEstimator.Estimate(start, goal))
 
