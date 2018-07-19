@@ -11,10 +11,8 @@ import (
 )
 
 var (
-	audit      = flag.Bool("audit", false, "audit results")
 	logging    = flag.Bool("verbose", false, "enable logging")
 	smallInput = flag.Bool("small_input", false, "use small input")
-	dumpSeen   = flag.Bool("dump_seen", false, "dump seen after completion")
 )
 
 func main() {
@@ -47,21 +45,11 @@ func main() {
 		})
 	}
 
-	minMoves, seen := game.Play(b)
+	minMoves := game.Play(b)
 
 	if minMoves == nil {
 		fmt.Println("no solutions found")
 	} else {
-		fmt.Printf("minMoves %d\n", len(minMoves))
-	}
-
-	if *audit {
-		game.Audit(b, minMoves)
-	}
-
-	if *dumpSeen {
-		for s, v := range seen {
-			fmt.Printf("seen %v = %+v\n", s, v)
-		}
+		fmt.Printf("minMoves %d\n", len(minMoves)-1)
 	}
 }

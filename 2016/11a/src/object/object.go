@@ -40,6 +40,14 @@ func (o Object) Serialize() byte {
 	}
 }
 
+func Deserialize(ser byte) Object {
+	if ser > 'Z' {
+		return Microchip(int8(ser - 'a' + 1))
+	} else {
+		return Generator(int8(ser - 'A' + 1))
+	}
+}
+
 type Objects []Object
 
 func (o Objects) Len() int {

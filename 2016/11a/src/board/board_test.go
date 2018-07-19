@@ -124,6 +124,26 @@ func TestBoard(t *testing.T) {
 	}
 }
 
+func TestSerialize(t *testing.T) {
+	in := New(map[object.Object]uint8{
+		object.Microchip(1): 2,
+		object.Generator(1): 3,
+		object.Microchip(2): 4,
+		object.Generator(2): 4,
+	})
+
+	ser := in.Serialize()
+	if ser != "1A3a2B4b4" {
+		in.Print()
+		t.Errorf("serialize: want \"1A3a2B4b4\", got \"%v\"", ser)
+	}
+
+	deser, err := Deserialize(ser)
+	if err != nil || !reflect.DeepEqual(deser, in) {
+		t.Errorf("Deserialize(%v) = %+v, %v, want %+v, nil", ser, deser, err, in)
+	}
+}
+
 func TestMain(m *testing.M) {
 	flag.Parse()
 	logger.Init(true)

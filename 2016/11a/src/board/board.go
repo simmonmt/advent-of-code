@@ -43,11 +43,17 @@ func New(objsToFloors map[object.Object]uint8) *Board {
 	return NewWithElevatorStart(objsToFloors, 1)
 }
 
-func (b *Board) Apply(m *Move) *Board {
+func (b *Board) duplicate() *Board {
 	nb := new(len(b.Objs))
-	nb.ElevatorFloor = m.dest
+	nb.ElevatorFloor = b.ElevatorFloor
 	copy(nb.Objs, b.Objs)
 	copy(nb.ObjFloors, b.ObjFloors)
+	return nb
+}
+
+func (b *Board) Apply(m *Move) *Board {
+	nb := b.duplicate()
+	nb.ElevatorFloor = m.dest
 
 	for _, moveObj := range m.objs {
 		for i, obj := range b.Objs {
@@ -75,6 +81,26 @@ func (b *Board) Serialize() string {
 	}
 
 	return string(out)
+}
+
+func Deserialize(str string) (*Board, error) {
+	if len(str)%2 != 1 {
+		return nil, fmt.Errorf("invalid length %v in %v", len(str), str)
+	}
+
+	sArr := []byte(str)
+
+	b := &Board{}
+	b.ElevatorFloor = sArr[0] - '0'
+	b.Objs = []object.Object{}
+	b.ObjFloors = []uint8{}
+
+	for i := 1; i < len(sArr); i += 2 {
+		b.Objs = append(b.Objs, object.Deserialize(sArr[i]))
+		b.ObjFloors = append(b.ObjFloors, uint8(sArr[i+1]-'0'))
+	}
+
+	return b, nil
 }
 
 func (b *Board) makeFloorContents() [5][]object.Object {
@@ -235,11 +261,11 @@ func (b *Board) AllMoves() []*Move {
 	return moves
 }
 
-func (b *Board) Success() bool {
-	for _, floor := range b.ObjFloors {
-		if floor != 4 {
-			return false
-		}
+func (b *Board) SuccessBoard() *Board {
+	nb := b.duplicate()
+	nb.ElevatorFloor = 4
+	for i := range nb.ObjFloors {
+		nb.ObjFloors[i] = 4
 	}
-	return true
+	return nb
 }
