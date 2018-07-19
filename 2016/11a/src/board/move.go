@@ -23,7 +23,7 @@ func (m Move) String() string {
 	return out
 }
 
-func newMove(dest uint8, objs ...object.Object) *Move {
+func NewMove(dest uint8, objs ...object.Object) *Move {
 	m := &Move{
 		dest: dest,
 		objs: make([]object.Object, len(objs)),

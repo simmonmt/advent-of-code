@@ -39,3 +39,34 @@ func (o Object) Serialize() byte {
 		return byte('a' + o - 1)
 	}
 }
+
+type Objects []Object
+
+func (o Objects) Len() int {
+	return len(o)
+}
+
+func abs(a int) int {
+	if a < 0 {
+		return -a
+	} else {
+		return a
+	}
+}
+
+func (o Objects) Less(i, j int) bool {
+	absI := abs(int(o[i]))
+	absJ := abs(int(o[j]))
+
+	if absI < absJ {
+		return true
+	} else if absI > absJ {
+		return false
+	} else {
+		return o[i] < 0
+	}
+}
+
+func (o Objects) Swap(i, j int) {
+	o[i], o[j] = o[j], o[i]
+}

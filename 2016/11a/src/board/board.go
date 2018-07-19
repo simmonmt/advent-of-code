@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sort"
 
-	"logger"
 	"object"
 )
 
@@ -26,15 +25,15 @@ func NewWithElevatorStart(objsToFloors map[object.Object]uint8, elevatorStart ui
 	b := new(len(objsToFloors))
 	b.ElevatorFloor = elevatorStart
 
-	objs := []int{}
+	objs := []object.Object{}
 	for obj := range objsToFloors {
-		objs = append(objs, int(obj))
+		objs = append(objs, obj)
 	}
-	sort.Ints(objs)
+	sort.Sort(object.Objects(objs))
 
 	for i, obj := range objs {
-		b.Objs[i] = object.Object(obj)
-		b.ObjFloors[i] = objsToFloors[object.Object(obj)]
+		b.Objs[i] = obj
+		b.ObjFloors[i] = objsToFloors[obj]
 	}
 
 	return b
@@ -130,7 +129,13 @@ func (b *Board) Print() {
 
 		for i, obj := range b.Objs {
 			if floor == b.ObjFloors[i] {
-				fmt.Printf("%s ", obj)
+				fmt.Printf("%s", obj)
+				if i+1 < len(b.Objs) && floor == b.ObjFloors[i+1] && obj.Num() == b.Objs[i+1].Num() {
+					fmt.Printf("-")
+				} else {
+					fmt.Printf(" ")
+				}
+
 			} else {
 				fmt.Printf(".  ")
 			}
@@ -149,7 +154,6 @@ func validMove(objsOnSrcFloor, objsOnDestFloor []object.Object, cands ...object.
 	newDestFloor := make([]object.Object, len(objsOnDestFloor)+len(cands))
 	copy(newDestFloor, objsOnDestFloor)
 	copy(newDestFloor[len(objsOnDestFloor):], cands)
-	logger.LogF("checking dest objs %v\n", newDestFloor)
 	if !floorIsOk(newDestFloor) {
 		return false
 	}
@@ -168,7 +172,6 @@ func validMove(objsOnSrcFloor, objsOnDestFloor []object.Object, cands ...object.
 			i++
 		}
 	}
-	logger.LogF("checking src objs %v\n", newSrcFloor)
 	if !floorIsOk(newSrcFloor) {
 		return false
 	}
@@ -192,13 +195,13 @@ func (b *Board) AllMoves() []*Move {
 		if b.ElevatorFloor != 4 {
 			destFloor := b.ElevatorFloor + 1
 			if validMove(floorContents[b.ElevatorFloor], floorContents[destFloor], obj) {
-				moves = append(moves, newMove(destFloor, obj))
+				moves = append(moves, NewMove(destFloor, obj))
 			}
 		}
 		if b.ElevatorFloor != 1 {
 			destFloor := b.ElevatorFloor - 1
 			if validMove(floorContents[b.ElevatorFloor], floorContents[destFloor], obj) {
-				moves = append(moves, newMove(destFloor, obj))
+				moves = append(moves, NewMove(destFloor, obj))
 			}
 		}
 	}
@@ -216,13 +219,13 @@ func (b *Board) AllMoves() []*Move {
 			if b.ElevatorFloor != 4 {
 				destFloor := b.ElevatorFloor + 1
 				if validMove(floorContents[b.ElevatorFloor], floorContents[destFloor], obj1, obj2) {
-					moves = append(moves, newMove(destFloor, obj1, obj2))
+					moves = append(moves, NewMove(destFloor, obj1, obj2))
 				}
 			}
 			if b.ElevatorFloor != 1 {
 				destFloor := b.ElevatorFloor - 1
 				if validMove(floorContents[b.ElevatorFloor], floorContents[destFloor], obj1, obj2) {
-					moves = append(moves, newMove(destFloor, obj1, obj2))
+					moves = append(moves, NewMove(destFloor, obj1, obj2))
 				}
 			}
 		}

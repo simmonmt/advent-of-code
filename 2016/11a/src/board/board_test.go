@@ -101,12 +101,12 @@ func TestBoard(t *testing.T) {
 				object.Generator(2): 1,
 			}),
 			expectedMoves: []*Move{
-				newMove(2, object.Microchip(1)),
-				newMove(2, object.Microchip(2)),
-				newMove(2, object.Generator(2), object.Generator(1)),
-				newMove(2, object.Generator(2), object.Microchip(2)),
-				newMove(2, object.Generator(1), object.Microchip(1)),
-				newMove(2, object.Microchip(1), object.Microchip(2)),
+				NewMove(2, object.Microchip(1)),
+				NewMove(2, object.Microchip(2)),
+				NewMove(2, object.Generator(1), object.Microchip(1)),
+				NewMove(2, object.Generator(1), object.Generator(2)),
+				NewMove(2, object.Microchip(1), object.Microchip(2)),
+				NewMove(2, object.Generator(2), object.Microchip(2)),
 				// Does not include G2=>2 or G1=>2, both of
 				// which would leave their respective microchips
 				// without protection.

@@ -15,7 +15,6 @@ var (
 	logging    = flag.Bool("verbose", false, "enable logging")
 	smallInput = flag.Bool("small_input", false, "use small input")
 	dumpSeen   = flag.Bool("dump_seen", false, "dump seen after completion")
-	allSeen    = flag.Bool("all_seen", false, "include zeroes")
 )
 
 func main() {
@@ -61,10 +60,8 @@ func main() {
 	}
 
 	if *dumpSeen {
-		for s, moves := range seen {
-			if *allSeen || len(moves) > 0 {
-				fmt.Printf("seen %v = %v\n", s, len(moves))
-			}
+		for s, v := range seen {
+			fmt.Printf("seen %v = %+v\n", s, v)
 		}
 	}
 }

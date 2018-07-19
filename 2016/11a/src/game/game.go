@@ -11,11 +11,43 @@ var (
 )
 
 type SeenVal struct {
-	done  bool
-	moves []*boardMove
+	inProgress bool
+	moves      []*board.Move
 }
 
-func doPlay(b *board.Board, seen map[string][]*board.Move, playNum int) []*board.Move {
+func (s SeenVal) String() string {
+	out := ""
+	if s.inProgress {
+		out += "in-progress"
+	} else {
+		out += "done"
+	}
+
+	out += " "
+	if s.moves == nil {
+		out += "unreachable"
+	} else {
+		out += fmt.Sprintf("%d=%+v", len(s.moves), s.moves)
+	}
+
+	return out
+}
+
+func (s *SeenVal) Duplicate() *SeenVal {
+	ns := &SeenVal{
+		inProgress: s.inProgress,
+		moves:      make([]*board.Move, len(s.moves)),
+	}
+
+	for i, move := range s.moves {
+		nm := *move
+		ns.moves[i] = &nm
+	}
+
+	return ns
+}
+
+func doPlay(b *board.Board, seen map[string]*SeenVal, playNum int) []*board.Move {
 	var minMoves []*board.Move
 
 	if logger.Enabled() {
@@ -34,14 +66,16 @@ func doPlay(b *board.Board, seen map[string][]*board.Move, playNum int) []*board
 		logger.LogF("%v:  %+v (to %v)", playNum, move, nb.Serialize())
 
 		serialized := nb.Serialize()
-		if seenMoves, found := seen[serialized]; found {
-			if len(seenMoves) == 0 {
+		if seenVal, found := seen[serialized]; found {
+			if seenVal.inProgress {
 				logger.LogLn("  (already seen; in progress)")
+			} else if seenVal.moves == nil {
+				logger.LogLn("  (already seen; dead end)")
 			} else {
-				logger.LogF("  (already seen; success in %d)\n", seenMoves)
-				if minMoves == nil || len(seenMoves)+1 < len(minMoves) {
+				logger.LogF("  (already seen; success in %d)\n", seenVal.moves)
+				if minMoves == nil || len(seenVal.moves)+1 < len(minMoves) {
 					minMoves = []*board.Move{move}
-					minMoves = append(minMoves, seenMoves...)
+					minMoves = append(minMoves, seenVal.moves...)
 				}
 			}
 			continue
@@ -63,7 +97,7 @@ func doPlay(b *board.Board, seen map[string][]*board.Move, playNum int) []*board
 		}
 
 		serialized := nb.Serialize()
-		seen[serialized] = []*board.Move{}
+		seen[serialized] = &SeenVal{inProgress: true}
 
 		globalPlayNum++
 		logger.LogF("%v: recursing with playNum %v\n", playNum, globalPlayNum)
@@ -75,7 +109,9 @@ func doPlay(b *board.Board, seen map[string][]*board.Move, playNum int) []*board
 				minMoves = append(minMoves, successMoves...)
 			}
 
-			seen[serialized] = successMoves
+			seen[serialized] = &SeenVal{inProgress: false, moves: successMoves}
+		} else {
+			seen[serialized] = &SeenVal{inProgress: false}
 		}
 	}
 
@@ -83,17 +119,17 @@ func doPlay(b *board.Board, seen map[string][]*board.Move, playNum int) []*board
 	return minMoves
 }
 
-func Play(b *board.Board) ([]*board.Move, map[string][]*board.Move) {
+func Play(b *board.Board) ([]*board.Move, map[string]*SeenVal) {
 	// Tracks parts of the move space that we've already
 	// visited. If the value is -1, we don't know whether this
 	// board leads to success. Otherwise, it's the number of moves
 	// to get to success from that board.
-	seen := map[string][]*board.Move{}
-	seen[b.Serialize()] = []*board.Move{}
+	seen := map[string]*SeenVal{}
+	seen[b.Serialize()] = &SeenVal{inProgress: true}
 
 	moves := doPlay(b, seen, globalPlayNum)
 	if moves != nil {
-		seen[b.Serialize()] = moves
+		seen[b.Serialize()] = &SeenVal{inProgress: false, moves: moves}
 	}
 
 	return moves, seen
