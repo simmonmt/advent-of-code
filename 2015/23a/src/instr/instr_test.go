@@ -51,7 +51,7 @@ func TestInc(t *testing.T) {
 	testSingleRegInstr(t, i, 3, 4)
 }
 
-func testJmp(t *testing.T) {
+func TestJmp(t *testing.T) {
 	i := newJmp(12)
 	if s := i.String(); s != "jmp 12" {
 		t.Errorf("i = \"%v\", want \"jmp 12\"", s)
@@ -67,8 +67,8 @@ func testJmp(t *testing.T) {
 	verifyFile(t, f, 5, 5)
 }
 
-func testJie(t *testing.T) {
-	if s := newJie(reg.B, 12).String(); s != "jie 12" {
+func TestJie(t *testing.T) {
+	if s := newJie(reg.B, 12).String(); s != "jie b, 12" {
 		t.Errorf("i = \"%v\", want \"jie b, 12\"", s)
 	}
 
@@ -86,8 +86,8 @@ func testJie(t *testing.T) {
 	verifyFile(t, f, 5, 6)
 }
 
-func testJio(t *testing.T) {
-	if s := newJio(reg.B, 12).String(); s != "jio 12" {
+func TestJio(t *testing.T) {
+	if s := newJio(reg.B, 12).String(); s != "jio b, 12" {
 		t.Errorf("i = \"%v\", want \"jio b, 12\"", s)
 	}
 
