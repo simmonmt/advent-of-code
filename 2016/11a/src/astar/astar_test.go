@@ -58,7 +58,7 @@ func (h *aStarHelper) NeighborDistance(n1, n2 string) uint {
 	panic(fmt.Sprintf("no distance for %v to %v", n1, n2))
 }
 
-func TestSimple(t *testing.T) {
+func TestAStar(t *testing.T) {
 	helper := aStarHelper{
 		nodes: map[string]helperNode{
 			"start": helperNode{distances: map[string]uint{"a": 15, "d": 20}},
@@ -78,6 +78,26 @@ func TestSimple(t *testing.T) {
 	expected := []string{"end", "e", "d3", "d2", "d1", "d", "start"}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("start->end, got %v, want %v", result, expected)
+	}
+}
+
+func TestFScoreMap(t *testing.T) {
+	m := newFScoreMap()
+	m.Set("a", 6)
+	m.Set("b", 2)
+	m.Set("c", 1)
+	m.Set("d", 1)
+	m.Set("e", 1)
+
+	found := []string{}
+	m.Walk(func(item *fScoreItem) bool {
+		found = append(found, fmt.Sprintf("%v:%v", item.Name, item.Value))
+		return true
+	})
+
+	expected := []string{"c:1", "d:1", "e:1", "b:2", "a:6"}
+	if !reflect.DeepEqual(expected, found) {
+		t.Errorf("got %v, wanted %v", found, expected)
 	}
 }
 

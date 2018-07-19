@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
+	"runtime/pprof"
 
 	"board"
 	"game"
@@ -12,8 +14,9 @@ import (
 )
 
 var (
-	logging  = flag.Bool("verbose", false, "enable logging")
-	inputSet = flag.String("input_set", "", "input set to use -- small, a, or b")
+	cpuProfile = flag.String("cpuprofile", "", "write cpu profile to file")
+	logging    = flag.Bool("verbose", false, "enable logging")
+	inputSet   = flag.String("input_set", "", "input set to use -- small, a, or b")
 )
 
 func main() {
@@ -71,6 +74,15 @@ func main() {
 
 	default:
 		log.Fatalf("unknown input set \"%v\"", *inputSet)
+	}
+
+	if *cpuProfile != "" {
+		f, err := os.Create(*cpuProfile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
 	}
 
 	minMoves := game.Play(b)

@@ -8,6 +8,8 @@ package astar
 import (
 	"math"
 
+	"github.com/google/btree"
+
 	"logger"
 )
 
@@ -28,6 +30,48 @@ func (m *scoreMap) GetWithDefault(key string, def uint) uint {
 	} else {
 		return math.MaxUint32
 	}
+}
+
+type fScoreItem struct {
+	Name  string
+	Value uint
+}
+
+func (i *fScoreItem) Less(x btree.Item) bool {
+	than := x.(*fScoreItem)
+
+	// We implement greater-than because we want the tree to store small-to-large
+	if i.Value > than.Value {
+		return true
+	} else if i.Value < than.Value {
+		return false
+	} else {
+		return i.Name > than.Name
+	}
+}
+
+type fScoreMap struct {
+	btree *btree.BTree
+}
+
+func newFScoreMap() *fScoreMap {
+	return &fScoreMap{
+		btree: btree.New(2000),
+	}
+}
+
+func (m *fScoreMap) Walk(visitor func(item *fScoreItem) bool) {
+	m.btree.Descend(func(item btree.Item) bool {
+		return visitor(item.(*fScoreItem))
+	})
+}
+
+func (m *fScoreMap) Set(name string, value uint) {
+	m.btree.ReplaceOrInsert(&fScoreItem{Name: name, Value: value})
+}
+
+func (m *fScoreMap) Delete(name string, value uint) {
+	m.btree.Delete(&fScoreItem{Name: name, Value: value})
 }
 
 func reconstructPath(cameFrom map[string]string, current string) []string {
@@ -53,8 +97,11 @@ func AStar(start, goal string, neighborDiscoverer NeighborDiscoverer, distanceEs
 	gScore := scoreMap{}
 	gScore[start] = 0
 
-	fScore := scoreMap{}
-	fScore[start] = distanceEstimator.Estimate(start, goal)
+	fScore := newFScoreMap()
+	fScore.Set(start, distanceEstimator.Estimate(start, goal))
+
+	openFScore := newFScoreMap()
+	openFScore.Set(start, distanceEstimator.Estimate(start, goal))
 
 	for round := 0; len(openSet) > 0; round++ {
 		logger.LogF("===round %v\n", round)
@@ -63,21 +110,18 @@ func AStar(start, goal string, neighborDiscoverer NeighborDiscoverer, distanceEs
 		logger.LogF("gScore %+v\n", gScore)
 		logger.LogF("fScore %+v\n", fScore)
 
-		// This is pretty inefficient. We can't simply use Go's
-		// container/heap priority queue implementation as-is because
-		// that implementation is missing methods that let us:
-		//  - find the lowest-priority item that's in a given set. this
-		//    probably requires a Walk method that lets us traverse the
-		//    heap in order.
-		//  - update an arbitrary node in the heap (or remove an
-		//    arbitrary node)
-		var currentFScore uint = math.MaxUint32
 		current := ""
-		for open := range openSet {
-			if score := fScore.GetWithDefault(open, math.MaxUint32); score < currentFScore {
-				current = open
-				currentFScore = score
+		var currentFScore uint
+		openFScore.Walk(func(item *fScoreItem) bool {
+			if _, found := openSet[item.Name]; found {
+				current = item.Name
+				currentFScore = item.Value
+				return false
 			}
+			return true
+		})
+		if current == "" {
+			panic("nothing found in fscore")
 		}
 
 		logger.LogF("current %v\n", current)
@@ -87,6 +131,7 @@ func AStar(start, goal string, neighborDiscoverer NeighborDiscoverer, distanceEs
 		}
 
 		delete(openSet, current)
+		openFScore.Delete(current, currentFScore)
 		closedSet[current] = true
 
 		currentGScore := gScore.GetWithDefault(current, math.MaxUint32)
@@ -110,7 +155,10 @@ func AStar(start, goal string, neighborDiscoverer NeighborDiscoverer, distanceEs
 			// this path is the best until now. record it!
 			cameFrom[neighbor] = current
 			gScore[neighbor] = neighborGScore
-			fScore[neighbor] = neighborGScore + distanceEstimator.Estimate(neighbor, goal)
+
+			neighborFScore := neighborGScore + distanceEstimator.Estimate(neighbor, goal)
+			fScore.Set(neighbor, neighborFScore)
+			openFScore.Set(neighbor, neighborFScore)
 		}
 	}
 
