@@ -25,6 +25,26 @@ func doHash(str string) string {
 	return string(out)
 }
 
-func MakeHash(salt string, index int) string {
+func makeNormalHash(salt string, index int) string {
 	return doHash(fmt.Sprintf("%v%d", salt, index))
+}
+
+type Hasher interface {
+	MakeHash(salt string, index int) string
+}
+
+type NormalHasher struct{}
+
+func (h *NormalHasher) MakeHash(salt string, index int) string {
+	return makeNormalHash(salt, index)
+}
+
+type StretchedHasher struct{}
+
+func (h *StretchedHasher) MakeHash(salt string, index int) string {
+	hStr := makeNormalHash(salt, index)
+	for i := 0; i < 2016; i++ {
+		hStr = doHash(hStr)
+	}
+	return hStr
 }

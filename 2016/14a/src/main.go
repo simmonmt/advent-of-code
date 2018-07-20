@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	salt    = flag.String("salt", "", "salt")
-	verbose = flag.Bool("verbose", false, "verbose")
+	salt      = flag.String("salt", "", "salt")
+	stretched = flag.Bool("stretched", false, "use stretched hasher")
+	verbose   = flag.Bool("verbose", false, "verbose")
 )
 
 func main() {
@@ -24,16 +25,24 @@ func main() {
 		log.Fatal("--salt is required")
 	}
 
+	var hasher pad.Hasher
+	if *stretched {
+		hasher = &pad.StretchedHasher{}
+	} else {
+		hasher = &pad.NormalHasher{}
+	}
+
 	hashQueue := pad.NewQueue()
 
 	finishIdx := math.MaxInt32
 	keyIndexes := []int{}
 	for i := 0; i < finishIdx; i++ {
-		if i != 0 && i%1000000 == 0 {
-			fmt.Println(i)
+		if i != 0 && i%1000 == 0 {
+			fmt.Printf("%d: #keys: %d, finish %v\n", i, len(keyIndexes), finishIdx)
 		}
 
-		h := pad.MakeHash(*salt, i)
+		h := hasher.MakeHash(*salt, i)
+		logger.LogF("%d: hash %v\n", i, h)
 
 		if reps := pad.HasRepeats(h, 3); len(reps) > 0 {
 			// We only consider the first one
@@ -45,6 +54,7 @@ func main() {
 		// corresponding 5-reps. We use ActiveBefore because we want to
 		// exclude any added this iteration.
 		if reps := pad.HasRepeats(h[:], 5); len(reps) > 0 {
+			logger.LogF("%d: found 5-reps %v\n", i, reps)
 			activeElems := hashQueue.ActiveBefore(i)
 			logger.LogF("%d: found 5-rep %x active %v\n", i, h, activeElems)
 			for _, activeElem := range activeElems {
