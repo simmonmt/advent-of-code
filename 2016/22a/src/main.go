@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -11,15 +12,19 @@ import (
 	"strings"
 
 	"grid"
+	"logger"
 	"node"
+	"solver"
 )
 
 var (
 	sizePattern = regexp.MustCompile(`^/dev/grid/node-x([0-9]+)-y([0-9]+) +([0-9]+)T +([0-9]+)T +[0-9]+T +[0-9]+%$`)
+
+	verbose = flag.Bool("verbose", false, "verbose")
 )
 
 func readInput(r io.Reader) (width uint8, height uint8, nodes []node.Node, err error) {
-	nodes = []node.Node{}
+	yxnodes := []node.Node{}
 
 	var maxX, maxY uint64
 
@@ -30,7 +35,7 @@ func readInput(r io.Reader) (width uint8, height uint8, nodes []node.Node, err e
 			break
 		}
 
-		if lineNum < 3 {
+		if !strings.HasPrefix(line, "/") {
 			continue
 		}
 
@@ -58,49 +63,75 @@ func readInput(r io.Reader) (width uint8, height uint8, nodes []node.Node, err e
 		}
 
 		if x > maxX {
-			x = maxX
+			maxX = x
 		}
 		if y > maxY {
-			y = maxY
+			maxY = y
 		}
 
-		nodes = append(nodes, *node.New(uint16(size), uint16(used)))
+		yxnodes = append(yxnodes, *node.New(uint16(size), uint16(used)))
 	}
 
-	return uint8(maxX + 1), uint8(maxY + 1), nodes, nil
+	width = uint8(maxX + 1)
+	height = uint8(maxY + 1)
+
+	// They gave us nodes sorted by x then y. We needed y then
+	// x. Rearrange the nodes array.
+	nodes = make([]node.Node, len(yxnodes))
+	for i, n := range yxnodes {
+		x := i / int(height)
+		y := i % int(height)
+		nodes[y*int(width)+x] = n
+	}
+
+	return width, height, nodes, nil
 }
 
 func main() {
+	flag.Parse()
+	logger.Init(*verbose)
+
 	width, height, nodes, err := readInput(os.Stdin)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	numViable := 0
-	for i := 0; i < len(nodes); i++ {
-		for j := 0; j < len(nodes); j++ {
-			if i == j {
-				continue
-			}
+	//fmt.Println(nodes)
 
-			a, b := nodes[i], nodes[j]
-			if a.Used == 0 {
-				continue
-			}
-			if a.Used > (b.Size - b.Used) {
-				continue
-			}
+	// numViable := 0
+	// for i := 0; i < len(nodes); i++ {
+	// 	for j := 0; j < len(nodes); j++ {
+	// 		if i == j {
+	// 			continue
+	// 		}
 
-			numViable++
-		}
-	}
+	// 		a, b := nodes[i], nodes[j]
+	// 		if a.Used == 0 {
+	// 			continue
+	// 		}
+	// 		if a.Used > (b.Size - b.Used) {
+	// 			continue
+	// 		}
 
-	fmt.Printf("#viable = %v\n", numViable)
+	// 		numViable++
+	// 	}
+	// }
 
-	g, err := grid.New(int(width), int(height), uint8(width-1), 0, nodes)
+	// fmt.Printf("#viable = %v\n", numViable)
+
+	g, err := grid.New(width, height, uint8(width-1), 0, nodes)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	g.Print()
+	// g2, err := grid.Deserialize(width, height, g.Serialize())
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// fmt.Println(g2.Get(35, 21))
+
+	// return
+
+	found, numSteps := solver.Solve(width, height, g)
+	fmt.Printf("found %v numSteps %v\n", found, numSteps)
 }

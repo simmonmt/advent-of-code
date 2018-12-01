@@ -1,17 +1,18 @@
 package grid
 
 import (
+	"crypto/md5"
 	"fmt"
 	"node"
 )
 
 type Grid struct {
-	w, h         int
+	w, h         uint8
 	nodes        []node.Node
 	goalX, goalY uint8
 }
 
-func New(w, h int, goalX, goalY uint8, nodes []node.Node) (*Grid, error) {
+func New(w, h uint8, goalX, goalY uint8, nodes []node.Node) (*Grid, error) {
 	if int(w)*int(h) != len(nodes) {
 		return nil, fmt.Errorf("w=%v h=%v expected %v nodes, got %v",
 			w, h, w*h, len(nodes))
@@ -24,6 +25,18 @@ func New(w, h int, goalX, goalY uint8, nodes []node.Node) (*Grid, error) {
 		goalX: goalX,
 		goalY: goalY,
 	}, nil
+}
+
+func (g *Grid) Duplicate() *Grid {
+	ng := &Grid{
+		w:     g.w,
+		h:     g.h,
+		nodes: make([]node.Node, len(g.nodes)),
+		goalX: g.goalX,
+		goalY: g.goalY,
+	}
+	copy(ng.nodes, g.nodes)
+	return ng
 }
 
 func deserializeNode(out []byte) (*node.Node, int) {
@@ -57,7 +70,7 @@ func deserializeNode(out []byte) (*node.Node, int) {
 	return node.New(size, used), outIdx
 }
 
-func Deserialize(w, h int, ser []byte) (*Grid, error) {
+func Deserialize(w, h uint8, ser []byte) (*Grid, error) {
 	if len(ser) < 2 {
 		return nil, fmt.Errorf("too little input")
 	}
@@ -66,10 +79,10 @@ func Deserialize(w, h int, ser []byte) (*Grid, error) {
 	goalY := ser[1]
 	serIdx := 2
 
-	nodes := make([]node.Node, w*h)
+	nodes := make([]node.Node, int(w)*int(h))
 	nodeNum := 0
-	for y := 0; y < h; y++ {
-		for x := 0; x < w; x++ {
+	for y := 0; y < int(h); y++ {
+		for x := 0; x < int(w); x++ {
 			n, consumed := deserializeNode(ser[serIdx:])
 			if n == nil {
 				panic("can't deserialize")
@@ -85,14 +98,14 @@ func Deserialize(w, h int, ser []byte) (*Grid, error) {
 }
 
 func (g *Grid) Print() {
-	for row := 0; row < g.h; row++ {
-		for col := 0; col < g.w; col++ {
-			n := g.nodes[row*g.w+col]
+	for y := 0; y < int(g.h); y++ {
+		for x := 0; x < int(g.w); x++ {
+			n := g.nodes[y*int(g.w)+x]
 
 			bracket := [2]rune{' ', ' '}
-			if row == 0 && col == 0 {
+			if y == 0 && x == 0 {
 				bracket = [2]rune{'(', ')'}
-			} else if row == int(g.goalY) && col == int(g.goalX) {
+			} else if y == int(g.goalY) && x == int(g.goalX) {
 				bracket = [2]rune{'[', ']'}
 			}
 
@@ -156,10 +169,61 @@ func (g Grid) String() string {
 
 	for i, n := range g.nodes {
 		if i > 0 {
-			out += ","
+			if i%int(g.w) == 0 {
+				out += "|"
+			} else {
+				out += ","
+			}
 		}
 		out += n.String()
 	}
 
 	return out + "]"
+}
+
+func (g *Grid) SetGoal(x, y uint8) {
+	g.goalX = x
+	g.goalY = y
+}
+
+func (g *Grid) Goal() (uint8, uint8) {
+	return g.goalX, g.goalY
+}
+
+func (g *Grid) Width() uint8 {
+	return g.w
+}
+
+func (g *Grid) Height() uint8 {
+	return g.h
+}
+
+func (g *Grid) Get(x, y uint8) *node.Node {
+	var idx int = int(y)*int(g.w) + int(x)
+	return &g.nodes[idx]
+}
+
+func (g *Grid) Transfer(srcX, srcY, destX, destY uint8) *Grid {
+	ng := g.Duplicate()
+
+	src := ng.Get(srcX, srcY)
+	dest := ng.Get(destX, destY)
+	if dest.Avail() < src.Used {
+		panic(fmt.Sprintf("unable to transfer %+v to %+v", src, dest))
+	}
+
+	dest.Used += src.Used
+	src.Used = 0
+
+	if srcX == ng.goalX && srcY == ng.goalY {
+		ng.goalX = destX
+		ng.goalY = destY
+	}
+
+	return ng
+}
+
+func (g *Grid) Hash() string {
+	h := md5.Sum(g.Serialize())
+	return string(h[:])
 }
