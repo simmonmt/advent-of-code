@@ -63,6 +63,7 @@ func candidates(center Point, points []Point, seen map[Point]bool) []Point {
 				continue
 			}
 
+			// Is this necessary? does the seen array suffice?
 			candDist := manhattanDistance(cand, center)
 			if candDist >= pointDist {
 				found[cand] = true
