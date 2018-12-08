@@ -19,7 +19,7 @@ DAYDIR="$1"
 
 [[ -d ../tpl ]] || die "../tpl doesn't exist"
 
-mkdir -p "${DAYDIR}"/src || die "failed to make ${DAYDIR}/src"
+mkdir -p "${DAYDIR}" || die "failed to make ${DAYDIR}"
 
 for tpl_path in ../tpl/*; do
     f=$(basename "$tpl_path")
@@ -30,6 +30,6 @@ for tpl_path in ../tpl/*; do
 	dest="${DAYDIR}"
     fi
 
-    echo cp "${tpl_path}" "${dest}"
-    cp "${tpl_path}" "${dest}" || die "failed to copy"
+    echo cp -R "${tpl_path}" "${dest}"
+    cp -R "${tpl_path}" "${dest}" || die "failed to copy"
 done
