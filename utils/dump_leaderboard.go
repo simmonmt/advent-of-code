@@ -1,3 +1,9 @@
+// The dump_leaderboard command pretty-prints a single day's worth of a Advent
+// of Code private leaderboard, making it easy to see the completion order for
+// each star.
+//
+// To use, download the JSON version of the private leaderboard. Pass the path
+// to that file using --path. Specify the day of interest using --day.
 package main
 
 import (
@@ -16,8 +22,9 @@ var (
 	dayFlag = flag.Int("day", 0, "day num")
 )
 
+// The structs used to decode the JSON leaderboard
+
 type LeaderboardJSON struct {
-	Event   string
 	Members map[int]MemberJSON
 }
 
@@ -31,12 +38,18 @@ type StarJSON struct {
 	GetStarTs string `json:"get_star_ts"`
 }
 
+// The friendlier native struct used to represent the leaderboard
 type Member struct {
-	Name        string
-	Stars       int
+	Name  string
+	Stars int
+
+	// The first map is keyed by day number, the second by star number. The
+	// timestamp is the completion time.
 	Completions map[int]map[int]time.Time
 }
 
+// Contains the completion time for a single star for a single user. This
+// container exists largely to enable sorting.
 type Result struct {
 	Name string
 	Ts   time.Time
@@ -76,6 +89,7 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Transform the raw JSON-based structs into a friendlier version.
 	members := []Member{}
 	for _, jsonMember := range board.Members {
 		member := Member{
@@ -100,6 +114,7 @@ func main() {
 		members = append(members, member)
 	}
 
+	// Build the completions for the given day.
 	results := map[int][]Result{
 		1: []Result{},
 		2: []Result{},
@@ -115,6 +130,7 @@ func main() {
 		}
 	}
 
+	// Dump the results.
 	for starNum := 1; starNum <= 2; starNum++ {
 		starResults := results[starNum]
 		sort.Sort(ByTimestamp(starResults))
@@ -124,5 +140,4 @@ func main() {
 			fmt.Printf("%-20s %v\n", r.Name, r.Ts)
 		}
 	}
-
 }
