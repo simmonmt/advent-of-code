@@ -1,0 +1,2 @@
+#!/bin/bash
+cat small.txt |while read np lm ; do echo $np $lm  $(./solution --num_players ${np} --last_marble ${lm}) ; done
