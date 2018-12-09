@@ -20,6 +20,9 @@ import (
 var (
 	path    = flag.String("path", "", "leaderboard path")
 	dayFlag = flag.Int("day", 0, "day num")
+	sortFlag = flag.String("sort", "default", "member sort")
+
+	allowedSorts = "names, stars"
 )
 
 // The structs used to decode the JSON leaderboard
@@ -42,11 +45,24 @@ type StarJSON struct {
 type Member struct {
 	Name  string
 	Stars int
+	Ranks [25][2]string
 
 	// The first map is keyed by day number, the second by star number. The
 	// timestamp is the completion time.
 	Completions map[int]map[int]time.Time
 }
+
+type ByName []Member
+
+func (a ByName) Len() int           { return len(a) }
+func (a ByName) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByName) Less(i, j int) bool { return a[i].Name < a[j].Name }
+
+type ByStars []Member
+
+func (a ByStars) Len() int           { return len(a) }
+func (a ByStars) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByStars) Less(i, j int) bool { return a[i].Stars > a[j].Stars }
 
 // Contains the completion time for a single star for a single user. This
 // container exists largely to enable sorting.
@@ -75,9 +91,6 @@ func main() {
 	if *path == "" {
 		log.Fatalf("--path is required")
 	}
-	if *dayFlag == 0 {
-		log.Fatalf("--day is required")
-	}
 
 	contents, err := ioutil.ReadFile(*path)
 	if err != nil {
@@ -95,6 +108,7 @@ func main() {
 		member := Member{
 			Name:  jsonMember.Name,
 			Stars: jsonMember.Stars,
+			Ranks: [25][2]string{},
 		}
 
 		completions := map[int]map[int]time.Time{}
@@ -114,25 +128,43 @@ func main() {
 		members = append(members, member)
 	}
 
-	// Build the completions for the given day.
-	results := map[int][]Result{
-		1: []Result{},
-		2: []Result{},
+	if *sortFlag == "default" {
+		sort.Sort(ByName(members))
+	} else if *sortFlag == "stars" {
+		sort.Sort(ByStars(members))
+	} else if *sortFlag == "names" {
+		sort.Sort(ByName(members))
+	} else {
+		log.Fatal(fmt.Sprintf("invalid sort: %s. Allowed: %s", *sortFlag, allowedSorts))
 	}
+
+	// Build the completions for the given day.
+	var results [25]map[int][]Result
+
+  // Initialize results map for each day.
+	for day := range results {
+		results[day] = map[int][]Result{
+			1: []Result{},
+			2: []Result{},
+		}
+	}
+
 	for _, member := range members {
 		for day, completion := range member.Completions {
-			if day != *dayFlag {
-				continue
-			}
-
-			results[1] = append(results[1], Result{member.Name, completion[1]})
-			results[2] = append(results[2], Result{member.Name, completion[2]})
+			results[day][1] = append(results[day][1], Result{member.Name, completion[1]})
+			results[day][2] = append(results[day][2], Result{member.Name, completion[2]})
 		}
+	}
+
+	if *dayFlag == 0 {
+		fmt.Printf("\nUse --day flag for day ranks with times\n\n")
+		dailyRanks(results, members)
+		return
 	}
 
 	// Dump the results.
 	for starNum := 1; starNum <= 2; starNum++ {
-		starResults := results[starNum]
+		starResults := results[*dayFlag][starNum]
 		sort.Sort(ByTimestamp(starResults))
 
 		fmt.Printf("== star %d\n", starNum)
@@ -140,4 +172,57 @@ func main() {
 			fmt.Printf("%-20s %v\n", r.Name, r.Ts)
 		}
 	}
+}
+
+func dailyRanks(results [25]map[int][]Result, members []Member) {
+	// Sort the results for each day.
+	for day := range results {
+		sort.Sort(ByTimestamp(results[day][1]))
+		sort.Sort(ByTimestamp(results[day][2]))
+	}
+
+	// Assign rank to members for each day.
+	for day := range results {
+		for ndx, member := range members {
+			members[ndx].Ranks[day][0] = getRank(results[day][1], member.Name)
+			members[ndx].Ranks[day][1] = getRank(results[day][2], member.Name)
+		}
+	}
+
+	var dayNums = ""
+	for day := range [25]int{} {
+		dayNums += strconv.Itoa((day + 1) % 10) + "_ "
+	}
+	fmt.Printf("%-20s %s\n", "== Day: ", dayNums)
+
+	for _, member := range members {
+		ranks := ""
+		for day := range [25]int{} {
+			ranks += member.Ranks[day][0] + member.Ranks[day][1] + " "
+		}
+		fmt.Printf("%-20s %s\n",
+			map[bool]string{true: member.Name, false: "Anonymous"} [ len(member.Name) > 0 ],
+			ranks)
+	}
+
+	if *sortFlag == "default" {
+		fmt.Printf("== Add --sort flag for day ranks with times (flags: %s)\n", allowedSorts)
+	} else {
+		fmt.Printf("== Other sort flags: %s\n", allowedSorts) // Could filter out current flag.
+	}
+}
+
+func getRank(sortedDayResults []Result, name string) string {
+	rank := "."
+	for ndx, result := range sortedDayResults {
+		if result.Name == name {
+			// Avoid weird map ternary, since not inline.
+			if ndx > (10 - 1 - 1) {
+				rank = ">"
+			} else {
+				rank = strconv.Itoa(ndx + 1)
+			}
+		}
+	}
+	return rank
 }
