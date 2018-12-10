@@ -27,24 +27,56 @@ type Vel struct {
 }
 
 type Sky struct {
-	Points     map[Point]bool
+	Rep        int
+	Points     []Point
 	MinX, MinY int
 	MaxX, MaxY int
 	W, H       int
 }
 
+func NewSky(rep int, points []Point) *Sky {
+	s := &Sky{
+		Rep:    rep,
+		Points: points,
+		MinX:   -1,
+		MaxX:   -1,
+		MinY:   -1,
+		MaxY:   -1,
+	}
+
+	for _, p := range points {
+		if s.MinX == -1 || p.PosX < s.MinX {
+			s.MinX = p.PosX
+		}
+		if s.MaxX == -1 || p.PosX > s.MaxX {
+			s.MaxX = p.PosX
+		}
+		if s.MinY == -1 || p.PosY < s.MinY {
+			s.MinY = p.PosY
+		}
+		if s.MaxY == -1 || p.PosY > s.MaxY {
+			s.MaxY = p.PosY
+		}
+	}
+
+	s.W = s.MaxX - s.MinX
+	s.H = s.MaxY - s.MinY
+	return s
+}
+
 func (s *Sky) Dump() {
-	// for x := s.MinX; x <= s.MaxX; x++ {
-	// 	fmt.Printf("%3d ", x)
-	// }
-	// fmt.Println()
+	fmt.Printf("rep %d w %d h %d minx %v maxx %v miny %v maxy %v\n",
+		s.Rep, s.W, s.H, s.MinX, s.MaxX, s.MinY, s.MaxY)
+
+	coords := map[Point]bool{}
+	for _, p := range s.Points {
+		coords[p] = true
+	}
 
 	for y := s.MinY; y <= s.MaxY; y++ {
-		// fmt.Printf("%3d ", y)
-
 		for x := s.MinX; x <= s.MaxX; x++ {
 			p := Point{x, y}
-			if _, found := s.Points[p]; found {
+			if _, found := coords[p]; found {
 				fmt.Print("#")
 			} else {
 				fmt.Print(".")
@@ -94,34 +126,14 @@ func main() {
 	var lastSky *Sky
 
 	for rep := 0; ; rep++ {
-		sky := Sky{Points: map[Point]bool{}}
-		for _, p := range points {
-			sky.Points[p] = true
-			if p.PosX < sky.MinX {
-				sky.MinX = p.PosX
-			}
-			if p.PosX > sky.MaxX {
-				sky.MaxX = p.PosX
-			}
-			if p.PosY < sky.MinY {
-				sky.MinY = p.PosY
-			}
-			if p.PosY > sky.MaxY {
-				sky.MaxY = p.PosY
-			}
-		}
-		sky.W = sky.MaxX - sky.MinX
-		sky.H = sky.MaxY - sky.MinY
-
-		fmt.Printf("rep %d w %d h %d\n", rep, sky.W, sky.H)
+		sky := NewSky(rep, points)
 
 		if lastSky != nil {
-			if sky.W > lastSky.W {
+			shrunk := sky.W <= lastSky.W || sky.H <= lastSky.H
+			if !shrunk {
 				break
 			}
 		}
-
-		//sky.Dump()
 
 		updated := make([]Point, len(points))
 		for i := range points {
@@ -131,7 +143,7 @@ func main() {
 			updated[i] = np
 		}
 		points = updated
-		lastSky = &sky
+		lastSky = sky
 	}
 	lastSky.Dump()
 }
