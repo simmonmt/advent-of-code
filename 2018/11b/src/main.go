@@ -27,6 +27,7 @@ func sumSquare(grid *Grid, startX, startY, w, h int) int {
 }
 
 func dumpSquare(grid *Grid, startX, startY, w, h int) {
+	fmt.Printf("grid %v,%v %v,%v\n", startX, startY, w, h)
 	for y := startY; y < startY+h; y++ {
 		for x := startX; x < startX+w; x++ {
 			fmt.Printf("%3d ", grid[y][x])
@@ -56,12 +57,78 @@ func main() {
 	maxSz := -1
 	maxSum := -1
 
-	for sz := 1; sz <= 300; sz++ {
-		fmt.Println(sz)
+	// for 3
+	//   want orig
+	//   want 2
+	//
+	//   orig
+	//   1 1 1 1
+	//   1 1 1 1
+	//   1 1 1 1
+	//   1 1 1 1
+	//
+	//   n=2
+	//   4 4 4 X
+	//   4 4 4 X
+	//   4 4 4 X
+	//   X X X X
+	//
+	//   [0,0]=(n=2[0,0])+surrounding strip
+
+	grids := [301]Grid{}
+
+	grids[1] = *grid
+	for y := 1; y < 301; y++ {
+		for x := 1; x < 301; x++ {
+			if maxSz == -1 || grid[y][x] > maxSum {
+				maxPoint = Point{x, y}
+				maxSum = grid[y][x]
+				maxSz = 1
+			}
+		}
+	}
+
+	// fmt.Println("orig")
+	// dumpSquare(grid, 1, 1, 5, 5)
+	// fmt.Println("sz=1")
+	// dumpSquare(&grids[1], 1, 1, 5, 5)
+
+	for sz := 2; sz <= 300; sz++ {
+		// for sz := 2; sz <= 2; sz++ {
+		// fmt.Println(sz)
+		prev := &grids[sz-1]
+
 		for y := 1; y < 301-(sz-1); y++ {
 			for x := 1; x < 301-(sz-1); x++ {
-				sum := sumSquare(grid, x, y, sz, sz)
-				if maxSum == -1 || sum > maxSum {
+				// prev[y][x] gives us all but the surrounding
+				// strip.
+				sum := prev[y][x]
+
+				// stripx = x+sz-1, vary y : y to y+sz-2
+				for offY := 0; offY <= sz-2; offY++ {
+					stripX := x + sz - 1
+					stripY := y + offY
+					// if y == 2 && x == 2 {
+					// 	fmt.Printf("strip %v,%v %v\n", stripX, stripY,
+					// 		grid[stripY][stripX])
+					// }
+					sum += grid[stripY][stripX]
+				}
+
+				// stripy = y+sz-1, vary x : x to x+sz-1
+				for offX := 0; offX <= sz-1; offX++ {
+					stripX := x + offX
+					stripY := y + sz - 1
+					// if y == 2 && x == 2 {
+					// 	fmt.Printf("strip %v,%v %v\n", stripX, stripY,
+					// 		grid[stripY][stripX])
+					// }
+					sum += grid[stripY][stripX]
+				}
+
+				grids[sz][y][x] = sum
+
+				if sum > maxSum {
 					maxPoint = Point{x, y}
 					maxSum = sum
 					maxSz = sz
@@ -69,6 +136,9 @@ func main() {
 				}
 			}
 		}
+
+		// fmt.Printf("sz=%v\n", sz)
+		// dumpSquare(&grids[sz], 1, 1, 5, 5)
 	}
 
 	// dumpSquare(grid, 33, 45, 3, 3)
