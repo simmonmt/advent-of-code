@@ -71,10 +71,10 @@ func main() {
 	// fmt.Println("sz=1")
 	// dumpSquare(&grids[1], 1, 1, 5, 5)
 
-	// Each element x,y in grids[5] contains the 5x5 sums rooted at x,y To
+	// Each element x,y in grids[5] contains the 5x5 sums rooted at x,y. To
 	// compute 0,0 in grids[6], we need 0,0 from grids[5] plus an additional
 	// strip around the right and bottom edges -- i.e. the extra bit that
-	// turns a 5x5 grid centered on 0,0 into a 6x6 grid centered on 0,0.
+	// turns a 5x5 grid rooted at 0,0 into a 6x6 grid rooted at 0,0.
 
 	for sz := 2; sz <= 300; sz++ {
 		// for sz := 2; sz <= 2; sz++ {
