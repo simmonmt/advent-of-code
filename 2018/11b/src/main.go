@@ -49,31 +49,9 @@ func main() {
 		}
 	}
 
-	// fmt.Printf("122,79 %d\n", grid[79][122])
-	// fmt.Printf("217,196 %d\n", grid[196][217])
-	// fmt.Printf("101,153 %d\n", grid[153][101])
-
 	maxPoint := Point{-1, -1}
 	maxSz := -1
 	maxSum := -1
-
-	// for 3
-	//   want orig
-	//   want 2
-	//
-	//   orig
-	//   1 1 1 1
-	//   1 1 1 1
-	//   1 1 1 1
-	//   1 1 1 1
-	//
-	//   n=2
-	//   4 4 4 X
-	//   4 4 4 X
-	//   4 4 4 X
-	//   X X X X
-	//
-	//   [0,0]=(n=2[0,0])+surrounding strip
 
 	grids := [301]Grid{}
 
