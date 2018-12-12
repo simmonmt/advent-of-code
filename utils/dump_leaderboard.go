@@ -164,17 +164,9 @@ func main() {
 		sort.Sort(ByTimestamp(results[day][2]))
 	}
 
-	// Gather ranks in a separate array with member order matching members.
-	ranks := make([]string, len(members))
-	for day := range results {
-		for i, member := range members {
-			ranks[i] += getRank(results[day][1], member.Name) + getRank(results[day][2], member.Name) + " "
-		}
-	}
-
 	if *dayFlag == 0 {
 		fmt.Printf("\nUse --day flag for day ranks with times\n\n")
-		dumpDailyRanks(members, ranks)
+		dumpDailyRanks(members, results[:])
 		return
 	}
 
@@ -192,13 +184,21 @@ func main() {
 	}
 }
 
-func dumpDailyRanks(members []Member, ranks []string) {
+func dumpDailyRanks(members []Member, results []map[int][]Result) {
 	// Print header with day numbers.
 	var dayNums = ""
 	for day := range [26]int{} {
 		dayNums += strconv.Itoa((day+1)%10) + "_ "
 	}
 	fmt.Printf("%-20s %s\n", "== Day: ", dayNums)
+
+	// Gather ranks in a separate array with member order matching members.
+	ranks := make([]string, len(members))
+	for day := range results {
+		for i, member := range members {
+			ranks[i] += getRank(results[day][1], member.Name) + getRank(results[day][2], member.Name) + " "
+		}
+	}
 
 	// Print rows with each player's daily ranks.
 	for i := range members {
