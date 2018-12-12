@@ -1,4 +1,21 @@
-// tried 2650000000466 (11066 at 200)
+// This solution is a bit of a mess. When they ask for 50B iterations they don't
+// actually mean do it 50B times. They mean find a pattern and extrapolate. That
+// took longer than I'd like to admit to sink in.
+//
+// There were two ways to make my 12a solution faster:
+//   1. Get rid of some of the loops. I was storing the patterns as arrays of
+//      bools, looping through them each time. If I stored them as uints, I
+//      could make some sort of map, allowing for constant time lookup of an
+//      applicable rule.
+//   2. Make the padding dynamic.
+//
+// I needed to do the second, but wildly overestimated the time savings I'd get
+// from the first, and underestimated the complication. Converting the pattern
+// from an array of bools to a bitmask cured me of that misconception, so I
+// moved onto the second (making the padding dynamic). Dynamic padding was
+// sufficient to see the pattern, but I didn't take the time to rip out the
+// partial bitmaskification. So that's why pattern is stored as a bitmask, then
+// converted back to an array and used as an array.
 
 package main
 
