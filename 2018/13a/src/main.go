@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -185,7 +186,7 @@ func readInput() (*Track, map[Loc]Car, error) {
 	return &track, cars, nil
 }
 
-type ByLocation []*Car
+type ByLocation []Car
 
 func (a ByLocation) Len() int      { return len(a) }
 func (a ByLocation) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
@@ -320,8 +321,16 @@ func advanceCars(track *Track, cars map[Loc]Car) (map[Loc]Car, bool) {
 		newCars[l] = c
 	}
 
+	// We're supposed to iterate through cars in a certain order based on
+	// their pre-advance position. Put them in that order.
+	sortedCars := []Car{}
+	for _, c := range cars {
+		sortedCars = append(sortedCars, c)
+	}
+	sort.Sort(ByLocation(sortedCars))
+
 	newCrash := false
-	for _, car := range cars {
+	for _, car := range sortedCars {
 		if car.CrashedWith != nil {
 			continue
 		}
