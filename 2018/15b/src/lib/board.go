@@ -13,13 +13,14 @@ import (
 )
 
 type Board struct {
-	w     int
-	cells [][]rune
-	chars map[Pos]*Char
-	graph *Graph
+	w             int
+	cells         [][]rune
+	chars         map[Pos]*Char
+	graph         *Graph
+	validateBoard bool
 }
 
-func NewBoard(rows []string, elfAttackPower int) *Board {
+func NewBoard(rows []string, elfAttackPower int, validateBoard bool) *Board {
 	w := len(rows[0])
 	h := len(rows)
 
@@ -59,10 +60,11 @@ func NewBoard(rows []string, elfAttackPower int) *Board {
 	}
 
 	return &Board{
-		w:     w,
-		cells: cells,
-		chars: chars,
-		graph: graph,
+		w:             w,
+		cells:         cells,
+		chars:         chars,
+		graph:         graph,
+		validateBoard: validateBoard,
 	}
 }
 
@@ -229,6 +231,11 @@ func makePosEdge(a, b Pos) posEdge {
 }
 
 func (b *Board) Validate() bool {
+	if !b.validateBoard {
+		logger.LogF("skipping validate due to flag")
+		return true
+	}
+
 	graphEdges := b.graph.AllEdges()
 
 	knownEdges := map[posEdge]bool{}
@@ -266,9 +273,9 @@ func (b *Board) Validate() bool {
 		}
 	}
 
-	if valid {
-		logger.LogF("valid board")
-	}
+	// if valid {
+	// 	logger.LogF("valid board")
+	// }
 	return valid
 }
 
@@ -338,6 +345,14 @@ func (b *Board) MoveChar(src Char, destPos Pos) Char {
 	return dest
 }
 
+func (b *Board) GetChar(pos Pos) Char {
+	char, found := b.chars[pos]
+	if !found {
+		panic("invalid get pos")
+	}
+	return *char
+}
+
 func (b *Board) RemoveChar(char Char) {
 	logger.LogF("removing %v", char)
 	if r := b.getCell(char.P); r != 'G' && r != 'E' {
@@ -369,6 +384,7 @@ func (b *Board) AddChar(char Char) {
 	}
 }
 
+// returns the updated state of the victim
 func (b *Board) Attack(er, ee Char) (Char, bool) {
 	if _, found := b.chars[ee.P]; !found {
 		panic("ee isn't in chars")
@@ -379,5 +395,5 @@ func (b *Board) Attack(er, ee Char) (Char, bool) {
 
 	b.chars[ee.P].HP -= b.chars[er.P].AP
 	ee = *b.chars[ee.P]
-	return ee, ee.HP < 0
+	return ee, ee.HP <= 0
 }

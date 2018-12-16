@@ -10,6 +10,16 @@ type Char struct {
 	AP    int
 }
 
+func NewChar(num int, isElf bool, pos Pos, ap int) *Char {
+	return &Char{
+		Num:   num,
+		IsElf: isElf,
+		P:     pos,
+		HP:    200,
+		AP:    ap,
+	}
+}
+
 func (c Char) String() string {
 	t := "Elf"
 	if !c.IsElf {
@@ -24,16 +34,6 @@ func (c Char) Short() rune {
 		return 'E'
 	}
 	return 'G'
-}
-
-func NewChar(num int, isElf bool, pos Pos, ap int) *Char {
-	return &Char{
-		Num:   num,
-		IsElf: isElf,
-		P:     pos,
-		HP:    200,
-		AP:    ap,
-	}
 }
 
 type CharByReadingOrder []Char

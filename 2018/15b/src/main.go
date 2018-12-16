@@ -1,3 +1,5 @@
+// tried 20: Outcome: 31 * 1364 = 42284
+
 package main
 
 import (
@@ -17,6 +19,7 @@ var (
 	verbose        = flag.Bool("verbose", false, "verbose")
 	numTurns       = flag.Int("num_turns", 1, "num turns")
 	elfAttackPower = flag.Int("elf_attack_power", 3, "elf attack power")
+	validateBoard  = flag.Bool("validate", true, "validate")
 )
 
 type Result int
@@ -47,7 +50,7 @@ func readInput() (*lib.Board, error) {
 		return nil, fmt.Errorf("read failed: %v", err)
 	}
 
-	return lib.NewBoard(lines, *elfAttackPower), nil
+	return lib.NewBoard(lines, *elfAttackPower, *validateBoard), nil
 }
 
 func getOthers(board *lib.Board, self int) []lib.Char {
@@ -142,7 +145,7 @@ func neighborShortestPaths(board *lib.Board, from, to lib.Pos, wantLen int) []li
 			}
 		}
 
-		logger.LogF("%v to %v path %v (want len %v)\n", neighbor, to, path, wantLen)
+		logger.LogF("%v to %v path %v (want len %v)", neighbor, to, path, wantLen)
 
 		if len(path)+1 == wantLen {
 			options = append(options, neighbor)
@@ -173,7 +176,7 @@ func findNextMove(board *lib.Board, self lib.Char, enemies []lib.Char) (lib.Pos,
 
 		fmt.Println("Reachable:")
 		board.DumpWithDecorations(posns, '@')
-		fmt.Println(reachable)
+		//fmt.Println(reachable)
 	}
 
 	if len(reachable) == 0 {
@@ -235,13 +238,13 @@ func charAttack(board *lib.Board, self lib.Char, neighbors []lib.Char) (Result, 
 
 	victim, isDead := board.Attack(self, victim)
 	if isDead {
-		logger.LogF("victim now dead: %v")
+		logger.LogF("victim now dead: %v", victim)
 		board.RemoveChar(victim)
 		num := victim.Num
 		return RESULT_CONTINUE, &num
 	}
 
-	logger.LogF("victim current status %v")
+	logger.LogF("victim current status %v", victim)
 	return RESULT_CONTINUE, nil
 }
 
@@ -291,8 +294,15 @@ func playTurn(board *lib.Board) Result {
 			continue
 		}
 
+		// The character may have been attacked since the
+		// beginning of the round, so fetch its state
+		// again. Characters only move under their own power
+		// so it's safe to request by location.
+		char = board.GetChar(char.P)
+
 		result, victimNum := charTurn(board, char)
 		if victimNum != nil {
+			logger.LogF("recording deadChars %v\n", *victimNum)
 			deadChars[*victimNum] = true
 		}
 
