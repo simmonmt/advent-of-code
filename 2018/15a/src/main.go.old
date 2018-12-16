@@ -1,0 +1,661 @@
+package main
+
+import (
+	"bufio"
+	"flag"
+	"fmt"
+	"log"
+	"math"
+	"os"
+	"sort"
+
+	"intmath"
+	"logger"
+
+	"github.com/soniakeys/graph"
+)
+
+var (
+	verbose  = flag.Bool("verbose", false, "verbose")
+	numTurns = flag.Int("num_turns", 1, "num turns")
+)
+
+type Pos struct {
+	X, Y int
+}
+
+type Char struct {
+	Num   int
+	IsElf bool
+	P     Pos
+	HP    int
+	AP    int
+}
+
+func (c Char) String() string {
+	t := "Elf"
+	if !c.IsElf {
+		t = "Gob"
+	}
+
+	return fmt.Sprintf("#%d: %s HP:%3d AP:%d %+v", c.Num, t, c.HP, c.AP, c.P)
+}
+
+func NewChar(num int, isElf bool, pos Pos) Char {
+	return Char{
+		Num:   num,
+		IsElf: isElf,
+		P:     pos,
+		HP:    200,
+		AP:    3,
+	}
+}
+
+type CharByReadingOrder []Char
+
+func (a CharByReadingOrder) Len() int      { return len(a) }
+func (a CharByReadingOrder) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a CharByReadingOrder) Less(i, j int) bool {
+	if a[i].P.Y != a[j].P.Y {
+		return a[i].P.Y < a[j].P.Y
+	}
+	return a[i].P.X < a[j].P.X
+}
+
+type CharPtrByReadingOrder []*Char
+
+func (a CharPtrByReadingOrder) Len() int      { return len(a) }
+func (a CharPtrByReadingOrder) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a CharPtrByReadingOrder) Less(i, j int) bool {
+	if a[i].P.Y != a[j].P.Y {
+		return a[i].P.Y < a[j].P.Y
+	}
+	return a[i].P.X < a[j].P.X
+}
+
+type PosByReadingOrder []Pos
+
+func (a PosByReadingOrder) Len() int      { return len(a) }
+func (a PosByReadingOrder) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a PosByReadingOrder) Less(i, j int) bool {
+	if a[i].Y != a[j].Y {
+		return a[i].Y < a[j].Y
+	}
+	return a[i].X < a[j].X
+}
+
+type Board [][]rune
+
+func (b *Board) Dump(chars []Char) {
+	b.DumpWithDecoration(chars, nil, ' ')
+}
+
+func (b *Board) DumpWithDecoration(chars []Char, decorations []Pos, decorationChar rune) {
+	charsByPos := map[Pos]Char{}
+	for _, char := range chars {
+		charsByPos[char.P] = char
+	}
+
+	decsByPos := map[Pos]bool{}
+	for _, decPos := range decorations {
+		decsByPos[decPos] = true
+	}
+
+	for y, row := range *b {
+		for x, r := range row {
+			pos := Pos{x, y}
+
+			if len(decsByPos) > 0 {
+				if _, found := decsByPos[pos]; found {
+					fmt.Print(string(decorationChar))
+					continue
+				}
+			}
+
+			char, found := charsByPos[Pos{x, y}]
+			if !found {
+				fmt.Print(string(r))
+				continue
+			}
+
+			if char.IsElf {
+				fmt.Print("E")
+			} else {
+				fmt.Print("G")
+			}
+		}
+		fmt.Println()
+	}
+}
+
+func readInput() (Board, []Char, error) {
+	board := Board{}
+	chars := []Char{}
+
+	charNum := 0
+
+	scanner := bufio.NewScanner(os.Stdin)
+	for y := 0; scanner.Scan(); y++ {
+		line := scanner.Text()
+
+		rs := []rune(line)
+		for x, r := range rs {
+			isElf := false
+			switch r {
+			case 'E':
+				isElf = true
+				fallthrough
+			case 'G':
+				pos := Pos{x, y}
+				chars = append(chars, NewChar(charNum, isElf, pos))
+				charNum++
+				rs[x] = '.'
+			}
+		}
+
+		board = append(board, rs)
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, nil, fmt.Errorf("read failed: %v", err)
+	}
+
+	return board, chars, nil
+}
+
+func posToIdx(board Board, pos Pos) graph.NI {
+	width := len(board[0])
+	return graph.NI(width*pos.Y + pos.X)
+}
+
+func idxToPos(board Board, idx graph.NI) Pos {
+	width := len(board[0])
+	x := int(idx) % width
+	y := int(idx) / width
+	return Pos{x, y}
+}
+
+func pathToPosns(board Board, path graph.LabeledPath) []Pos {
+	nodes := []Pos{}
+	for _, n := range path.Path {
+		nodes = append(nodes, idxToPos(board, n.To))
+	}
+	return nodes
+}
+
+func pathToStr(board Board, path graph.LabeledPath) string {
+	return fmt.Sprintf("%+v", pathToPosns(board, path))
+}
+
+func boardToAdjacencyList(board Board) graph.LabeledAdjacencyList {
+	width := len(board[0])
+	height := len(board)
+	al := make([][]graph.Half, width*height)
+
+	for y, row := range board {
+		for x, c := range row {
+			idx := width*y + x
+			pos := Pos{x, y}
+
+			if c != '.' {
+				continue
+			}
+
+			al[idx] = []graph.Half{}
+			for _, open := range openPosns(board, pos) {
+				h := graph.Half{
+					To:    posToIdx(board, open),
+					Label: graph.LI(1),
+				}
+				al[idx] = append(al[idx], h)
+			}
+		}
+	}
+
+	return graph.LabeledAdjacencyList(al)
+}
+
+// Adding a character to an adjacency list means making that location unroutable.
+// We need to remove all outgoing links as well as all incoming ones.
+func addCharToAdjacencyList(board Board, char *Char, al graph.LabeledAdjacencyList) {
+	charIdx := posToIdx(board, char.P)
+
+	// outgoing
+	al[charIdx] = []graph.Half{}
+
+	// incoming
+	for _, open := range openPosns(board, char.P) {
+		idx := posToIdx(board, open)
+		filtered := []graph.Half{}
+		for _, h := range al[idx] {
+			if h.To != charIdx {
+				filtered = append(filtered, h)
+			}
+		}
+		al[idx] = filtered
+	}
+}
+
+// Removing a character from an adjacency list means making that location routable again.
+func removeCharFromAdjacencyList(board Board, char *Char, others map[Pos]*Char, al graph.LabeledAdjacencyList) {
+	charIdx := posToIdx(board, char.P)
+	outgoing := []graph.Half{}
+
+	for _, open := range openPosns(board, char.P) {
+		if _, found := others[open]; found {
+			continue
+		}
+		openIdx := posToIdx(board, open)
+		al[openIdx] = append(al[openIdx], graph.Half{charIdx, graph.LI(1)})
+		outgoing = append(outgoing, graph.Half{openIdx, graph.LI(1)})
+	}
+
+	al[charIdx] = outgoing
+}
+
+func astarHeuristic(board Board, to Pos, fromIdx graph.NI) float64 {
+	from := idxToPos(board, fromIdx)
+	return float64(intmath.Abs(from.X-to.X) + intmath.Abs(from.Y-to.Y))
+}
+
+func findShortestPaths(board Board, char *Char, others map[Pos]*Char, inRange []Pos, al graph.LabeledAdjacencyList) (map[Pos][]Pos, int) {
+	paths := map[Pos][]Pos{}
+
+	// We have to remove char or we can't find paths from it. We
+	// need to add it back before returning.
+	removeCharFromAdjacencyList(board, char, others, al)
+	defer addCharToAdjacencyList(board, char, al)
+
+	shortestLen := math.MaxInt32
+	for _, cand := range inRange {
+		heuristic := func(fromIdx graph.NI) float64 {
+			return astarHeuristic(board, cand, fromIdx)
+		}
+
+		idxPath, _ := al.AStarAPath(
+			posToIdx(board, char.P),
+			posToIdx(board, cand), heuristic, func(l graph.LI) float64 { return 1 })
+
+		path := pathToPosns(board, idxPath)
+		if len(path) == 0 || len(path) > shortestLen {
+			continue
+		}
+
+		if len(path) < shortestLen {
+			paths = map[Pos][]Pos{}
+			shortestLen = len(path)
+		}
+		paths[cand] = path
+	}
+
+	return paths, shortestLen
+}
+
+var validDirs = []Pos{Pos{0, -1}, Pos{-1, 0}, Pos{1, 0}, Pos{0, 1}}
+
+func validPosns(pos Pos) []Pos {
+	cands := make([]Pos, 4)
+	for i, validDir := range validDirs {
+		cands[i] = Pos{pos.X + validDir.X, pos.Y + validDir.Y}
+	}
+	return cands
+}
+
+func openPosns(board Board, pos Pos) []Pos {
+	open := []Pos{}
+	for _, cand := range validPosns(pos) {
+		if board[cand.Y][cand.X] == '.' {
+			open = append(open, cand)
+		}
+	}
+	return open
+}
+
+func neighborsToAttack(board Board, char *Char, others map[Pos]*Char) []*Char {
+	neighbors := []*Char{}
+
+	for _, candPos := range validPosns(char.P) {
+		if other, found := others[candPos]; found {
+			if char.IsElf != other.IsElf {
+				neighbors = append(neighbors, other)
+			}
+		}
+	}
+
+	return neighbors
+}
+
+func findInRange(board Board, char *Char, others map[Pos]*Char) []Pos {
+	inRangeMap := map[Pos]bool{}
+
+	for _, other := range others {
+		if char.IsElf != other.IsElf {
+			for _, candPos := range openPosns(board, other.P) {
+				if _, found := others[candPos]; !found {
+					inRangeMap[candPos] = true
+				}
+			}
+		}
+	}
+
+	inRange := make([]Pos, len(inRangeMap))
+	i := 0
+	for p := range inRangeMap {
+		inRange[i] = p
+		i++
+	}
+	return inRange
+}
+
+func findAllPaths(board Board, start, end Pos, maxLen int, others map[Pos]*Char) [][]Pos {
+	//fmt.Printf("findallpaths %v -> %v maxlen %v\n", start, end, maxLen)
+
+	visited := map[Pos]bool{}
+	path := make([]Pos, maxLen+1)
+	pathIdx := 0
+
+	out := [][]Pos{}
+
+	visitor := func(path []Pos) {
+		//fmt.Printf("visitor called with %v\n", path)
+		cp := make([]Pos, len(path)-1)
+		copy(cp, path[1:])
+		out = append(out, cp)
+	}
+
+	findAllPathsHelper(board, start, start, end, others, visited, path, pathIdx, maxLen+1, visitor)
+
+	//	fmt.Println("findallpaths done")
+
+	return out
+}
+
+func findAllPathsHelper(board Board, initial, cur, end Pos, others map[Pos]*Char, visited map[Pos]bool, path []Pos, pathIdx, maxLen int, visitor func(path []Pos)) {
+	//fmt.Printf("findallpathshelper %v -> %v maxlen %v path %v pathIdx %v\n",
+	//cur, end, maxLen, path, pathIdx)
+
+	visited[cur] = true
+	defer delete(visited, cur)
+
+	path[pathIdx] = cur
+	pathIdx++
+
+	if cur.X == end.X && cur.Y == end.Y {
+		visitor(path)
+	} else if pathIdx < maxLen {
+		for _, open := range openPosns(board, cur) {
+			if cur != initial {
+				if _, found := others[open]; found {
+					continue // there's a critter there
+				}
+			}
+
+			if _, found := visited[open]; !found {
+				findAllPathsHelper(board, initial, open, end, others, visited, path, pathIdx,
+					maxLen, visitor)
+			}
+		}
+	} else {
+		//fmt.Println("giving up too long")
+	}
+}
+
+func findNextMove(board Board, char *Char, chars []Char, others map[Pos]*Char, al graph.LabeledAdjacencyList) (Pos, bool) {
+	inRange := findInRange(board, char, others)
+
+	if *verbose {
+		fmt.Println("In range:")
+		fmt.Println(inRange)
+		board.DumpWithDecoration(chars, inRange, '?')
+	}
+
+	paths, shortestLen := findShortestPaths(board, char, others, inRange, al)
+	if *verbose {
+		fmt.Println("Shortest paths:")
+		for dest, path := range paths {
+			fmt.Printf("%v: %v\n", dest, path)
+		}
+	}
+
+	if len(paths) > 0 {
+		closestInRange := []Pos{}
+		for dest := range paths {
+			closestInRange = append(closestInRange, dest)
+		}
+
+		if *verbose {
+			fmt.Println("Nearest:")
+			board.DumpWithDecoration(chars, closestInRange, '!')
+		}
+
+		sort.Sort(PosByReadingOrder(closestInRange))
+		chosen := closestInRange[0]
+
+		if *verbose {
+			fmt.Println("Chosen:")
+			board.DumpWithDecoration(chars, []Pos{chosen}, '+')
+		}
+
+		allPaths := findAllPaths(board, char.P, chosen, shortestLen, others)
+
+		if *verbose {
+			fmt.Println("All shortest paths:")
+			for _, path := range allPaths {
+				fmt.Println(path)
+			}
+		}
+
+		firstStepsMap := map[Pos]bool{}
+		for _, path := range allPaths {
+			firstStepsMap[path[0]] = true
+		}
+
+		firstSteps := []Pos{}
+		for step := range firstStepsMap {
+			firstSteps = append(firstSteps, step)
+		}
+		sort.Sort(PosByReadingOrder(firstSteps))
+
+		nextStep := firstSteps[0]
+		logger.LogF("chosen step: %v", nextStep)
+
+		return nextStep, true
+	}
+
+	return Pos{}, false
+}
+
+func chooseVictim(cands []*Char) *Char {
+	lowestHP := math.MaxInt32
+	lowHPCands := []*Char{}
+	for _, c := range cands {
+		if c.HP == lowestHP {
+			lowHPCands = append(lowHPCands, c)
+		} else if c.HP < lowestHP {
+			lowHPCands = []*Char{c}
+			lowestHP = c.HP
+		}
+	}
+
+	sort.Sort(CharPtrByReadingOrder(lowHPCands))
+
+	return lowHPCands[0]
+}
+
+func turnForChar(board Board, char *Char, chars []Char, others map[Pos]*Char, al graph.LabeledAdjacencyList) *Char {
+	toAttackCands := neighborsToAttack(board, char, others)
+	if len(toAttackCands) == 0 {
+		// No neighbor to attack, so let's try to move
+		logger.LogF("trying to move")
+		newPos, shouldMove := findNextMove(board, char, chars, others, al)
+
+		if !shouldMove {
+			return nil // nothing we can do
+		}
+
+		// Move the character, both in the chars
+		// list and in the adjacency list
+		removeCharFromAdjacencyList(board, char, others, al)
+		char.P = newPos
+		addCharToAdjacencyList(board, char, al)
+
+		toAttackCands = neighborsToAttack(board, char, others)
+		if len(toAttackCands) == 0 {
+			logger.LogF("nobody to attack; turn done")
+			return nil
+		}
+	}
+
+	if *verbose {
+		cands := []Char{}
+		for _, c := range toAttackCands {
+			cands = append(cands, *c)
+		}
+		fmt.Printf("candidates: %+v\n", cands)
+	}
+
+	victim := chooseVictim(toAttackCands)
+
+	victim.HP -= char.AP
+	if victim.HP < 0 {
+		fmt.Printf("dead char %+v\n", *victim)
+		return victim
+	}
+
+	return nil
+}
+
+// 2,1 -> 1,1
+
+func verifyAdjacency(board Board, from, to Pos, al graph.LabeledAdjacencyList) {
+	fromIdx := posToIdx(board, from)
+	toIdx := posToIdx(board, to)
+
+	found := false
+	for _, h := range al[fromIdx] {
+		if h.To == toIdx {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		fmt.Printf("verifyAdjacency failed %v to %v\n", from, to)
+	}
+}
+
+func main() {
+	flag.Parse()
+	logger.Init(*verbose)
+
+	board, chars, err := readInput()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	al := boardToAdjacencyList(board)
+
+	// Add all characters to the adjacency list
+	for _, char := range chars {
+		addCharToAdjacencyList(board, &char, al)
+	}
+
+	for turn := 1; turn <= *numTurns; turn++ {
+		fmt.Printf("turn %d: start\n", turn)
+		if *verbose {
+			board.Dump(chars)
+		}
+
+		sort.Sort(CharByReadingOrder(chars))
+		logger.LogF("character order: %+v\n", chars)
+
+		deads := map[int]bool{}
+		for i := range chars {
+			char := &chars[i]
+
+			if _, found := deads[char.Num]; found {
+				logger.LogF("-- skipping dead char %v", char.Num)
+				continue
+			}
+
+			logger.LogF("-- character %d: %+v\n", char.Num, char)
+
+			//verifyAdjacency(board, Pos{1, 1}, Pos{1, 2}, al)
+
+			numEnemies := 0
+			others := map[Pos]*Char{}
+			for i := range chars {
+				if _, found := deads[chars[i].Num]; found {
+					// don't include dead chars in others
+					continue
+				}
+
+				if chars[i].Num != char.Num {
+					other := &chars[i]
+					others[other.P] = other
+
+					if other.IsElf != char.IsElf {
+						numEnemies++
+					}
+				}
+			}
+
+			liveChars := []Char{}
+			for _, c := range chars {
+				if _, found := deads[c.Num]; !found {
+					liveChars = append(liveChars, c)
+				}
+			}
+
+			if numEnemies == 0 {
+				hpSum := 0
+				for _, char := range chars {
+					if _, found := deads[char.Num]; !found {
+						hpSum += char.HP
+					}
+				}
+
+				outcome := (turn - 1) * hpSum
+
+				log.Fatalf("last=%d sum=%d outcome=%d\n",
+					turn-1, hpSum, outcome)
+			}
+
+			//victim := turnForChar(board, char, chars, others, al)
+			victim := turnForChar(board, char, liveChars, others, al)
+			if victim != nil {
+				deads[victim.Num] = true
+				removeCharFromAdjacencyList(board, victim, others, al)
+			}
+
+			if *verbose {
+				fmt.Println("end of char state")
+				board.Dump(liveChars)
+			}
+		}
+
+		live := []Char{}
+		for _, char := range chars {
+			if _, found := deads[char.Num]; !found {
+				live = append(live, char)
+			}
+		}
+		chars = live
+
+		if *verbose {
+			fmt.Printf("turn %d: end\n", turn)
+			board.Dump(chars)
+
+			numPos := map[Pos]int{}
+			for _, c := range chars {
+				numPos[c.P]++
+				if numPos[c.P] > 1 {
+					fmt.Printf("duplicate location %v found\n", c.P)
+				}
+				fmt.Printf("%+v\n", c)
+			}
+		}
+	}
+
+	fmt.Println("End")
+	board.Dump(chars)
+}

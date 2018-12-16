@@ -9,10 +9,8 @@ import (
 	"os"
 	"sort"
 
-	"intmath"
+	"lib"
 	"logger"
-
-	"github.com/soniakeys/graph"
 )
 
 var (
@@ -20,477 +18,334 @@ var (
 	numTurns = flag.Int("num_turns", 1, "num turns")
 )
 
-type Pos struct {
-	X, Y int
-}
+type Result int
 
-type Char struct {
-	IsElf bool
-	P     Pos
-}
+const (
+	RESULT_CONTINUE Result = iota
+	RESULT_NOTHINGTODO
+)
 
-type CharByReadingOrder []Char
-
-func (a CharByReadingOrder) Len() int      { return len(a) }
-func (a CharByReadingOrder) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a CharByReadingOrder) Less(i, j int) bool {
-	if a[i].P.Y != a[j].P.Y {
-		return a[i].P.Y < a[j].P.Y
-	}
-	return a[i].P.X < a[j].P.X
-}
-
-type PosByReadingOrder []Pos
-
-func (a PosByReadingOrder) Len() int      { return len(a) }
-func (a PosByReadingOrder) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a PosByReadingOrder) Less(i, j int) bool {
-	if a[i].Y != a[j].Y {
-		return a[i].Y < a[j].Y
-	}
-	return a[i].X < a[j].X
-}
-
-type Board [][]rune
-
-func (b *Board) Dump(chars []Char) {
-	b.DumpWithDecoration(chars, nil, ' ')
-}
-
-func (b *Board) DumpWithDecoration(chars []Char, decorations []Pos, decorationChar rune) {
-	charsByPos := map[Pos]Char{}
-	for _, char := range chars {
-		charsByPos[char.P] = char
-	}
-
-	decsByPos := map[Pos]bool{}
-	for _, decPos := range decorations {
-		decsByPos[decPos] = true
-	}
-
-	for y, row := range *b {
-		for x, r := range row {
-			pos := Pos{x, y}
-
-			if len(decsByPos) > 0 {
-				if _, found := decsByPos[pos]; found {
-					fmt.Print(string(decorationChar))
-					continue
-				}
-			}
-
-			char, found := charsByPos[Pos{x, y}]
-			if !found {
-				fmt.Print(string(r))
-				continue
-			}
-
-			if char.IsElf {
-				fmt.Print("E")
-			} else {
-				fmt.Print("G")
-			}
-		}
-		fmt.Println()
+func (r Result) String() string {
+	switch r {
+	case RESULT_CONTINUE:
+		return "continue"
+	case RESULT_NOTHINGTODO:
+		return "nothing_to_do"
+	default:
+		panic("unknown result")
 	}
 }
 
-func readInput() (Board, []Char, error) {
-	board := Board{}
-	chars := []Char{}
-
+func readInput() (*lib.Board, error) {
+	lines := []string{}
 	scanner := bufio.NewScanner(os.Stdin)
 	for y := 0; scanner.Scan(); y++ {
-		line := scanner.Text()
-
-		rs := []rune(line)
-		for x, r := range rs {
-			isElf := false
-			switch r {
-			case 'E':
-				isElf = true
-				fallthrough
-			case 'G':
-				pos := Pos{x, y}
-				chars = append(chars, Char{isElf, pos})
-				rs[x] = '.'
-			}
-		}
-
-		board = append(board, rs)
+		lines = append(lines, scanner.Text())
 	}
 	if err := scanner.Err(); err != nil {
-		return nil, nil, fmt.Errorf("read failed: %v", err)
+		return nil, fmt.Errorf("read failed: %v", err)
 	}
 
-	return board, chars, nil
+	return lib.NewBoard(lines), nil
 }
 
-func posToIdx(board Board, pos Pos) graph.NI {
-	width := len(board[0])
-	return graph.NI(width*pos.Y + pos.X)
-}
-
-func idxToPos(board Board, idx graph.NI) Pos {
-	width := len(board[0])
-	x := int(idx) % width
-	y := int(idx) / width
-	return Pos{x, y}
-}
-
-func pathToPosns(board Board, path graph.LabeledPath) []Pos {
-	nodes := []Pos{}
-	for _, n := range path.Path {
-		nodes = append(nodes, idxToPos(board, n.To))
-	}
-	return nodes
-}
-
-func pathToStr(board Board, path graph.LabeledPath) string {
-	return fmt.Sprintf("%+v", pathToPosns(board, path))
-}
-
-func boardToAdjacencyList(board Board) graph.LabeledAdjacencyList {
-	width := len(board[0])
-	height := len(board)
-	al := make([][]graph.Half, width*height)
-
-	for y, row := range board {
-		for x, c := range row {
-			idx := width*y + x
-			pos := Pos{x, y}
-
-			if c != '.' {
-				continue
-			}
-
-			al[idx] = []graph.Half{}
-			for _, open := range openPosns(board, pos) {
-				h := graph.Half{
-					To:    posToIdx(board, open),
-					Label: graph.LI(1),
-				}
-				al[idx] = append(al[idx], h)
-			}
+func getOthers(board *lib.Board, self int) []lib.Char {
+	others := []lib.Char{}
+	for _, char := range board.Chars() {
+		if char.Num != self {
+			others = append(others, char)
 		}
 	}
-
-	return graph.LabeledAdjacencyList(al)
+	return others
 }
 
-// Adding a character to an adjacency list means making that location unroutable.
-// We need to remove all outgoing links as well as all incoming ones.
-func addCharToAdjacencyList(board Board, char *Char, al graph.LabeledAdjacencyList) {
-	charIdx := posToIdx(board, char.P)
-
-	// outgoing
-	al[charIdx] = nil
-
-	// incoming
-	for _, open := range openPosns(board, char.P) {
-		idx := posToIdx(board, open)
-		filtered := []graph.Half{}
-		for _, h := range al[idx] {
-			if h.To != charIdx {
-				filtered = append(filtered, h)
-			}
+func findEnemies(cands []lib.Char, selfIsElf bool) []lib.Char {
+	enemies := []lib.Char{}
+	for _, other := range cands {
+		if other.IsElf != selfIsElf {
+			enemies = append(enemies, other)
 		}
-		al[idx] = filtered
 	}
+	return enemies
 }
 
-// Removing a character from an adjacency list means making that location routable again.
-func removeCharFromAdjacencyList(board Board, char *Char, al graph.LabeledAdjacencyList) {
-	charIdx := posToIdx(board, char.P)
-	outgoing := []graph.Half{}
-
-	for _, open := range openPosns(board, char.P) {
-		openIdx := posToIdx(board, open)
-		al[openIdx] = append(al[openIdx], graph.Half{charIdx, graph.LI(1)})
-		outgoing = append(outgoing, graph.Half{openIdx, graph.LI(1)})
-	}
-
-	al[charIdx] = outgoing
-}
-
-func astarHeuristic(board Board, to Pos, fromIdx graph.NI) float64 {
-	from := idxToPos(board, fromIdx)
-	return float64(intmath.Abs(from.X-to.X) + intmath.Abs(from.Y-to.Y))
-}
-
-func findShortestPaths(board Board, char *Char, inRange []Pos, al graph.LabeledAdjacencyList) (map[Pos][]Pos, int) {
-	paths := map[Pos][]Pos{}
-
-	// We have to remove char or we can't find paths from it. We
-	// need to add it back before returning.
-	removeCharFromAdjacencyList(board, char, al)
-	defer addCharToAdjacencyList(board, char, al)
-
-	shortestLen := math.MaxInt32
-	for _, cand := range inRange {
-		heuristic := func(fromIdx graph.NI) float64 {
-			return astarHeuristic(board, cand, fromIdx)
+func neighborsToAttack(board *lib.Board, self lib.Char) []lib.Char {
+	cands := []lib.Char{}
+	for _, neighbor := range board.SurroundingCharacters(self.P) {
+		if neighbor.IsElf != self.IsElf {
+			cands = append(cands, neighbor)
 		}
-
-		idxPath, _ := al.AStarAPath(
-			posToIdx(board, char.P),
-			posToIdx(board, cand), heuristic, func(l graph.LI) float64 { return 1 })
-
-		path := pathToPosns(board, idxPath)
-		if len(path) == 0 || len(path) > shortestLen {
-			continue
-		}
-
-		if len(path) < shortestLen {
-			paths = map[Pos][]Pos{}
-			shortestLen = len(path)
-		}
-		paths[cand] = path
-	}
-
-	return paths, shortestLen
-}
-
-var validDirs = []Pos{Pos{0, -1}, Pos{-1, 0}, Pos{1, 0}, Pos{0, 1}}
-
-func validPosns(pos Pos) []Pos {
-	cands := make([]Pos, 4)
-	for i, validDir := range validDirs {
-		cands[i] = Pos{pos.X + validDir.X, pos.Y + validDir.Y}
 	}
 	return cands
 }
 
-func openPosns(board Board, pos Pos) []Pos {
-	open := []Pos{}
-	for _, cand := range validPosns(pos) {
-		if board[cand.Y][cand.X] == '.' {
-			open = append(open, cand)
-		}
-	}
-	return open
-}
+func findInRange(board *lib.Board, self lib.Char, enemies []lib.Char) []lib.Pos {
+	inRangeMap := map[lib.Pos]bool{}
 
-func neighborToAttack(board Board, char *Char, others map[Pos]Char) *Char {
-	for _, candPos := range validPosns(char.P) {
-		if other, found := others[candPos]; found {
-			if char.IsElf != other.IsElf {
-				return &other
-			}
+	for _, enemy := range enemies {
+		for _, pos := range board.OpenSurroundingPositions(enemy.P) {
+			inRangeMap[pos] = true
 		}
 	}
 
-	return nil
-}
-
-func findInRange(board Board, others map[Pos]Char) []Pos {
-	inRangeMap := map[Pos]bool{}
-
-	for _, other := range others {
-		for _, candPos := range openPosns(board, other.P) {
-			inRangeMap[candPos] = true
-		}
-	}
-
-	inRange := make([]Pos, len(inRangeMap))
+	inRange := make([]lib.Pos, len(inRangeMap))
 	i := 0
 	for p := range inRangeMap {
 		inRange[i] = p
 		i++
 	}
 	return inRange
+
 }
 
-func findAllPaths(board Board, start, end Pos, maxLen int) [][]Pos {
-	//fmt.Printf("findallpaths %v -> %v maxlen %v\n", start, end, maxLen)
+func findReachable(board *lib.Board, self lib.Char, targets []lib.Pos) map[lib.Pos][]lib.Pos {
+	results := map[lib.Pos][]lib.Pos{}
+	for _, target := range targets {
+		if result := board.ShortestPath(self.P, target); result != nil {
+			results[target] = result
+		}
+	}
+	return results
+}
 
-	visited := map[Pos]bool{}
-	path := make([]Pos, maxLen+1)
-	pathIdx := 0
-
-	out := [][]Pos{}
-
-	visitor := func(path []Pos) {
-		//fmt.Printf("visitor called with %v\n", path)
-		cp := make([]Pos, len(path)-1)
-		copy(cp, path[1:])
-		out = append(out, cp)
+func shortestPaths(paths map[lib.Pos][]lib.Pos) (map[lib.Pos][]lib.Pos, int) {
+	shortestLen := math.MaxInt32
+	for _, path := range paths {
+		if len(path) < shortestLen {
+			shortestLen = len(path)
+		}
 	}
 
-	findAllPathsHelper(board, start, end, visited, path, pathIdx, maxLen+1, visitor)
+	shortest := map[lib.Pos][]lib.Pos{}
+	for target, path := range paths {
+		if len(path) == shortestLen {
+			shortest[target] = path
+		}
+	}
 
-	//	fmt.Println("findallpaths done")
-
-	return out
+	return shortest, shortestLen
 }
 
-func findAllPathsHelper(board Board, cur, end Pos, visited map[Pos]bool, path []Pos, pathIdx, maxLen int, visitor func(path []Pos)) {
-	//fmt.Printf("findallpathshelper %v -> %v maxlen %v path %v pathIdx %v\n",
-	//cur, end, maxLen, path, pathIdx)
+func neighborShortestPaths(board *lib.Board, from, to lib.Pos, wantLen int) []lib.Pos {
+	options := []lib.Pos{}
 
-	visited[cur] = true
-	defer delete(visited, cur)
+	for _, neighbor := range board.OpenSurroundingPositions(from) {
+		var path []lib.Pos
 
-	path[pathIdx] = cur
-	pathIdx++
-
-	if cur.X == end.X && cur.Y == end.Y {
-		visitor(path)
-	} else if pathIdx < maxLen {
-		for _, open := range openPosns(board, cur) {
-			if _, found := visited[open]; !found {
-				findAllPathsHelper(board, open, end, visited, path, pathIdx,
-					maxLen, visitor)
+		if neighbor == to {
+			path = []lib.Pos{}
+		} else {
+			path = board.ShortestPath(neighbor, to)
+			if path == nil {
+				continue
 			}
 		}
-	} else {
-		//fmt.Println("giving up too long")
+
+		fmt.Printf("%v to %v path %v (want len %v)\n", neighbor, to, path, wantLen)
+
+		if len(path)+1 == wantLen {
+			options = append(options, neighbor)
+		}
 	}
+
+	return options
 }
 
-func findNextMove(board Board, char *Char, chars []Char, others map[Pos]Char, al graph.LabeledAdjacencyList) (Pos, bool) {
-	// No neighbor; have to move then attack
-	inRange := findInRange(board, others)
-
+func findNextMove(board *lib.Board, self lib.Char, enemies []lib.Char) (lib.Pos, bool) {
+	inRange := findInRange(board, self, enemies)
 	if *verbose {
-		fmt.Println("In range:")
-		fmt.Println(inRange)
-		board.DumpWithDecoration(chars, inRange, '?')
+		fmt.Println("in range:")
+		board.DumpWithDecorations(inRange, '?')
 	}
 
-	paths, shortestLen := findShortestPaths(board, char, inRange, al)
+	if len(inRange) == 0 {
+		logger.LogLn("nothing in range")
+		return lib.Pos{}, false
+	}
+
+	reachable := findReachable(board, self, inRange)
 	if *verbose {
-		fmt.Println("Shortest paths:")
-		for dest, path := range paths {
-			fmt.Printf("%v: %v\n", dest, path)
+		posns := []lib.Pos{}
+		for posn, _ := range reachable {
+			posns = append(posns, posn)
 		}
+
+		fmt.Println("Reachable:")
+		board.DumpWithDecorations(posns, '@')
+		fmt.Println(reachable)
 	}
 
-	if len(paths) > 0 {
-		closestInRange := []Pos{}
-		for dest := range paths {
-			closestInRange = append(closestInRange, dest)
-		}
-
-		if *verbose {
-			fmt.Println("Nearest:")
-			board.DumpWithDecoration(chars, closestInRange, '!')
-		}
-
-		sort.Sort(PosByReadingOrder(closestInRange))
-		chosen := closestInRange[0]
-
-		if *verbose {
-			fmt.Println("Chosen:")
-			board.DumpWithDecoration(chars, []Pos{chosen}, '+')
-		}
-
-		allPaths := findAllPaths(board, char.P, chosen, shortestLen)
-
-		firstStepsMap := map[Pos]bool{}
-		for _, path := range allPaths {
-			firstStepsMap[path[0]] = true
-		}
-
-		firstSteps := []Pos{}
-		for step := range firstStepsMap {
-			firstSteps = append(firstSteps, step)
-		}
-		sort.Sort(PosByReadingOrder(firstSteps))
-
-		nextStep := firstSteps[0]
-		logger.LogF("chosen step: %v", nextStep)
-
-		return nextStep, true
+	if len(reachable) == 0 {
+		logger.LogLn("nothing reachable")
+		return lib.Pos{}, false
 	}
 
-	return Pos{}, false
+	shortestPaths, shortestLen := shortestPaths(reachable)
+	if *verbose {
+		posns := []lib.Pos{}
+		for posn, _ := range shortestPaths {
+			posns = append(posns, posn)
+		}
+
+		fmt.Println("Nearest:")
+		board.DumpWithDecorations(posns, '!')
+	}
+
+	nearest := []lib.Pos{}
+	for target := range shortestPaths {
+		nearest = append(nearest, target)
+	}
+	sort.Sort(lib.PosByReadingOrder(nearest))
+	chosen := nearest[0]
+	if *verbose {
+		fmt.Println("Chosen:")
+		board.DumpWithDecoration(chosen, '+')
+	}
+
+	neighborChoices := neighborShortestPaths(board, self.P, chosen, shortestLen)
+	sort.Sort(lib.PosByReadingOrder(neighborChoices))
+	if *verbose {
+		fmt.Printf("options: %v\n", neighborChoices)
+	}
+
+	return neighborChoices[0], true
 }
 
-func turnForChar(board Board, charNum int, chars []Char, al graph.LabeledAdjacencyList) {
-	char := &chars[charNum]
-
-	others := map[Pos]Char{}
-	for otherNum, other := range chars {
-		if otherNum != charNum && other.IsElf != char.IsElf {
-			others[other.P] = other
+func chooseVictim(cands []lib.Char) lib.Char {
+	lowestHP := math.MaxInt32
+	lowHPCands := []lib.Char{}
+	for _, c := range cands {
+		if c.HP == lowestHP {
+			lowHPCands = append(lowHPCands, c)
+		} else if c.HP < lowestHP {
+			lowHPCands = []lib.Char{c}
+			lowestHP = c.HP
 		}
 	}
 
-	toAttack := neighborToAttack(board, char, others)
-	if toAttack == nil {
-		// No neighbor to attack, so let's try to move
-		newPos, shouldMove := findNextMove(board, char, chars, others, al)
+	sort.Sort(lib.CharByReadingOrder(lowHPCands))
 
-		if !shouldMove {
-			return // nothing we can do
+	return lowHPCands[0]
+}
+
+func charAttack(board *lib.Board, self lib.Char, neighbors []lib.Char) (Result, *int) {
+	victim := chooseVictim(neighbors)
+	logger.LogF("chose victim %v", victim)
+
+	victim, isDead := board.Attack(self, victim)
+	if isDead {
+		logger.LogF("victim now dead: %v")
+		board.RemoveChar(victim)
+		num := victim.Num
+		return RESULT_CONTINUE, &num
+	}
+
+	logger.LogF("victim current status %v")
+	return RESULT_CONTINUE, nil
+}
+
+func charTurn(board *lib.Board, self lib.Char) (Result, *int) {
+	logger.LogF("\n-- character turn %v", self)
+
+	others := getOthers(board, self.Num)
+	enemies := findEnemies(others, self.IsElf)
+	if len(enemies) == 0 {
+		return RESULT_NOTHINGTODO, nil
+	}
+
+	if neighbors := neighborsToAttack(board, self); len(neighbors) != 0 {
+		return charAttack(board, self, neighbors)
+	}
+
+	nextPos, hasMove := findNextMove(board, self, enemies)
+	if !hasMove {
+		logger.LogF("can't attack, can't move")
+		return RESULT_CONTINUE, nil
+	}
+	logger.LogF("moving to %v", nextPos)
+
+	self = board.MoveChar(self, nextPos)
+	if *verbose {
+		fmt.Println("After move:")
+		board.Dump()
+	}
+
+	if neighbors := neighborsToAttack(board, self); len(neighbors) != 0 {
+		return charAttack(board, self, neighbors)
+	}
+
+	return RESULT_CONTINUE, nil
+}
+
+func playTurn(board *lib.Board) Result {
+	// Character numbers of dead characters
+	deadChars := map[int]bool{}
+
+	chars := board.Chars()
+	sort.Sort(lib.CharByReadingOrder(chars))
+
+	for _, char := range chars {
+		if _, found := deadChars[char.Num]; found {
+			logger.LogF("-- dead char %v skipped", char.Num)
+			continue
 		}
 
-		// Move the character, both in the chars
-		// list and in the adjacency list
-		removeCharFromAdjacencyList(board, char, al)
-		char.P = newPos
-		addCharToAdjacencyList(board, char, al)
+		result, victimNum := charTurn(board, char)
+		if victimNum != nil {
+			deadChars[*victimNum] = true
+		}
 
-		toAttack = neighborToAttack(board, char, others)
-		if toAttack == nil {
-			logger.LogF("nobody to attack; turn done")
-			return
+		if result != RESULT_CONTINUE {
+			return result
 		}
 	}
 
-	logger.LogF("-- chosen to attack: %v\n", toAttack)
+	return RESULT_CONTINUE
 }
 
 func main() {
 	flag.Parse()
 	logger.Init(*verbose)
 
-	board, chars, err := readInput()
+	board, err := readInput()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	//board.Dump(chars)
+	gameOver := false
+	lastFullTurn := 0
+	for turnNo := 1; !gameOver && (*numTurns == -1 || turnNo <= *numTurns); turnNo++ {
+		fmt.Printf("start turn %d:\n", turnNo)
+		board.Dump()
 
-	al := boardToAdjacencyList(board)
-
-	// Add all characters to the adjacency list
-	for _, char := range chars {
-		addCharToAdjacencyList(board, &char, al)
-	}
-
-	// heuristic := func(fromIdx graph.NI) float64 {
-	// 	from := idxToPos(board, fromIdx)
-	// 	return float64(intmath.Abs(from.X-end.X) + intmath.Abs(from.Y-end.Y))
-	// }
-
-	// weight := func(l graph.LI) float64 { return 1 }
-
-	// start := Pos{1, 1}
-	// end := Pos{5, 3}
-	// path, dist := al.AStarAPath(
-	// 	posToIdx(board, start),
-	// 	posToIdx(board, end), heuristic, weight)
-	// fmt.Printf("path %v, dist %v\n", pathToStr(board, path), dist)
-
-	for turn := 0; turn < *numTurns; turn++ {
-		if *verbose {
-			fmt.Printf("turn %d: start\n", turn)
-			board.Dump(chars)
+		result := playTurn(board)
+		if result == RESULT_NOTHINGTODO {
+			gameOver = true
+			break
 		}
 
-		sort.Sort(CharByReadingOrder(chars))
-		logger.LogF("character order: %+v\n", chars)
-
-		for charNum, _ := range chars {
-			logger.LogF("-- character %d: %+v\n", charNum, chars[charNum])
-
-			turnForChar(board, charNum, chars, al)
-
-		}
+		lastFullTurn = turnNo
 	}
 
-	fmt.Println("End")
-	board.Dump(chars)
+	fmt.Println()
+	if gameOver {
+		fmt.Printf("Combat ends after %d full rounds\n", lastFullTurn)
+
+		hpLeft := 0
+		whoWon := ""
+		for _, char := range board.Chars() {
+			if char.IsElf {
+				whoWon = "Elves"
+			} else {
+				whoWon = "Goblins"
+			}
+			hpLeft += char.HP
+		}
+
+		fmt.Printf("%v win with %d total hit points left\n", whoWon, hpLeft)
+		fmt.Printf("Outcome: %v * %v = %v\n", lastFullTurn, hpLeft, lastFullTurn*hpLeft)
+
+	} else {
+		fmt.Println("game terminated due to turn restriction")
+	}
 }
