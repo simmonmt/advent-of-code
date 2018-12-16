@@ -4,47 +4,47 @@ import (
 	"reg"
 )
 
-func Addr(file *reg.File, op, a, b, c int) {
+func Addr(file *reg.File, a, b, c int) {
 	file[c] = file[a] + file[b]
 }
 
-func Addi(file *reg.File, op, a, b, c int) {
+func Addi(file *reg.File, a, b, c int) {
 	file[c] = file[a] + b
 }
 
-func Mulr(file *reg.File, op, a, b, c int) {
+func Mulr(file *reg.File, a, b, c int) {
 	file[c] = file[a] * file[b]
 }
 
-func Muli(file *reg.File, op, a, b, c int) {
+func Muli(file *reg.File, a, b, c int) {
 	file[c] = file[a] * b
 }
 
-func Banr(file *reg.File, op, a, b, c int) {
+func Banr(file *reg.File, a, b, c int) {
 	file[c] = file[a] & file[b]
 }
 
-func Bani(file *reg.File, op, a, b, c int) {
+func Bani(file *reg.File, a, b, c int) {
 	file[c] = file[a] & b
 }
 
-func Borr(file *reg.File, op, a, b, c int) {
+func Borr(file *reg.File, a, b, c int) {
 	file[c] = file[a] | file[b]
 }
 
-func Bori(file *reg.File, op, a, b, c int) {
+func Bori(file *reg.File, a, b, c int) {
 	file[c] = file[a] | b
 }
 
-func Setr(file *reg.File, op, a, b, c int) {
+func Setr(file *reg.File, a, b, c int) {
 	file[c] = file[a]
 }
 
-func Seti(file *reg.File, op, a, b, c int) {
+func Seti(file *reg.File, a, b, c int) {
 	file[c] = a
 }
 
-func Gtir(file *reg.File, op, a, b, c int) {
+func Gtir(file *reg.File, a, b, c int) {
 	if a > file[b] {
 		file[c] = 1
 	} else {
@@ -52,7 +52,7 @@ func Gtir(file *reg.File, op, a, b, c int) {
 	}
 }
 
-func Gtri(file *reg.File, op, a, b, c int) {
+func Gtri(file *reg.File, a, b, c int) {
 	if file[a] > b {
 		file[c] = 1
 	} else {
@@ -60,7 +60,7 @@ func Gtri(file *reg.File, op, a, b, c int) {
 	}
 }
 
-func Gtrr(file *reg.File, op, a, b, c int) {
+func Gtrr(file *reg.File, a, b, c int) {
 	if file[a] > file[b] {
 		file[c] = 1
 	} else {
@@ -68,7 +68,7 @@ func Gtrr(file *reg.File, op, a, b, c int) {
 	}
 }
 
-func Eqir(file *reg.File, op, a, b, c int) {
+func Eqir(file *reg.File, a, b, c int) {
 	if a == file[b] {
 		file[c] = 1
 	} else {
@@ -76,7 +76,7 @@ func Eqir(file *reg.File, op, a, b, c int) {
 	}
 }
 
-func Eqri(file *reg.File, op, a, b, c int) {
+func Eqri(file *reg.File, a, b, c int) {
 	if file[a] == b {
 		file[c] = 1
 	} else {
@@ -84,7 +84,7 @@ func Eqri(file *reg.File, op, a, b, c int) {
 	}
 }
 
-func Eqrr(file *reg.File, op, a, b, c int) {
+func Eqrr(file *reg.File, a, b, c int) {
 	if file[a] == file[b] {
 		file[c] = 1
 	} else {
@@ -94,7 +94,7 @@ func Eqrr(file *reg.File, op, a, b, c int) {
 
 type Desc struct {
 	Op   int
-	F    func(file *reg.File, op, a, b, c int)
+	F    func(file *reg.File, a, b, c int)
 	Name string
 }
 

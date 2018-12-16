@@ -123,7 +123,7 @@ func findCands(testCases []TestCase) {
 			regFile := reg.File{}
 			regFile = *testCase.Before
 
-			desc.F(&regFile, testCase.Op, testCase.A, testCase.B, testCase.C)
+			desc.F(&regFile, testCase.A, testCase.B, testCase.C)
 
 			if regFile == *testCase.After {
 				matches[desc.Name] = true
@@ -180,7 +180,7 @@ func main() {
 	for _, inst := range instrs {
 		desc := descByOp[inst.Op]
 		fmt.Printf("%s %d %d %d\n", desc.Name, inst.A, inst.B, inst.C)
-		desc.F(&regFile, inst.Op, inst.A, inst.B, inst.C)
+		desc.F(&regFile, inst.A, inst.B, inst.C)
 		fmt.Println(regFile)
 	}
 
