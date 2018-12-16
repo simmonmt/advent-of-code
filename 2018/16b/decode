@@ -1,0 +1,16 @@
+ 0: bori
+ 1: borr
+ 2: seti
+ 3: mulr
+ 4: setr
+ 5: addr
+ 6: gtir
+ 7: eqir
+ 8: gtri
+ 9: bani
+10: muli
+11: gtrr
+12: banr
+13: eqri
+14: addi
+15: eqrr
