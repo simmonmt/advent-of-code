@@ -14,6 +14,7 @@ const (
 	TYPE_WALL
 	TYPE_FLOW
 	TYPE_FILLED
+	TYPE_SPRING
 )
 
 func (c CellType) Short() string {
@@ -26,6 +27,8 @@ func (c CellType) Short() string {
 		return "|"
 	case TYPE_FILLED:
 		return "~"
+	case TYPE_SPRING:
+		return "+"
 	default:
 		panic("unknown")
 	}
@@ -41,14 +44,26 @@ func (c CellType) String() string {
 		return "flow"
 	case TYPE_FILLED:
 		return "filled"
+	case TYPE_SPRING:
+		return "spring"
 	default:
 		panic("unknown")
 	}
 }
 
+type Pos struct {
+	X, Y int
+}
+
+func (p Pos) Eq(s Pos) bool {
+	return p.X == s.X && p.Y == s.Y
+}
+
 type Board struct {
 	cells                  [][]CellType
+	cur                    Pos
 	xmin, xmax, ymin, ymax int
+	cursors                map[Pos]bool
 }
 
 func findBounds(lines []InputLine) (xmin, xmax, ymin, ymax int) {
@@ -65,19 +80,85 @@ func findBounds(lines []InputLine) (xmin, xmax, ymin, ymax int) {
 	return
 }
 
-func NewBoard(lines []InputLine) *Board {
+func NewBoard(spring Pos, lines []InputLine) *Board {
 	xmin, xmax, ymin, ymax := findBounds(lines)
-	return &Board{
-		cells: nil,
-		xmin:  xmin,
-		xmax:  xmax,
-		ymin:  ymin,
-		ymax:  ymax,
+
+	ymin = intmath.IntMin(ymin, spring.Y)
+	xmax = intmath.IntMax(xmax, spring.X)
+	xmin = intmath.IntMin(xmin, spring.X)
+
+	cells := make([][]CellType, ymax-ymin+1)
+	for y := ymin; y <= ymax; y++ {
+		cells[y-ymin] = make([]CellType, xmax-xmin+1)
 	}
+
+	b := &Board{
+		cells:   cells,
+		xmin:    xmin,
+		xmax:    xmax,
+		ymin:    ymin,
+		ymax:    ymax,
+		cursors: map[Pos]bool{},
+	}
+
+	b.Set(spring, TYPE_SPRING)
+
+	for _, line := range lines {
+		for y := line.Ymin; y <= line.Ymax; y++ {
+			for x := line.Xmin; x <= line.Xmax; x++ {
+				b.Set(Pos{x, y}, TYPE_WALL)
+			}
+		}
+	}
+
+	return b
 }
 
 func (b *Board) Dump() {
 	b.DumpBox(b.xmin, b.xmax, b.ymin, b.ymax)
+}
+
+func (b *Board) InBounds(pos Pos) bool {
+	return pos.X >= b.xmin && pos.X <= b.xmax && pos.Y >= b.ymin && pos.Y <= b.ymax
+}
+
+func (b *Board) checkBounds(pos Pos) {
+	if !b.InBounds(pos) {
+		panic(fmt.Sprintf("%v out of bounds %v %v", pos, Pos{b.xmin, b.ymin},
+			Pos{b.xmax, b.ymax}))
+	}
+}
+
+func (b *Board) Get(pos Pos) CellType {
+	b.checkBounds(pos)
+	return b.cells[pos.Y-b.ymin][pos.X-b.xmin]
+}
+
+func (b *Board) Set(pos Pos, cell CellType) {
+	b.checkBounds(pos)
+	b.cells[pos.Y-b.ymin][pos.X-b.xmin] = cell
+}
+
+func (b *Board) Cursors() []Pos {
+	cursors := make([]Pos, len(b.cursors))
+	i := 0
+	for c := range b.cursors {
+		cursors[i] = c
+		i++
+	}
+	return cursors
+}
+
+func (b *Board) AddCursor(pos Pos) {
+	b.cursors[pos] = true
+}
+
+func (b *Board) MoveCursor(old, new Pos) {
+	if _, found := b.cursors[old]; found {
+		panic(fmt.Sprintf("no cursor at %v", old))
+	}
+	delete(b.cursors, old)
+	b.cursors[new] = true
 }
 
 func (b *Board) DumpBox(xmin, xmax, ymin, ymax int) {
@@ -102,7 +183,13 @@ func (b *Board) DumpBox(xmin, xmax, ymin, ymax int) {
 		fmt.Printf("%*d ", ylines, y)
 
 		for x := xmin; x <= xmax; x++ {
-			fmt.Print(b.cells[y][x].Short())
+			pos := Pos{x, y}
+			short := b.Get(pos).Short()
+			if _, found := b.cursors[pos]; found {
+				fmt.Printf("\033[1m%s\033[0m", short)
+			} else {
+				fmt.Print(short)
+			}
 		}
 		fmt.Println()
 	}

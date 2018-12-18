@@ -64,6 +64,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	board := lib.NewBoard(lines)
+	board := lib.NewBoard(lib.Pos{500, 0}, lines)
+	board.AddCursor(lib.Pos{500, 0})
 	board.Dump()
 }
