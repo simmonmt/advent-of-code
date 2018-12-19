@@ -1,3 +1,5 @@
+// This is the Go version of the assembly program in ../input.txt
+
 package main
 
 import (
@@ -29,6 +31,10 @@ func main() {
 			if a*b == c {
 				out += a
 			}
+			// This conditional added after analysis of
+			// transliterated assembly. Without this, the
+			// loop is way too expensive to run with
+			// --runlong
 			if a*b > c {
 				break
 			}
