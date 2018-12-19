@@ -2,6 +2,8 @@ package lib
 
 import (
 	"fmt"
+	"image"
+	"image/color"
 	"math"
 
 	"intmath"
@@ -51,14 +53,6 @@ func (c CellType) String() string {
 	}
 }
 
-type Pos struct {
-	X, Y int
-}
-
-func (p Pos) Eq(s Pos) bool {
-	return p.X == s.X && p.Y == s.Y
-}
-
 type Board struct {
 	cells                  [][]CellType
 	cur                    Pos
@@ -71,8 +65,8 @@ func findBounds(lines []InputLine) (xmin, xmax, ymin, ymax int) {
 	ymin, ymax = math.MaxInt32, 0
 
 	for _, line := range lines {
-		xmin = intmath.IntMin(xmin, line.Xmin)
-		xmax = intmath.IntMax(xmax, line.Xmax)
+		xmin = intmath.IntMin(xmin, line.Xmin) - 1
+		xmax = intmath.IntMax(xmax, line.Xmax) + 1
 		ymin = intmath.IntMin(ymin, line.Ymin)
 		ymax = intmath.IntMax(ymax, line.Ymax)
 	}
@@ -114,8 +108,8 @@ func NewBoard(spring Pos, lines []InputLine) *Board {
 	return b
 }
 
-func (b *Board) Dump() {
-	b.DumpBox(b.xmin, b.xmax, b.ymin, b.ymax)
+func (b *Board) Bounds() (xmin, xmax, ymin, ymax int) {
+	return b.xmin, b.xmax, b.ymin, b.ymax
 }
 
 func (b *Board) InBounds(pos Pos) bool {
@@ -129,13 +123,43 @@ func (b *Board) checkBounds(pos Pos) {
 	}
 }
 
+func (b *Board) get(pos Pos) CellType {
+	return b.cells[pos.Y-b.ymin][pos.X-b.xmin]
+}
+
 func (b *Board) Get(pos Pos) CellType {
 	b.checkBounds(pos)
-	return b.cells[pos.Y-b.ymin][pos.X-b.xmin]
+	return b.get(pos)
+}
+
+func (b *Board) GetWithDefault(pos Pos, def CellType) CellType {
+	if !b.InBounds(pos) {
+		return def
+	}
+	return b.get(pos)
 }
 
 func (b *Board) Set(pos Pos, cell CellType) {
 	b.checkBounds(pos)
+
+	// seemsBad := func(ex, cell CellType) bool {
+	// 	if ex == TYPE_OPEN {
+	// 		return false
+	// 	}
+	// 	if ex == TYPE_WALL && cell == TYPE_WALL {
+	// 		return false
+	// 	}
+	// 	if ex == TYPE_FLOW && cell == TYPE_FILLED {
+	// 		return false
+	// 	}
+
+	// 	return true
+	// }
+
+	// if ex := b.get(pos); seemsBad(ex, cell) {
+	// 	fmt.Printf("overwriting %v %s with %s\n", pos, b.get(pos), cell)
+	// }
+
 	b.cells[pos.Y-b.ymin][pos.X-b.xmin] = cell
 }
 
@@ -149,19 +173,37 @@ func (b *Board) Cursors() []Pos {
 	return cursors
 }
 
+func (b *Board) GetACursor() (Pos, bool) {
+	for c := range b.cursors {
+		return c, true
+	}
+	return Pos{}, false
+}
+
 func (b *Board) AddCursor(pos Pos) {
+	// if _, found := b.cursors[pos]; found {
+	// 	panic("already added")
+	// }
+
 	b.cursors[pos] = true
 }
 
-func (b *Board) MoveCursor(old, new Pos) {
-	if _, found := b.cursors[old]; found {
-		panic(fmt.Sprintf("no cursor at %v", old))
+func (b *Board) DeleteCursor(pos Pos) {
+	if _, found := b.cursors[pos]; !found {
+		panic(fmt.Sprintf("no cursor at %v", pos))
 	}
-	delete(b.cursors, old)
-	b.cursors[new] = true
+	delete(b.cursors, pos)
 }
 
-func (b *Board) DumpBox(xmin, xmax, ymin, ymax int) {
+func (b *Board) Dump() {
+	b.DumpBox(b.xmin, b.xmax, b.ymin, b.ymax, Pos{-1, -1})
+}
+
+func (b *Board) DumpWithFocus(focus Pos) {
+	b.DumpBox(b.xmin, b.xmax, b.ymin, b.ymax, focus)
+}
+
+func (b *Board) DumpBox(xmin, xmax, ymin, ymax int, focus Pos) {
 	xmin = intmath.IntMax(xmin, b.xmin)
 	xmax = intmath.IntMin(xmax, b.xmax)
 	ymin = intmath.IntMax(ymin, b.ymin)
@@ -185,7 +227,7 @@ func (b *Board) DumpBox(xmin, xmax, ymin, ymax int) {
 		for x := xmin; x <= xmax; x++ {
 			pos := Pos{x, y}
 			short := b.Get(pos).Short()
-			if _, found := b.cursors[pos]; found {
+			if focus.X >= 0 && focus.Y >= 0 && focus.Eq(pos) {
 				fmt.Printf("\033[1m%s\033[0m", short)
 			} else {
 				fmt.Print(short)
@@ -193,4 +235,66 @@ func (b *Board) DumpBox(xmin, xmax, ymin, ymax int) {
 		}
 		fmt.Println()
 	}
+}
+
+func (b *Board) Score() (numFlow, numFilled int) {
+	minYWall := math.MaxInt32
+	numFlow, numFilled = 0, 0
+	for y := range b.cells {
+		for _, c := range b.cells[y] {
+			if c == TYPE_WALL {
+				minYWall = intmath.IntMin(minYWall, y)
+			} else if c == TYPE_FLOW {
+				numFlow++
+			} else if c == TYPE_FILLED {
+				numFilled++
+			}
+		}
+	}
+
+	// Remove the flow values between the spigot and the top of
+	// the highest wall
+	if minYWall > 1 {
+		numFlow -= (minYWall - 1)
+	}
+
+	return
+}
+
+func (b *Board) Visit(want CellType, visitor func(pos Pos)) {
+	for y := range b.cells {
+		for x, c := range b.cells[y] {
+			if c == want {
+				visitor(Pos{x + b.xmin, y + b.ymin})
+			}
+		}
+	}
+}
+
+func (b *Board) ToImage() image.Image {
+	img := image.NewRGBA(image.Rect(b.xmin, b.ymin, b.xmax+1, b.ymax+1))
+
+	for y := range b.cells {
+		for x, c := range b.cells[y] {
+			var col color.RGBA
+			switch c {
+			case TYPE_OPEN:
+				col = color.RGBA{255, 255, 255, 255}
+			case TYPE_WALL:
+				col = color.RGBA{0, 0, 0, 255}
+			case TYPE_FLOW:
+				col = color.RGBA{127, 127, 127, 255}
+			case TYPE_FILLED:
+				col = color.RGBA{0, 0, 255, 255}
+			case TYPE_SPRING:
+				col = color.RGBA{255, 0, 0, 255}
+			default:
+				panic("unknown")
+			}
+
+			img.Set(x+b.xmin, y+b.ymin, col)
+		}
+	}
+
+	return img
 }
