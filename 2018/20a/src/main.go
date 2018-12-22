@@ -16,6 +16,7 @@ import (
 var (
 	verbose   = flag.Bool("verbose", false, "verbose")
 	dumpFinal = flag.Bool("dump_final", true, "dump final board")
+	gtThresh  = flag.Int("gt_thresh", -1, "gt thresh")
 )
 
 func readInput() ([]string, error) {
@@ -187,12 +188,20 @@ func main() {
 
 	distances := findDistances(board, origin)
 
+	greaterThan := 0
 	maxDist := 0
 	for _, d := range distances {
 		if d > maxDist {
 			maxDist = d
 		}
+
+		if d > *gtThresh {
+			greaterThan++
+		}
 	}
 
 	fmt.Printf("max dist %v\n", maxDist)
+	if *gtThresh > 0 {
+		fmt.Printf("nodes with path >%d: %d\n", *gtThresh, greaterThan)
+	}
 }
