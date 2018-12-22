@@ -4,15 +4,19 @@ PKGS=$(shell find src -type d -depth 1 |xargs -n1 basename)
 solution: $(DEPS)
 	GOPATH=$$(PWD):$$GOPATH go build -o $@ src/*.go
 
-test:
+test:	test_input test_go
+
+test_input:
 	@for test in testdata/test*.txt ; do \
+		echo $$test \\c ; \
 		expected=$$(echo $$test |sed -e 's:/test:/expected:') ; \
 		if ./solution <$$test |diff $$expected - >/dev/null ; then \
-			echo $$test PASS ; \
+			echo PASS ; \
 		else \
-			echo $$test FAIL ; \
+			echo FAIL ; \
 		fi ; \
 	done
 
-#	GOPATH=$$(PWD):$$GOPATH go test $(PKGS)
-#	GOPATH=$$(PWD):$$GOPATH go test src/*.go
+test_go:
+	GOPATH=$$(PWD):$$GOPATH go test $(PKGS)
+	GOPATH=$$(PWD):$$GOPATH go test src/*.go

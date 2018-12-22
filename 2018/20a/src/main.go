@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"intmath"
 	"log"
+	"math"
 	"os"
 	"strings"
 
@@ -12,7 +14,8 @@ import (
 )
 
 var (
-	verbose = flag.Bool("verbose", false, "verbose")
+	verbose   = flag.Bool("verbose", false, "verbose")
+	dumpFinal = flag.Bool("dump_final", true, "dump final board")
 )
 
 func readInput() ([]string, error) {
@@ -30,27 +33,63 @@ func readInput() ([]string, error) {
 	return lines, nil
 }
 
+func uniquify(posns []Pos) []Pos {
+	seen := make(map[Pos]struct{}, len(posns))
+
+	i := 0
+	for _, p := range posns {
+		if _, found := seen[p]; found {
+			continue
+		}
+		posns[i] = p
+		seen[p] = struct{}{}
+		i++
+	}
+
+	logger.LogF("reduced %d to %d", len(posns), i)
+	return posns[:i]
+}
+
 type Extent struct {
 	S, E int
 }
 
-func traverse(pos Pos, board *Board, path string) {
-	logger.LogF("traverse pos %v path %v\n", pos, path)
+func traverse(starts []Pos, board *Board, path string) []Pos {
+	logger.LogF("traverse posns %v path %v", starts, path)
+
+	posns := make([]Pos, len(starts))
+	copy(posns, starts)
+
 	i := 0
 	for i < len(path) {
+		logger.LogF("i=%d of %v", i, path)
 		nextI := i + 1
 
 		switch path[i] {
 		case 'N', 'S', 'E', 'W':
-			pos = board.Move(pos, string(path[i]))
+			dir := rune(path[i])
+			for j := range posns {
+				logger.LogF("moving %v from %v", string(dir), posns[j])
+				posns[j] = board.Move(posns[j], dir)
+				if *verbose {
+					board.Dump()
+				}
+			}
+
 		case '(':
 			extents, endIdx := parseGroup(path[i:])
+			logger.LogF("found group with %d extents end %v, starting at %v",
+				len(extents), endIdx, posns)
+			ends := []Pos{}
 			for _, e := range extents {
-				// traverse the extent and the stuff beyond it
-				traverse(pos, board, path[e.S+i:e.E+i]+path[endIdx+i:])
-				// fmt.Println("---")
+				sub := path[e.S+i : e.E+i]
+				newEnds := traverse(posns, board, sub)
+				logger.LogF("extent %v done: began %v, returned %v", sub, posns, newEnds)
+				ends = append(ends, newEnds...)
 			}
-			return
+			posns = uniquify(ends)
+			nextI = i + endIdx
+
 		case '|', ')':
 			break
 		default:
@@ -59,6 +98,9 @@ func traverse(pos Pos, board *Board, path string) {
 
 		i = nextI
 	}
+
+	logger.LogF("traverse of %v path %v done", starts, path)
+	return posns
 }
 
 func parseGroup(str string) ([]Extent, int) {
@@ -98,6 +140,28 @@ func parseGroup(str string) ([]Extent, int) {
 	panic("ran out of string")
 }
 
+func findDistances(board *Board, start Pos) map[Pos]int {
+	distances := map[Pos]int{start: 0}
+
+	board.BFS(start, func(pos Pos, neighbors []Pos) {
+		dist, found := distances[pos]
+		if !found {
+			panic("pos unfound")
+		}
+
+		for _, n := range neighbors {
+			existingDist := math.MaxInt32
+			if _, found := distances[n]; found {
+				existingDist = distances[n]
+			}
+			distances[n] = intmath.IntMin(existingDist, dist+1)
+		}
+	})
+
+	logger.LogLn(distances)
+	return distances
+}
+
 func main() {
 	flag.Parse()
 	logger.Init(*verbose)
@@ -107,13 +171,28 @@ func main() {
 		log.Fatal(err)
 	}
 
-	board := NewBoard()
+	origin := Pos{0, 0}
+	board := NewBoard(origin)
 
 	for _, line := range lines {
+		logger.LogF("input is %v", line)
 		line = strings.TrimPrefix(line, "^")
 		line = strings.TrimSuffix(line, "$")
-		traverse(Pos{0, 0}, board, line)
+		traverse([]Pos{origin}, board, line)
 	}
 
-	board.Dump(Pos{0, 0})
+	if *dumpFinal {
+		board.Dump()
+	}
+
+	distances := findDistances(board, origin)
+
+	maxDist := 0
+	for _, d := range distances {
+		if d > maxDist {
+			maxDist = d
+		}
+	}
+
+	fmt.Printf("max dist %v\n", maxDist)
 }
