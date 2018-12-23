@@ -6,3 +6,6 @@ solution: $(DEPS)
 
 test:
 	GOPATH=$$(PWD):$$GOPATH go test $(PKGS)
+
+clean:
+	$(RM) solution
