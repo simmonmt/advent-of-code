@@ -16,11 +16,10 @@ import (
 
 var (
 	verbose = flag.Bool("verbose", false, "verbose")
+	boost   = flag.Int("boost", 0, "immune system boost")
 
-	//groupPattern = regexp.MustCompile(`(\d+) units each with (\d+) hit points(?: \(weak to ([^\)]+)\)) with an attack that does (\d+) ([^ ]+) damage at initiative (\d+)`)
-	groupPattern = regexp.MustCompile(`^(\d+) units each with (\d+) hit points (?:\(([^\)]+)\) )?with an attack that does (\d+) ([^ ]+) damage at initiative (\d+)`)
-	//17 units each with 5390 hit points (weak to radiation, bludgeoning) with an attack that does 4507 fire damage at initiative 2
-
+	groupPattern = regexp.MustCompile(`^(\d+) units each with (\d+) hit points (?:\(([^\)]+)\) )?` +
+		`with an attack that does (\d+) ([^ ]+) damage at initiative (\d+)`)
 )
 
 type Side int
@@ -230,6 +229,7 @@ func readInput() (immune, infection []*Group, err error) {
 
 		if readingImmune {
 			group.Side = SIDE_IMMUNE
+			group.AttackDamage += *boost
 			group.ID = len(immune) + 1
 			immune = append(immune, group)
 		} else {
@@ -286,8 +286,8 @@ func selectTargets(attackers, targets []*Group) map[FullID]FullID {
 				cands = append(cands, target)
 			}
 
-			logger.LogF("%v group %v would deal defending group %v %v damage",
-				attacker.Side, attacker.ID, target.ID, damageCaused)
+			// logger.LogF("%v group %v would deal defending group %v %v damage",
+			// 	attacker.Side, attacker.ID, target.ID, damageCaused)
 		}
 
 		if len(cands) == 0 || maxDamageCaused == 0 {
@@ -310,11 +310,13 @@ func dumpGroups(groups []*Group) {
 	}
 }
 
-func attack(groups []*Group, toAttacks map[FullID]FullID) {
+func attack(groups []*Group, toAttacks map[FullID]FullID) int {
 	groupsByID := map[FullID]*Group{}
 	for _, g := range groups {
 		groupsByID[FullIDFromGroup(g)] = g
 	}
+
+	totalUnitsKilled := 0
 
 	for _, attacker := range groups {
 		if attacker.NumUnits == 0 {
@@ -340,7 +342,11 @@ func attack(groups []*Group, toAttacks map[FullID]FullID) {
 		if target.NumUnits == 0 {
 			logger.LogF("defending group %v now dead", target.ID)
 		}
+
+		totalUnitsKilled += unitsKilled
 	}
+
+	return totalUnitsKilled
 }
 
 func removeDead(in []*Group) []*Group {
@@ -405,12 +411,20 @@ func main() {
 		// By initiative highest to lowest
 		sort.Sort(sort.Reverse(ByInitiative(allGroups)))
 
-		attack(allGroups, allAttacks)
+		numUnitsKilled := attack(allGroups, allAttacks)
+		if numUnitsKilled == 0 {
+			fmt.Println("no units killed; terminating")
+			break
+		}
 
 		immune = removeDead(immune)
 		infection = removeDead(infection)
 	}
 
-	fmt.Printf("immune %v units\n", countUnits(immune))
-	fmt.Printf("infection %v units\n", countUnits(infection))
+	if num := countUnits(immune); num > 0 {
+		fmt.Printf("immune %v units\n", countUnits(immune))
+	}
+	if num := countUnits(infection); num > 0 {
+		fmt.Printf("infection %v units\n", countUnits(infection))
+	}
 }
