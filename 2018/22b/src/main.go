@@ -145,6 +145,15 @@ func makeGraph(fill [][]Fill, w, h int) graph.LabeledAdjacencyList {
 			pType := fill[p.Y][p.X]
 			pTools := allowedTools(pType)
 
+			for i := range pTools {
+				for j := range pTools {
+					if i == j {
+						continue
+					}
+					g = addEdge(g, w, p, pTools[i], p, pTools[j], 7)
+				}
+			}
+
 			for _, dir := range dirs {
 				op := xypos.Pos{p.X + dir.X, p.Y + dir.Y}
 				if op.X < 0 || op.Y < 0 {
@@ -158,11 +167,11 @@ func makeGraph(fill [][]Fill, w, h int) graph.LabeledAdjacencyList {
 
 				for _, pTool := range pTools {
 					for _, opTool := range opTools {
-						cost := 1
 						if pTool != opTool {
-							cost += 7
+							continue
 						}
-						g = addEdge(g, w, p, pTool, op, opTool, cost)
+
+						g = addEdge(g, w, p, pTool, op, opTool, 1)
 					}
 				}
 			}
