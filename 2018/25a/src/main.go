@@ -83,6 +83,16 @@ func main() {
 						consts[i] = append(consts[i], consts[j]...)
 						consts[j] = nil
 						moved = true
+
+						// Yes, I'm vaguely ashamed
+						// about this part. Also the
+						// solution isn't fast since
+						// it's at least n^2. It works
+						// though, and I wasn't going
+						// for pretty. I was going for
+						// fastest completion relative
+						// to the puzzle release time,
+						// not fastest execution time.
 						goto done
 					}
 				}
