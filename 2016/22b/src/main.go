@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"image/gif"
 	"io"
 	"log"
 	"os"
@@ -20,7 +21,7 @@ var (
 
 	immovableThresh = flag.Int("immovable_thresh", -1, "Immovable threshold")
 	verbose         = flag.Bool("verbose", false, "verbose")
-	start           = flag.String("start", "", "start node")
+	imagePath       = flag.String("image_path", "", "image path")
 )
 
 func readInput(r io.Reader) (*Board, *PlayState, error) {
@@ -99,14 +100,33 @@ func main() {
 
 	goal := &PlayState{Goal: Pos{0, 0}}
 
-	helper := NewAStarHelper(board)
+	saveImages := *imagePath != ""
+
+	helper := NewAStarHelper(board, saveImages)
 	steps := astar.AStar(playState.Encode(), goal.Encode(), helper)
 
-	fmt.Printf("num steps %v\n", len(steps))
+	// fmt.Println()
+	// for i := len(steps) - 1; i >= 0; i-- {
+	// 	board.Dump(Decode(steps[i]))
+	// 	fmt.Println()
+	// }
 
-	fmt.Println()
-	for i := len(steps) - 1; i >= 0; i-- {
-		board.Dump(Decode(steps[i]))
-		fmt.Println()
+	fmt.Printf("num steps %v\n", len(steps)-1)
+
+	if *imagePath != "" {
+		f, err := os.Create(*imagePath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
+
+		g := &gif.GIF{
+			Image: helper.images,
+			Delay: make([]int, len(helper.images)),
+		}
+
+		if err := gif.EncodeAll(f, g); err != nil {
+			log.Fatal(err)
+		}
 	}
 }

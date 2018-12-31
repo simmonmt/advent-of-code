@@ -1,6 +1,10 @@
 package main
 
-import "logger"
+import (
+	"image"
+	"image/color"
+	"logger"
+)
 
 // heuristic
 //
@@ -8,11 +12,25 @@ import "logger"
 // moving to goal: (ml + manhattan distance empty to goal)
 
 type aStarHelper struct {
-	board *Board
+	board    *Board
+	visited  map[Pos]bool
+	num, mod int
+	images   []*image.Paletted
 }
 
-func NewAStarHelper(board *Board) *aStarHelper {
-	return &aStarHelper{board}
+func NewAStarHelper(board *Board, saveImages bool) *aStarHelper {
+	var visited map[Pos]bool
+	if saveImages {
+		visited = map[Pos]bool{}
+	}
+
+	return &aStarHelper{
+		board:   board,
+		visited: visited,
+		num:     0,
+		mod:     100,
+		images:  []*image.Paletted{},
+	}
 }
 
 var (
@@ -24,8 +42,37 @@ var (
 	}
 )
 
+func (h *aStarHelper) addImage() {
+	width, height := h.board.Size()
+	arr := make([]uint8, width*height)
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			if _, found := h.visited[Pos{x, y}]; found {
+				arr[y*width+x] = 1
+			}
+		}
+	}
+
+	image := &image.Paletted{
+		Pix:     arr,
+		Stride:  width,
+		Rect:    image.Rect(0, 0, width, height),
+		Palette: []color.Color{color.White, color.Black},
+	}
+
+	h.images = append(h.images, image)
+}
+
 func (h *aStarHelper) AllNeighbors(start string) []string {
 	ps := Decode(start)
+
+	if h.visited != nil {
+		h.num++
+		h.visited[ps.Empty] = true
+		if h.num%10 == 0 {
+			h.addImage()
+		}
+	}
 
 	width, height := h.board.Size()
 
