@@ -1,0 +1,71 @@
+#PROTECT 4-9
+# 0 -> a
+# 6 -> b
+# 6 -> c
+# 7 -> d
+ 0 cpy a b
+ 1 dec b
+ 2 cpy a d
+ 3 cpy 0 a
+#### 4-9:
+# while d > 0 {
+#  c=b
+#  while c > 0 { a++; c-- }
+#  d--
+# }
+#
+# while d > 0 {
+#  c=b
+#  a+=c; c=0
+# }
+#
+# while d > 0 {
+#  a+=b
+# }
+# c=0
+#
+# a += b*d
+# (c,d set to zero, but overwritten on 11,12)
+#
+4 cpy b c      ## PROTECT 4-9
+5 mul d c
+6 add c a
+7 nop
+8 nop
+9 nop
+####
+# a=42
+# b=6
+# c=0
+# d=0
+####
+#
+# b-- (5)
+# c=b (5)
+# d=c (5)
+# do {            => c+=d (10), d=0
+#   d-- (4)
+#   c++ (6)
+# } while d > 0
+10 dec b
+11 cpy b c
+12 cpy c d
+13 dec d
+14 inc c
+15 jnz d -2
+####
+# a=42
+# b=5
+# c=10
+# d=0
+####
+16 tgl c       #nop, c=10; 16+10=>oob
+17 cpy -16 c   
+18 jnz 1 c    # jmp -16 => -2
+19 cpy 93 c
+20 jnz 80 d
+21 inc a
+22 inc d
+23 jnz d -2
+24 inc c
+25 jnz c -5
