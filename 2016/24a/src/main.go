@@ -135,5 +135,5 @@ func main() {
 		}
 	}
 
-	fmt.Println(shortestRoute(0, dists))
+	fmt.Printf("shortest from 0 through all: %v\n", shortestRoute(0, dists))
 }
