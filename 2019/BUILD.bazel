@@ -7,7 +7,6 @@ gazelle(
     command = "fix",
     extra_args = [
         "--mode=diff",
-        "--exclude=tpl",
     ],
 )
 
@@ -15,5 +14,4 @@ gazelle(
     name = "gazelle_fix",
     external = "vendored",
     command = "fix",
-    extra_args = ["--exclude=tpl"],
 )
