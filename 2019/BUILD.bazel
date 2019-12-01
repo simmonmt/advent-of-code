@@ -1,0 +1,15 @@
+load("@bazel_gazelle//:def.bzl", "gazelle")
+
+# gazelle:prefix github.com/simmonmt/aoc/2019
+gazelle(
+    name = "gazelle",
+    external = "vendored",
+    command = "fix",
+    extra_args = ["--mode=diff"],
+)
+
+gazelle(
+    name = "gazelle_fix",
+    external = "vendored",
+    command = "fix",
+)
