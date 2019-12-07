@@ -9,7 +9,7 @@ go_library(
         "vm.go",
     ],
     importpath = "github.com/simmonmt/aoc/2019/07/a/src/vm",
-    visibility = ["//05/a/src:__subpackages__"],
+    visibility = ["//07/a/src:__subpackages__"],
     deps = ["//common/logger:go_default_library"],
 )
 
