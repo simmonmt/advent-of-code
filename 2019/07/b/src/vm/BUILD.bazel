@@ -1,0 +1,29 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "inst.go",
+        "io.go",
+        "ram.go",
+        "vm.go",
+    ],
+    importpath = "github.com/simmonmt/aoc/2019/07/b/src/vm",
+    visibility = ["//07/b/src:__subpackages__"],
+    deps = ["//common/logger:go_default_library"],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "inst_test.go",
+        "io_test.go",
+        "ram_test.go",
+        "vm_test.go",
+    ],
+    embed = [":go_default_library"],
+    deps = [
+        "//05/a/src/testutils:go_default_library",
+        "//common/logger:go_default_library",
+    ],
+)
