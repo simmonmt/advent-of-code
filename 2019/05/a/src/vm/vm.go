@@ -25,7 +25,15 @@ func makeCtor(mode int) func(int) Operand {
 	}
 }
 
-func Run(pc int, ram Ram) error {
+func readBytes(ram Ram, pc, sz int) []int {
+	out := []int{}
+	for i := 0; i < sz; i++ {
+		out = append(out, ram.Read(pc+i))
+	}
+	return out
+}
+
+func Run(ram Ram, io IO, pc int) error {
 	for {
 		var inst Instruction
 
@@ -52,6 +60,12 @@ func Run(pc int, ram Ram) error {
 				c: ctorC(ram.Read(pc + 3)),
 			}
 			break
+		case 3:
+			inst = &Input{a: ctorA(ram.Read(pc + 1))}
+			break
+		case 4:
+			inst = &Output{a: ctorA(ram.Read(pc + 1))}
+			break
 		case 99:
 			inst = &Halt{}
 			break
@@ -60,9 +74,9 @@ func Run(pc int, ram Ram) error {
 			return fmt.Errorf("bad opcode %d at %d", op, pc)
 		}
 
-		logger.LogF("%d: %s", pc, inst.String())
+		logger.LogF("%d: %s %v", pc, inst.String(), readBytes(ram, pc, inst.Size()))
 
-		npc := inst.Execute(ram, pc)
+		npc := inst.Execute(ram, io, pc)
 		if npc == -1 {
 			return nil
 		}

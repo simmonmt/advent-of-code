@@ -9,19 +9,6 @@ import (
 	"github.com/simmonmt/aoc/2019/common/logger"
 )
 
-func TestSimpleRun(t *testing.T) {
-	// This is the example program from day 2
-	ram := NewRam(1, 9, 10, 3, 2, 3, 11, 0, 99, 30, 40, 50)
-	if err := Run(0, ram); err != nil {
-		t.Errorf("Run = %v, want nil", err)
-		return
-	}
-
-	if got := ram.Read(0); got != 3500 {
-		t.Errorf("ram[0] = %v, want %v", got, 3500)
-	}
-}
-
 func TestRun(t *testing.T) {
 	type TestCase struct {
 		ramVals        []int
@@ -46,6 +33,17 @@ func TestRun(t *testing.T) {
 			input:       []int{},
 			expectedRam: []int{1101, 100, -1, 4, 99},
 		},
+		TestCase{ // input and output
+			ramVals: []int{
+				3, 9, // in => *9
+				1001, 9, 1, 9, // add *9, 1 => *9
+				4, 9, // out *9
+				99, // hlt
+				0,  // scratch},
+			},
+			input:          []int{15},
+			expectedOutput: []int{16},
+		},
 	}
 
 	for i, tc := range testCases {
@@ -55,7 +53,7 @@ func TestRun(t *testing.T) {
 			ram := NewRam(tc.ramVals...)
 			io := NewIO(tc.input...)
 
-			if err := Run(0, ram); err != nil {
+			if err := Run(ram, io, 0); err != nil {
 				t.Errorf("run failed: %v", err)
 				return
 			}

@@ -70,10 +70,11 @@ func main() {
 		log.Fatalf("ram init fail: %v", err)
 	}
 
-	ram.Write(1, 12)
-	ram.Write(2, 2)
-	if err := vm.Run(0, ram); err != nil {
+	io := vm.NewIO(1)
+
+	if err := vm.Run(ram, io, 0); err != nil {
 		log.Fatalf("program failed: %v", err)
 	}
-	fmt.Printf("ram[0] = %v\n", ram.Read(0))
+
+	fmt.Printf("output: %v\n", io.Written())
 }
