@@ -9,6 +9,7 @@ import (
 type IO interface {
 	Read() int
 	Write(int)
+	Written() []int
 	String() string
 }
 
@@ -39,6 +40,10 @@ func (io *ioImpl) Read() int {
 func (io *ioImpl) Write(val int) {
 	io.output = append(io.output, val)
 	logger.LogF("output: %v", val)
+}
+
+func (io *ioImpl) Written() []int {
+	return io.output
 }
 
 func (io *ioImpl) String() string {

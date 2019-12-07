@@ -8,19 +8,35 @@ type Operand interface {
 	String() string
 }
 
-type IndirectOperand struct {
+type ImmediateOperand struct {
+	imm int
+}
+
+func (o *ImmediateOperand) Read(ram Ram, pc int) int {
+	return o.imm
+}
+
+func (o *ImmediateOperand) Write(ram Ram, pc, val int) {
+	panic("attempt to write immediate")
+}
+
+func (o *ImmediateOperand) String() string {
+	return fmt.Sprintf("%v", o.imm)
+}
+
+type PositionOperand struct {
 	loc int
 }
 
-func (o *IndirectOperand) Read(ram Ram, pc int) int {
+func (o *PositionOperand) Read(ram Ram, pc int) int {
 	return ram.Read(o.loc)
 }
 
-func (o *IndirectOperand) Write(ram Ram, pc, val int) {
+func (o *PositionOperand) Write(ram Ram, pc, val int) {
 	ram.Write(o.loc, val)
 }
 
-func (o *IndirectOperand) String() string {
+func (o *PositionOperand) String() string {
 	return fmt.Sprintf("*%v", o.loc)
 }
 

@@ -1,15 +1,10 @@
 package vm
 
-import "testing"
+import (
+	"testing"
 
-func assertPanic(t *testing.T, msg string, f func()) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error(msg)
-		}
-	}()
-	f()
-}
+	"github.com/simmonmt/aoc/2019/05/a/src/testutils"
+)
 
 func TestInput(t *testing.T) {
 	io := NewIO(1, 2, 3, 4)
@@ -19,5 +14,5 @@ func TestInput(t *testing.T) {
 		got = append(got, io.Read())
 	}
 
-	assertPanic(t, "read failed to panic", func() { io.Read() })
+	testutils.AssertPanic(t, "read failed to panic", func() { io.Read() })
 }
