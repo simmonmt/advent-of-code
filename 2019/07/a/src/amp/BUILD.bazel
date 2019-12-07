@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["amp.go"],
+    importpath = "github.com/simmonmt/aoc/2019/07/a/src/amp",
+    visibility = ["//07/a/src:__subpackages__"],
+    deps = ["//07/a/src/vm:go_default_library"],
+)
