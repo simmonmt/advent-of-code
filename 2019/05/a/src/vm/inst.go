@@ -139,3 +139,105 @@ func (i *Halt) Execute(ram Ram, io IO, pc int) (npc int) {
 func (i *Halt) String() string {
 	return "hlt"
 }
+
+type JumpIfTrue struct {
+	a, b Operand
+}
+
+func (i *JumpIfTrue) Size() int {
+	return 3
+}
+
+func (i *JumpIfTrue) Execute(ram Ram, io IO, pc int) (npc int) {
+	a := i.a.Read(ram, pc)
+	b := i.b.Read(ram, pc)
+	logger.LogF("jit exec: %d ? goto %v", a, b)
+	if a > 0 {
+		npc = b
+	} else {
+		npc = pc + i.Size()
+	}
+	return
+}
+
+func (i *JumpIfTrue) String() string {
+	return fmt.Sprintf("jit %s? to %s", i.a, i.b)
+}
+
+type JumpIfFalse struct {
+	a, b Operand
+}
+
+func (i *JumpIfFalse) Size() int {
+	return 3
+}
+
+func (i *JumpIfFalse) Execute(ram Ram, io IO, pc int) (npc int) {
+	a := i.a.Read(ram, pc)
+	b := i.b.Read(ram, pc)
+	logger.LogF("jif exec: %d =0? goto %v", a, b)
+	if a == 0 {
+		npc = b
+	} else {
+		npc = pc + i.Size()
+	}
+	return
+}
+
+func (i *JumpIfFalse) String() string {
+	return fmt.Sprintf("jif %s=0? to %s", i.a, i.b)
+}
+
+type LessThan struct {
+	a, b, c Operand
+}
+
+func (i *LessThan) Size() int {
+	return 4
+}
+
+func (i *LessThan) Execute(ram Ram, io IO, pc int) (npc int) {
+	a := i.a.Read(ram, pc)
+	b := i.b.Read(ram, pc)
+
+	out := 0
+	if a < b {
+		out = 1
+	}
+
+	logger.LogF("lt exec: %d<%d? %d => %d", a, b, out, i.c)
+	i.c.Write(ram, pc, out)
+	npc = pc + i.Size()
+	return
+}
+
+func (i *LessThan) String() string {
+	return fmt.Sprintf("lt %s<%s => %s", i.a, i.b, i.c)
+}
+
+type Equals struct {
+	a, b, c Operand
+}
+
+func (i *Equals) Size() int {
+	return 4
+}
+
+func (i *Equals) Execute(ram Ram, io IO, pc int) (npc int) {
+	a := i.a.Read(ram, pc)
+	b := i.b.Read(ram, pc)
+
+	out := 0
+	if a == b {
+		out = 1
+	}
+
+	logger.LogF("eq exec: %d==%d? %d => %d", a, b, out, i.c)
+	i.c.Write(ram, pc, out)
+	npc = pc + i.Size()
+	return
+}
+
+func (i *Equals) String() string {
+	return fmt.Sprintf("eq %s==%s => %s", i.a, i.b, i.c)
+}

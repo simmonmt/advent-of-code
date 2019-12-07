@@ -39,10 +39,34 @@ func TestRun(t *testing.T) {
 				1001, 9, 1, 9, // add *9, 1 => *9
 				4, 9, // out *9
 				99, // hlt
-				0,  // scratch},
+				0,  // scratch
 			},
 			input:          []int{15},
 			expectedOutput: []int{16},
+		},
+		TestCase{ // branching
+			ramVals: []int{
+				11105, 1, 4, // 0: jit 1, 4
+				99,          // 3: hlt catches jit fail
+				11106, 0, 8, // 4: jif 0, 8
+				99,       // 7: hlt catches jif fail
+				11104, 1, // out 1
+				99, // hlt
+			},
+			input:          []int{},
+			expectedOutput: []int{1},
+		},
+		TestCase{ // less than and equals
+			ramVals: []int{
+				1107, 0, 1, 13, // 0: lt 0,1 => 13
+				1108, 0, 1, 14, // 4: eq 0,1 => 14
+				4, 13, // 8: out *13
+				4, 14, // 10: out *14
+				99,   // 12: hlt
+				0, 0, // 13: x, y
+			},
+			input:          []int{},
+			expectedOutput: []int{1, 0},
 		},
 	}
 

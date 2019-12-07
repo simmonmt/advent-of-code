@@ -66,6 +66,32 @@ func Run(ram Ram, io IO, pc int) error {
 		case 4:
 			inst = &Output{a: ctorA(ram.Read(pc + 1))}
 			break
+		case 5:
+			inst = &JumpIfTrue{
+				a: ctorA(ram.Read(pc + 1)),
+				b: ctorB(ram.Read(pc + 2)),
+			}
+			break
+		case 6:
+			inst = &JumpIfFalse{
+				a: ctorA(ram.Read(pc + 1)),
+				b: ctorB(ram.Read(pc + 2)),
+			}
+			break
+		case 7:
+			inst = &LessThan{
+				a: ctorA(ram.Read(pc + 1)),
+				b: ctorB(ram.Read(pc + 2)),
+				c: ctorC(ram.Read(pc + 3)),
+			}
+			break
+		case 8:
+			inst = &Equals{
+				a: ctorA(ram.Read(pc + 1)),
+				b: ctorB(ram.Read(pc + 2)),
+				c: ctorC(ram.Read(pc + 3)),
+			}
+			break
 		case 99:
 			inst = &Halt{}
 			break
