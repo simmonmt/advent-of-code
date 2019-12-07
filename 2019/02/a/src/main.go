@@ -6,13 +6,15 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/simmonmt/aoc/2019/common/logger"
 )
 
 var (
 	verbose = flag.Bool("verbose", false, "verbose")
-	input = flag.String("input", "", "input file")
+	input   = flag.String("input", "", "input file")
 )
 
 func readInput(path string) ([]string, error) {
@@ -36,6 +38,41 @@ func readInput(path string) ([]string, error) {
 	return lines, nil
 }
 
+func initRam(line string) (map[int]int, error) {
+	ram := map[int]int{}
+	for i, str := range strings.Split(line, ",") {
+		val, err := strconv.Atoi(str)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse %v: %v", str, err)
+		}
+		ram[i] = val
+	}
+
+	return ram, nil
+}
+
+func runProgram(ram map[int]int) {
+	for pc := 0; ; pc += 4 {
+		op := ram[pc]
+		logger.LogF("pc=%d op %d %d %d %d",
+			pc, op, ram[pc+1], ram[pc+2], ram[pc+3])
+		switch op {
+		case 1:
+			ram[ram[pc+3]] = ram[ram[pc+1]] + ram[ram[pc+2]]
+			break
+		case 2:
+			ram[ram[pc+3]] = ram[ram[pc+1]] * ram[ram[pc+2]]
+			break
+		case 99:
+			logger.LogLn("exiting")
+			return
+
+		default:
+			panic(fmt.Sprintf("bad opcode %d at %d", op, pc))
+		}
+	}
+}
+
 func main() {
 	flag.Parse()
 	logger.Init(*verbose)
@@ -49,5 +86,21 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(lines)
+	for i, line := range lines {
+		logger.LogF("program %d", i)
+		ram, err := initRam(line)
+		if err != nil {
+			log.Fatalf("program %d ram init fail: %v", i, err)
+		}
+
+		logger.LogLn("read ram")
+
+		ram[1] = 12
+		ram[2] = 2
+
+		runProgram(ram)
+		logger.LogF("after done: ram %v", ram)
+
+		fmt.Printf("ram[0] = %v\n", ram[0])
+	}
 }
