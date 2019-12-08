@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	amp "github.com/simmonmt/aoc/2019/07/b/src/amp"
-	vm "github.com/simmonmt/aoc/2019/07/b/src/vm"
+	"github.com/simmonmt/aoc/2019/07/b/src/amp"
+	"github.com/simmonmt/aoc/2019/07/b/src/vm"
 	"github.com/simmonmt/aoc/2019/common/logger"
 )
 
@@ -63,24 +63,48 @@ func parseInput(inputStr string) ([]int, error) {
 	return out, nil
 }
 
-func tryPhaseCombination(phases []int, ram vm.Ram) int {
-	signal := 0
-	for i, phase := range phases {
-		out, err := amp.Run(phase, signal, ram.Clone())
-		if err != nil {
-			log.Fatalf("amp %d crashed: %v", i, err)
-		}
+func tryPhaseCombination(phases []int, ram vm.Ram) (int, error) {
+	logger.LogF("trying phase combination %v\n", phases)
 
-		signal = out
+	amps := make([]*amp.Amp, 5)
+	for i, phase := range phases {
+		amps[i] = amp.Start(phase, ram.Clone())
 	}
-	return signal
+
+	amps[0].In <- &vm.ChanIOMessage{Val: 0}
+
+	last := 0
+	for {
+		for i := range amps {
+			msg, ok := <-amps[i].Out
+			if !ok {
+				logger.LogF("amp %d stopping show for %v result %v\n",
+					i, phases, last)
+				return last, nil
+			}
+
+			if msg.Err != nil {
+				return 0, fmt.Errorf("amp %d error: %v", i, msg.Err)
+			}
+			signal := msg.Val
+
+			if i == 4 {
+				last = signal
+			}
+
+			dest := (i + 1) % 5
+			logger.LogF("amp %d out %v to amp %d\n", i, msg, dest)
+			amps[dest].In <- msg
+		}
+	}
 }
 
-func tryAllPhases(ram vm.Ram) ([]int, int) {
-	var phases, maxPhases [5]int
+func tryAllPhases(ram vm.Ram) ([]int, int, error) {
+	phases := []int{5, 5, 5, 5, 5}
+	var maxPhases [5]int
 	maxResult := 0
 	for {
-		var phaseCounts [5]bool
+		var phaseCounts [10]bool
 		hasRepeats := false
 		for _, v := range phases {
 			if phaseCounts[v] {
@@ -91,20 +115,22 @@ func tryAllPhases(ram vm.Ram) ([]int, int) {
 			}
 		}
 		if !hasRepeats {
-			//fmt.Printf("trying %v\n", phases)
-			result := tryPhaseCombination(phases[:], ram)
-			//fmt.Printf("phase %v, result %v\n", phases, result)
+			result, err := tryPhaseCombination(phases[:], ram)
+			if err != nil {
+				return nil, 0, err
+			}
+
 			if result > maxResult {
 				maxResult = result
-				maxPhases = phases
+				copy(maxPhases[:], phases)
 			}
 		}
 
 		var i int
 		for i = 0; i < len(phases); i++ {
 			phases[i]++
-			if phases[i] == 5 {
-				phases[i] = 0
+			if phases[i] == 10 {
+				phases[i] = 5
 			} else {
 				break
 			}
@@ -114,7 +140,7 @@ func tryAllPhases(ram vm.Ram) ([]int, int) {
 		}
 	}
 
-	return maxPhases[:], maxResult
+	return maxPhases[:], maxResult, nil
 }
 
 func main() {
@@ -136,18 +162,16 @@ func main() {
 			log.Fatal(err)
 		}
 
-		in := 0
-		for i, phase := range inputValues {
-			out, err := amp.Run(phase, in, ram.Clone())
-			if err != nil {
-				log.Fatalf("amp %d crashed: %v", i, err)
-			}
-
-			fmt.Printf("amp %d phase %d in %d out %d\n", i, phase, in, out)
-			in = out
+		result, err := tryPhaseCombination(inputValues, ram)
+		if err != nil {
+			log.Fatal(err)
 		}
+		fmt.Printf("result %v\n", result)
 	} else {
-		seq, result := tryAllPhases(ram)
+		seq, result, err := tryAllPhases(ram)
+		if err != nil {
+			log.Fatal(err)
+		}
 		fmt.Printf("seq %v result %v\n", seq, result)
 	}
 }

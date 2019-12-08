@@ -16,7 +16,7 @@ func CheckRam(t *testing.T, ram Ram, vals []int) {
 	}
 }
 
-func CheckEmptyOutput(t *testing.T, io IO) {
+func CheckEmptyOutput(t *testing.T, io *ioImpl) {
 	if got := io.Written(); !reflect.DeepEqual(got, []int{}) {
 		t.Errorf("output = %v, want []", got)
 	}
@@ -82,7 +82,7 @@ func CheckInstruction(t *testing.T, startRam Ram, startPC int, testCases []Instr
 				CheckRam(t, ram, tc.expectedRam)
 			}
 
-			CheckEmptyOutput(t, io)
+			CheckEmptyOutput(t, io.(*ioImpl))
 		})
 
 	}
@@ -187,7 +187,7 @@ func TestInputInstruction(t *testing.T) {
 		t.Errorf("npc = %v, want %v", npc, 3)
 	}
 
-	CheckEmptyOutput(t, io)
+	CheckEmptyOutput(t, io.(*ioImpl))
 	CheckRam(t, ram, []int{10, 5, 12})
 }
 
@@ -201,7 +201,7 @@ func TestOutputInstruction(t *testing.T) {
 		t.Errorf("npc = %v, want %v", npc, 3)
 	}
 
-	if got := io.Written(); !reflect.DeepEqual(got, []int{11}) {
+	if got := io.(*ioImpl).Written(); !reflect.DeepEqual(got, []int{11}) {
 		t.Errorf("Written() = %v, want [11]")
 	}
 

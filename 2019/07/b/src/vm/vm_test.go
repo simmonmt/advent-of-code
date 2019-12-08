@@ -83,7 +83,7 @@ func TestRun(t *testing.T) {
 			}
 
 			if tc.expectedOutput != nil {
-				if got := io.Written(); !reflect.DeepEqual(got, tc.expectedOutput) {
+				if got := io.(*ioImpl).Written(); !reflect.DeepEqual(got, tc.expectedOutput) {
 					t.Errorf("output = %v, want %v", got, tc.expectedOutput)
 				}
 			}

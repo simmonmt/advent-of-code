@@ -6,15 +6,36 @@ import (
 	vm "github.com/simmonmt/aoc/2019/07/b/src/vm"
 )
 
-func Run(phase, in int, ram vm.Ram) (int, error) {
-	io := vm.NewIO(phase, in)
-	if err := vm.Run(ram, io, 0); err != nil {
-		return 0, err
+type Amp struct {
+	In    chan *vm.ChanIOMessage
+	Out   chan *vm.ChanIOMessage
+	phase int
+	ram   vm.Ram
+}
+
+func Start(phase int, ram vm.Ram) *Amp {
+	amp := &Amp{
+		In:    make(chan *vm.ChanIOMessage, 2),
+		Out:   make(chan *vm.ChanIOMessage, 2),
+		phase: phase,
+		ram:   ram,
 	}
 
-	out := io.Written()
-	if len(out) != 1 {
-		return 0, fmt.Errorf("unexpected out sz %d, want 1", len(out))
+	amp.In <- &vm.ChanIOMessage{Val: phase}
+
+	go run(amp)
+
+	return amp
+}
+
+func run(amp *Amp) {
+	io := vm.NewChanIO(amp.In, amp.Out)
+	if err := vm.Run(amp.ram, io, 0); err != nil {
+		amp.Out <- &vm.ChanIOMessage{
+			Err: fmt.Errorf("phase %d amp failed: %v", amp.phase, err),
+		}
 	}
-	return out[0], nil
+
+	close(amp.Out)
+	fmt.Sprintf("phase %d amp terminating\n", amp.phase)
 }

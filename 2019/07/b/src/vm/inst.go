@@ -118,6 +118,8 @@ func (i *Output) Size() int {
 }
 
 func (i *Output) Execute(ram Ram, io IO, pc int) (npc int) {
+	out := i.a.Read(ram, pc)
+	logger.LogF("out exec: write %d", out)
 	io.Write(i.a.Read(ram, pc))
 	return pc + i.Size()
 }
