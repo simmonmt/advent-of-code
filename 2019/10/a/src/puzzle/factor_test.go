@@ -3,6 +3,8 @@ package puzzle
 import (
 	"fmt"
 	"testing"
+
+	"github.com/simmonmt/aoc/2019/10/a/src/testutils"
 )
 
 func TestFactor(t *testing.T) {
@@ -24,4 +26,6 @@ func TestFactor(t *testing.T) {
 			}
 		})
 	}
+
+	testutils.AssertPanic(t, "too large", func() { Factor(999, 999) })
 }

@@ -11,4 +11,5 @@ go_test(
     name = "go_default_test",
     srcs = ["factor_test.go"],
     embed = [":go_default_library"],
+    deps = ["//10/a/src/testutils:go_default_library"],
 )
