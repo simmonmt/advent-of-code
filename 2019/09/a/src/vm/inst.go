@@ -44,6 +44,22 @@ func (o *PositionOperand) String() string {
 	return fmt.Sprintf("*%v", o.loc)
 }
 
+type RelativeOperand struct {
+	imm int
+}
+
+func (o *RelativeOperand) Read(r *Resources, pc int) int {
+	return r.relBase + o.imm
+}
+
+func (o *RelativeOperand) Write(r *Resources, pc, val int) {
+	panic("attempt to write relative")
+}
+
+func (o *RelativeOperand) String() string {
+	return fmt.Sprintf("*R%v", o.imm)
+}
+
 type Instruction interface {
 	Size() int
 	Execute(r *Resources, pc int) (npc int)

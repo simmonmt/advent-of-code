@@ -24,10 +24,9 @@ func CheckEmptyOutput(t *testing.T, io *ioImpl) {
 
 func TestImmediateOperand(t *testing.T) {
 	ramVals := []int{10, 11, 12, 13, 14}
-
 	r := &Resources{ram: NewRam(ramVals...)}
-	var op Operand = &ImmediateOperand{imm: 2}
 
+	var op Operand = &ImmediateOperand{imm: 2}
 	if got := op.Read(r, 0); got != 2 {
 		t.Errorf("Read(ram, 0) = %d, want %d", got, 2)
 	}
@@ -40,8 +39,8 @@ func TestImmediateOperand(t *testing.T) {
 
 func TestPositionOperand(t *testing.T) {
 	r := &Resources{ram: NewRam(10, 11, 12, 13, 14)}
-	var op Operand = &PositionOperand{loc: 2}
 
+	var op Operand = &PositionOperand{loc: 2}
 	if got := op.Read(r, 0); got != 12 {
 		t.Errorf("Read(ram, 0) = %d, want %d", got, 12)
 	}
@@ -52,6 +51,23 @@ func TestPositionOperand(t *testing.T) {
 	}
 
 	CheckRam(t, r.ram, []int{10, 11, 99, 13, 14})
+}
+
+func TestRelativeOperand(t *testing.T) {
+	r := &Resources{
+		ram:     NewRam(),
+		relBase: 1000,
+	}
+
+	var op Operand = &RelativeOperand{imm: -10}
+	if got := op.Read(r, 0); got != 990 {
+		t.Errorf("Read(ram, 0) = %d, want %d", got, 990)
+	}
+
+	testutils.AssertPanic(t, "write failed to panic",
+		func() { op.Write(r, 0, 99) })
+
+	CheckRam(t, r.ram, []int{})
 }
 
 type InstructionTestCase struct {

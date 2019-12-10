@@ -14,12 +14,18 @@ func position(addr int) Operand {
 	return &PositionOperand{addr}
 }
 
+func relative(addr int) Operand {
+	return &RelativeOperand{addr}
+}
+
 func makeCtor(mode int) func(int) Operand {
 	switch mode {
 	case 0:
 		return position
 	case 1:
 		return immediate
+	case 2:
+		return relative
 	default:
 		panic(fmt.Sprintf("unknown mode %d", mode))
 	}
