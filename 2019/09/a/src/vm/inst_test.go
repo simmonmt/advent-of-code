@@ -55,19 +55,18 @@ func TestPositionOperand(t *testing.T) {
 
 func TestRelativeOperand(t *testing.T) {
 	r := &Resources{
-		ram:     NewRam(),
-		relBase: 1000,
+		ram:     NewRam(0, 1, 2, 3, 4, 5),
+		relBase: 5,
 	}
 
-	var op Operand = &RelativeOperand{imm: -10}
-	if got := op.Read(r, 0); got != 990 {
-		t.Errorf("Read(ram, 0) = %d, want %d", got, 990)
+	var op Operand = &RelativeOperand{imm: -2}
+	if got := op.Read(r, 0); got != 3 {
+		t.Errorf("Read(ram, 0) = %d, want %d", got, 3)
 	}
 
-	testutils.AssertPanic(t, "write failed to panic",
-		func() { op.Write(r, 0, 99) })
+	op.Write(r, 0, 99)
 
-	CheckRam(t, r.ram, []int{})
+	CheckRam(t, r.ram, []int{0, 1, 2, 99, 4, 5})
 }
 
 type InstructionTestCase struct {

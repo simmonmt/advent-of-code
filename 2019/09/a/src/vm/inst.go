@@ -49,11 +49,11 @@ type RelativeOperand struct {
 }
 
 func (o *RelativeOperand) Read(r *Resources, pc int) int {
-	return r.relBase + o.imm
+	return r.ram.Read(r.relBase + o.imm)
 }
 
 func (o *RelativeOperand) Write(r *Resources, pc, val int) {
-	panic("attempt to write relative")
+	r.ram.Write(r.relBase+o.imm, val)
 }
 
 func (o *RelativeOperand) String() string {

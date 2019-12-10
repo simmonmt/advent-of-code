@@ -70,11 +70,12 @@ func TestRun(t *testing.T) {
 		},
 		TestCase{ // relbase
 			ramVals: []int{
-				109, 2019, // 0: setrelbase 2019
-				204, -34, // 2: output *R-34
+				109, 7, // 0: setrelbase 7
+				204, -2, // 2: output *R-2
 				99, // 4: hlt
+				42, // 5: scratch
 			},
-			expectedOutput: []int{1985},
+			expectedOutput: []int{42},
 		},
 	}
 
