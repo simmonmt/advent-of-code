@@ -11,5 +11,8 @@ go_library(
     srcs = ["main.go"],
     importpath = "github.com/simmonmt/aoc/2019/09/a/src",
     visibility = ["//visibility:private"],
-    deps = ["//common/logger:go_default_library"],
+    deps = [
+        "//09/a/src/vm:go_default_library",
+        "//common/logger:go_default_library",
+    ],
 )
