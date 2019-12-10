@@ -2,6 +2,8 @@ package puzzle
 
 import (
 	"fmt"
+
+	"github.com/simmonmt/aoc/2019/common/intmath"
 )
 
 var (
@@ -11,14 +13,14 @@ var (
 )
 
 func Factor(n, d int) (int, int) {
-	if n > kPrimes[len(kPrimes)-1] || d > kPrimes[len(kPrimes)-1] {
+	if intmath.Abs(n) > kPrimes[len(kPrimes)-1] || intmath.Abs(d) > kPrimes[len(kPrimes)-1] {
 		panic(fmt.Sprintf("too large n=%d d=%d", n, d))
 	}
 
 	for {
 		changed := false
 		for _, p := range kPrimes {
-			if p > n && p > d {
+			if p > intmath.Abs(n) && p > intmath.Abs(d) {
 				break
 			}
 

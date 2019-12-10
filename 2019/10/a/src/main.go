@@ -7,12 +7,13 @@ import (
 	"log"
 	"os"
 
+	"github.com/simmonmt/aoc/2019/10/a/src/puzzle"
 	"github.com/simmonmt/aoc/2019/common/logger"
 )
 
 var (
 	verbose = flag.Bool("verbose", false, "verbose")
-	input = flag.String("input", "", "input file")
+	input   = flag.String("input", "", "input file")
 )
 
 func readInput(path string) ([]string, error) {
@@ -49,5 +50,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(lines)
+	asteroids := puzzle.ParseMap(lines)
+	bestPos, bestVisible := puzzle.FindBest(asteroids)
+	fmt.Printf("best is %v visible from %+v\n", bestVisible, bestPos)
 }

@@ -11,5 +11,8 @@ go_library(
     srcs = ["main.go"],
     importpath = "github.com/simmonmt/aoc/2019/10/a/src",
     visibility = ["//visibility:private"],
-    deps = ["//common/logger:go_default_library"],
+    deps = [
+        "//10/a/src/puzzle:go_default_library",
+        "//common/logger:go_default_library",
+    ],
 )

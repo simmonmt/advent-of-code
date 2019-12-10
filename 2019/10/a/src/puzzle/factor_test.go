@@ -16,6 +16,7 @@ func TestFactor(t *testing.T) {
 	testCases := []TestCase{
 		TestCase{4, 6, 2, 3},
 		TestCase{12, 18, 2, 3},
+		TestCase{-4, -2, -2, -1},
 	}
 
 	for _, tc := range testCases {
