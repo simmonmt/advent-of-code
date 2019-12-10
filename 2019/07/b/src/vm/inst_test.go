@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/simmonmt/aoc/2019/07/b/src/testutils"
+	"github.com/simmonmt/aoc/2019/common/testutils"
 )
 
 func CheckRam(t *testing.T, ram Ram, vals []int) {

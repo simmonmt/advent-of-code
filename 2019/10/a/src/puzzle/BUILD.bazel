@@ -23,5 +23,5 @@ go_test(
         "find_test.go",
     ],
     embed = [":go_default_library"],
-    deps = ["//10/a/src/testutils:go_default_library"],
+    deps = ["//common/testutils:go_default_library"],
 )

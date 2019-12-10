@@ -1,8 +1,0 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "go_default_library",
-    srcs = ["testutils.go"],
-    importpath = "github.com/simmonmt/aoc/2019/05/a/src/testutils",
-    visibility = ["//05/a:__subpackages__"],
-)

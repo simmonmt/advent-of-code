@@ -23,7 +23,7 @@ go_test(
     ],
     embed = [":go_default_library"],
     deps = [
-        "//07/b/src/testutils:go_default_library",
         "//common/logger:go_default_library",
+        "//common/testutils:go_default_library",
     ],
 )

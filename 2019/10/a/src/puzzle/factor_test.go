@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/simmonmt/aoc/2019/10/a/src/testutils"
+	"github.com/simmonmt/aoc/2019/common/testutils"
 )
 
 func TestFactor(t *testing.T) {

@@ -3,7 +3,7 @@ package vm
 import (
 	"testing"
 
-	"github.com/simmonmt/aoc/2019/07/a/src/testutils"
+	"github.com/simmonmt/aoc/2019/common/testutils"
 )
 
 func TestInput(t *testing.T) {
