@@ -3,33 +3,33 @@ package vm
 import "fmt"
 
 type Ram interface {
-	Read(addr int) int
-	Write(addr, val int)
+	Read(addr int64) int64
+	Write(addr, val int64)
 	Clone() Ram
 	Dump()
 }
 
 type ramImpl struct {
-	r map[int]int
+	r map[int64]int64
 }
 
-func NewRam(vals ...int) Ram {
+func NewRam(vals ...int64) Ram {
 	r := &ramImpl{
-		r: map[int]int{},
+		r: map[int64]int64{},
 	}
 
 	for a, v := range vals {
-		r.r[a] = v
+		r.r[int64(a)] = v
 	}
 
 	return r
 }
 
-func (r *ramImpl) Read(addr int) int {
+func (r *ramImpl) Read(addr int64) int64 {
 	return r.r[addr]
 }
 
-func (r *ramImpl) Write(addr, val int) {
+func (r *ramImpl) Write(addr, val int64) {
 	r.r[addr] = val
 }
 

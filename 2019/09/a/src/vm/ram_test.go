@@ -23,24 +23,24 @@ func TestRamWithData(t *testing.T) {
 	ram := NewRam(0, 0, 10, 11, 12, 13)
 	ram.Write(4, 99)
 
-	got := []int{}
-	for i := 0; i <= 6; i++ {
+	got := []int64{}
+	for i := int64(0); i <= 6; i++ {
 		got = append(got, ram.Read(i))
 	}
 
-	want := []int{0, 0, 10, 11, 99, 13, 0}
+	want := []int64{0, 0, 10, 11, 99, 13, 0}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("Ram got %v, want %v", got, want)
 	}
 }
 
 func TestClone(t *testing.T) {
-	vals := []int{0, 0, 10, 11, 12, 13}
+	vals := []int64{0, 0, 10, 11, 12, 13}
 	ram := NewRam(vals...)
 	clone := ram.Clone()
 
 	for addr, val := range vals {
-		if got := clone.Read(addr); got != val {
+		if got := clone.Read(int64(addr)); got != val {
 			t.Errorf("clone %v = %v, want %v", addr, got, val)
 		}
 	}

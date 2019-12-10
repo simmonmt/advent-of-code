@@ -6,19 +6,19 @@ import (
 	"github.com/simmonmt/aoc/2019/common/logger"
 )
 
-func immediate(imm int) Operand {
+func immediate(imm int64) Operand {
 	return &ImmediateOperand{imm}
 }
 
-func position(addr int) Operand {
+func position(addr int64) Operand {
 	return &PositionOperand{addr}
 }
 
-func relative(addr int) Operand {
+func relative(addr int64) Operand {
 	return &RelativeOperand{addr}
 }
 
-func makeCtor(mode int) func(int) Operand {
+func makeCtor(mode int64) func(int64) Operand {
 	switch mode {
 	case 0:
 		return position
@@ -31,9 +31,9 @@ func makeCtor(mode int) func(int) Operand {
 	}
 }
 
-func readBytes(ram Ram, pc, sz int) []int {
-	out := []int{}
-	for i := 0; i < sz; i++ {
+func readBytes(ram Ram, pc, sz int64) []int64 {
+	out := []int64{}
+	for i := int64(0); i < sz; i++ {
 		out = append(out, ram.Read(pc+i))
 	}
 	return out
@@ -42,10 +42,10 @@ func readBytes(ram Ram, pc, sz int) []int {
 type Resources struct {
 	ram     Ram
 	io      IO
-	relBase int
+	relBase int64
 }
 
-func decode(r *Resources, pc int) (Instruction, error) {
+func decode(r *Resources, pc int64) (Instruction, error) {
 	var inst Instruction
 
 	val := r.ram.Read(pc)
@@ -120,7 +120,7 @@ func decode(r *Resources, pc int) (Instruction, error) {
 	return inst, nil
 }
 
-func run(r *Resources, pc int) error {
+func run(r *Resources, pc int64) error {
 	for {
 		inst, err := decode(r, pc)
 		if err != nil {
@@ -136,10 +136,11 @@ func run(r *Resources, pc int) error {
 	}
 }
 
-func Run(ram Ram, io IO, pc int) error {
+func Run(ram Ram, io IO, pc int64) error {
 	r := &Resources{
-		ram: ram,
-		io:  io,
+		ram:     ram,
+		io:      io,
+		relBase: 0,
 	}
 
 	return run(r, pc)

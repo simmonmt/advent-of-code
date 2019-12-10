@@ -43,21 +43,21 @@ func readRam(path string) (vm.Ram, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse %v: %v", str, err)
 		}
-		ram.Write(i, val)
+		ram.Write(int64(i), int64(val))
 	}
 
 	return ram, nil
 }
 
-func parseInput(inputStr string) ([]int, error) {
-	out := []int{}
+func parseInput(inputStr string) ([]int64, error) {
+	out := []int64{}
 	for _, s := range strings.Split(inputStr, ",") {
 		v, err := strconv.Atoi(s)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse input value %v: %v", s, err)
 		}
 
-		out = append(out, v)
+		out = append(out, int64(v))
 	}
 	return out, nil
 }

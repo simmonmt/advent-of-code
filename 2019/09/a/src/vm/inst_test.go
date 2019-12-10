@@ -8,22 +8,22 @@ import (
 	"github.com/simmonmt/aoc/2019/09/a/src/testutils"
 )
 
-func CheckRam(t *testing.T, ram Ram, vals []int) {
+func CheckRam(t *testing.T, ram Ram, vals []int64) {
 	for i, val := range vals {
-		if got := ram.Read(i); got != val {
+		if got := ram.Read(int64(i)); got != val {
 			t.Errorf("verify mismatch at %v: got %v want %v", i, got, val)
 		}
 	}
 }
 
 func CheckEmptyOutput(t *testing.T, io *SaverIO) {
-	if got := io.Written(); !reflect.DeepEqual(got, []int{}) {
+	if got := io.Written(); !reflect.DeepEqual(got, []int64{}) {
 		t.Errorf("output = %v, want []", got)
 	}
 }
 
 func TestImmediateOperand(t *testing.T) {
-	ramVals := []int{10, 11, 12, 13, 14}
+	ramVals := []int64{10, 11, 12, 13, 14}
 	r := &Resources{ram: NewRam(ramVals...)}
 
 	var op Operand = &ImmediateOperand{imm: 2}
@@ -50,7 +50,7 @@ func TestPositionOperand(t *testing.T) {
 		t.Errorf("Read(ram, 0) = %d, want %d", got, 99)
 	}
 
-	CheckRam(t, r.ram, []int{10, 11, 99, 13, 14})
+	CheckRam(t, r.ram, []int64{10, 11, 99, 13, 14})
 }
 
 func TestRelativeOperand(t *testing.T) {
@@ -66,16 +66,16 @@ func TestRelativeOperand(t *testing.T) {
 
 	op.Write(r, 0, 99)
 
-	CheckRam(t, r.ram, []int{0, 1, 2, 99, 4, 5})
+	CheckRam(t, r.ram, []int64{0, 1, 2, 99, 4, 5})
 }
 
 type InstructionTestCase struct {
 	inst        Instruction
-	expectedNPC int
-	expectedRam []int
+	expectedNPC int64
+	expectedRam []int64
 }
 
-func CheckInstruction(t *testing.T, startRam Ram, startPC int, testCases []InstructionTestCase) {
+func CheckInstruction(t *testing.T, startRam Ram, startPC int64, testCases []InstructionTestCase) {
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
 			saverIO := NewSaverIO()
@@ -84,7 +84,7 @@ func CheckInstruction(t *testing.T, startRam Ram, startPC int, testCases []Instr
 				io:  saverIO,
 			}
 
-			var wantNPC int
+			var wantNPC int64
 			if tc.expectedNPC != 0 {
 				wantNPC = tc.expectedNPC
 			} else {
@@ -106,9 +106,9 @@ func CheckInstruction(t *testing.T, startRam Ram, startPC int, testCases []Instr
 }
 
 func TestInstructions(t *testing.T) {
-	initialRamValues := []int{10, 11, 12, 13, 14}
+	initialRamValues := []int64{10, 11, 12, 13, 14}
 	ram := NewRam(initialRamValues...)
-	startPC := 1
+	startPC := int64(1)
 
 	testCases := []InstructionTestCase{
 		// Simple instructions
@@ -118,7 +118,7 @@ func TestInstructions(t *testing.T) {
 				b: &PositionOperand{2},
 				c: &PositionOperand{4},
 			},
-			expectedRam: []int{10, 11, 12, 13, 11 + 12},
+			expectedRam: []int64{10, 11, 12, 13, 11 + 12},
 		},
 		InstructionTestCase{
 			inst: &Multiply{
@@ -126,7 +126,7 @@ func TestInstructions(t *testing.T) {
 				b: &PositionOperand{2},
 				c: &PositionOperand{4},
 			},
-			expectedRam: []int{10, 11, 12, 13, 11 * 12},
+			expectedRam: []int64{10, 11, 12, 13, 11 * 12},
 		},
 		InstructionTestCase{
 			inst:        &Halt{},
@@ -161,7 +161,7 @@ func TestInstructions(t *testing.T) {
 				b: &ImmediateOperand{2},
 				c: &PositionOperand{1},
 			},
-			expectedRam: []int{10, 1, 12, 13, 14},
+			expectedRam: []int64{10, 1, 12, 13, 14},
 		},
 		InstructionTestCase{
 			inst: &LessThan{
@@ -169,7 +169,7 @@ func TestInstructions(t *testing.T) {
 				b: &ImmediateOperand{1},
 				c: &PositionOperand{1},
 			},
-			expectedRam: []int{10, 0, 12, 13, 14},
+			expectedRam: []int64{10, 0, 12, 13, 14},
 		},
 
 		// Equals
@@ -179,7 +179,7 @@ func TestInstructions(t *testing.T) {
 				b: &ImmediateOperand{1},
 				c: &PositionOperand{1},
 			},
-			expectedRam: []int{10, 1, 12, 13, 14},
+			expectedRam: []int64{10, 1, 12, 13, 14},
 		},
 		InstructionTestCase{
 			inst: &Equals{
@@ -187,7 +187,7 @@ func TestInstructions(t *testing.T) {
 				b: &ImmediateOperand{2},
 				c: &PositionOperand{1},
 			},
-			expectedRam: []int{10, 0, 12, 13, 14},
+			expectedRam: []int64{10, 0, 12, 13, 14},
 		},
 	}
 
@@ -208,7 +208,7 @@ func TestInputInstruction(t *testing.T) {
 	}
 
 	CheckEmptyOutput(t, saverIO)
-	CheckRam(t, r.ram, []int{10, 5, 12})
+	CheckRam(t, r.ram, []int64{10, 5, 12})
 }
 
 func TestOutputInstruction(t *testing.T) {
@@ -223,11 +223,11 @@ func TestOutputInstruction(t *testing.T) {
 		t.Errorf("npc = %v, want %v", npc, 3)
 	}
 
-	if got := saverIO.Written(); !reflect.DeepEqual(got, []int{11}) {
+	if got := saverIO.Written(); !reflect.DeepEqual(got, []int64{11}) {
 		t.Errorf("Written() = %v, want [11]")
 	}
 
-	CheckRam(t, r.ram, []int{10, 11, 12})
+	CheckRam(t, r.ram, []int64{10, 11, 12})
 }
 
 func TestSetRelBaseInstruction(t *testing.T) {

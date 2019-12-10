@@ -9,8 +9,8 @@ import (
 func TestInput(t *testing.T) {
 	io := NewSaverIO(1, 2, 3, 4)
 
-	got := []int{}
-	for i := 0; i < 4; i++ {
+	got := []int64{}
+	for i := int64(0); i < 4; i++ {
 		got = append(got, io.Read())
 	}
 

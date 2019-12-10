@@ -7,20 +7,20 @@ import (
 )
 
 type Operand interface {
-	Read(r *Resources, pc int) int
-	Write(r *Resources, pc, val int)
+	Read(r *Resources, pc int64) int64
+	Write(r *Resources, pc, val int64)
 	String() string
 }
 
 type ImmediateOperand struct {
-	imm int
+	imm int64
 }
 
-func (o *ImmediateOperand) Read(r *Resources, pc int) int {
+func (o *ImmediateOperand) Read(r *Resources, pc int64) int64 {
 	return o.imm
 }
 
-func (o *ImmediateOperand) Write(r *Resources, pc, val int) {
+func (o *ImmediateOperand) Write(r *Resources, pc, val int64) {
 	panic("attempt to write immediate")
 }
 
@@ -29,14 +29,14 @@ func (o *ImmediateOperand) String() string {
 }
 
 type PositionOperand struct {
-	loc int
+	loc int64
 }
 
-func (o *PositionOperand) Read(r *Resources, pc int) int {
+func (o *PositionOperand) Read(r *Resources, pc int64) int64 {
 	return r.ram.Read(o.loc)
 }
 
-func (o *PositionOperand) Write(r *Resources, pc, val int) {
+func (o *PositionOperand) Write(r *Resources, pc, val int64) {
 	r.ram.Write(o.loc, val)
 }
 
@@ -45,14 +45,14 @@ func (o *PositionOperand) String() string {
 }
 
 type RelativeOperand struct {
-	imm int
+	imm int64
 }
 
-func (o *RelativeOperand) Read(r *Resources, pc int) int {
+func (o *RelativeOperand) Read(r *Resources, pc int64) int64 {
 	return r.ram.Read(r.relBase + o.imm)
 }
 
-func (o *RelativeOperand) Write(r *Resources, pc, val int) {
+func (o *RelativeOperand) Write(r *Resources, pc, val int64) {
 	r.ram.Write(r.relBase+o.imm, val)
 }
 
@@ -61,8 +61,8 @@ func (o *RelativeOperand) String() string {
 }
 
 type Instruction interface {
-	Size() int
-	Execute(r *Resources, pc int) (npc int)
+	Size() int64
+	Execute(r *Resources, pc int64) (npc int64)
 	String() string
 }
 
@@ -70,11 +70,11 @@ type Add struct {
 	a, b, c Operand
 }
 
-func (i *Add) Size() int {
+func (i *Add) Size() int64 {
 	return 4
 }
 
-func (i *Add) Execute(r *Resources, pc int) (npc int) {
+func (i *Add) Execute(r *Resources, pc int64) (npc int64) {
 	a := i.a.Read(r, pc)
 	b := i.b.Read(r, pc)
 	out := a + b
@@ -92,11 +92,11 @@ type Multiply struct {
 	a, b, c Operand
 }
 
-func (i *Multiply) Size() int {
+func (i *Multiply) Size() int64 {
 	return 4
 }
 
-func (i *Multiply) Execute(r *Resources, pc int) (npc int) {
+func (i *Multiply) Execute(r *Resources, pc int64) (npc int64) {
 	i.c.Write(r, pc, i.a.Read(r, pc)*i.b.Read(r, pc))
 	npc = pc + i.Size()
 	return
@@ -110,11 +110,11 @@ type Input struct {
 	a Operand
 }
 
-func (i *Input) Size() int {
+func (i *Input) Size() int64 {
 	return 2
 }
 
-func (i *Input) Execute(r *Resources, pc int) (npc int) {
+func (i *Input) Execute(r *Resources, pc int64) (npc int64) {
 	in := r.io.Read()
 	logger.LogF("in exec: %d => %s", in, i.a)
 	i.a.Write(r, pc, in)
@@ -129,11 +129,11 @@ type Output struct {
 	a Operand
 }
 
-func (i *Output) Size() int {
+func (i *Output) Size() int64 {
 	return 2
 }
 
-func (i *Output) Execute(r *Resources, pc int) (npc int) {
+func (i *Output) Execute(r *Resources, pc int64) (npc int64) {
 	out := i.a.Read(r, pc)
 	logger.LogF("out exec: write %d", out)
 	r.io.Write(i.a.Read(r, pc))
@@ -146,11 +146,11 @@ func (i *Output) String() string {
 
 type Halt struct{}
 
-func (i *Halt) Size() int {
+func (i *Halt) Size() int64 {
 	return 1
 }
 
-func (i *Halt) Execute(r *Resources, pc int) (npc int) {
+func (i *Halt) Execute(r *Resources, pc int64) (npc int64) {
 	return -1
 }
 
@@ -162,11 +162,11 @@ type JumpIfTrue struct {
 	a, b Operand
 }
 
-func (i *JumpIfTrue) Size() int {
+func (i *JumpIfTrue) Size() int64 {
 	return 3
 }
 
-func (i *JumpIfTrue) Execute(r *Resources, pc int) (npc int) {
+func (i *JumpIfTrue) Execute(r *Resources, pc int64) (npc int64) {
 	a := i.a.Read(r, pc)
 	b := i.b.Read(r, pc)
 	logger.LogF("jit exec: %d ? goto %v", a, b)
@@ -186,11 +186,11 @@ type JumpIfFalse struct {
 	a, b Operand
 }
 
-func (i *JumpIfFalse) Size() int {
+func (i *JumpIfFalse) Size() int64 {
 	return 3
 }
 
-func (i *JumpIfFalse) Execute(r *Resources, pc int) (npc int) {
+func (i *JumpIfFalse) Execute(r *Resources, pc int64) (npc int64) {
 	a := i.a.Read(r, pc)
 	b := i.b.Read(r, pc)
 	logger.LogF("jif exec: %d =0? goto %v", a, b)
@@ -210,15 +210,15 @@ type LessThan struct {
 	a, b, c Operand
 }
 
-func (i *LessThan) Size() int {
+func (i *LessThan) Size() int64 {
 	return 4
 }
 
-func (i *LessThan) Execute(r *Resources, pc int) (npc int) {
+func (i *LessThan) Execute(r *Resources, pc int64) (npc int64) {
 	a := i.a.Read(r, pc)
 	b := i.b.Read(r, pc)
 
-	out := 0
+	var out int64 = 0
 	if a < b {
 		out = 1
 	}
@@ -237,15 +237,15 @@ type Equals struct {
 	a, b, c Operand
 }
 
-func (i *Equals) Size() int {
+func (i *Equals) Size() int64 {
 	return 4
 }
 
-func (i *Equals) Execute(r *Resources, pc int) (npc int) {
+func (i *Equals) Execute(r *Resources, pc int64) (npc int64) {
 	a := i.a.Read(r, pc)
 	b := i.b.Read(r, pc)
 
-	out := 0
+	var out int64 = 0
 	if a == b {
 		out = 1
 	}
@@ -264,11 +264,11 @@ type SetRelBase struct {
 	a Operand
 }
 
-func (i *SetRelBase) Size() int {
+func (i *SetRelBase) Size() int64 {
 	return 2
 }
 
-func (i *SetRelBase) Execute(r *Resources, pc int) (npc int) {
+func (i *SetRelBase) Execute(r *Resources, pc int64) (npc int64) {
 	a := i.a.Read(r, pc)
 	logger.LogF("setrelbase exec: old %v + %d", r.relBase, a)
 	r.relBase += a

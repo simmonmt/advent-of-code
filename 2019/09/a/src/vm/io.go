@@ -7,25 +7,25 @@ import (
 )
 
 type IO interface {
-	Read() int
-	Write(int)
+	Read() int64
+	Write(int64)
 }
 
 type SaverIO struct {
-	input     []int
+	input     []int64
 	inputAddr int
-	output    []int
+	output    []int64
 }
 
-func NewSaverIO(input ...int) *SaverIO {
+func NewSaverIO(input ...int64) *SaverIO {
 	return &SaverIO{
 		input:     input,
 		inputAddr: 0,
-		output:    []int{},
+		output:    []int64{},
 	}
 }
 
-func (io *SaverIO) Read() int {
+func (io *SaverIO) Read() int64 {
 	if io.inputAddr >= len(io.input) {
 		panic("out of input")
 	}
@@ -35,12 +35,12 @@ func (io *SaverIO) Read() int {
 	return in
 }
 
-func (io *SaverIO) Write(val int) {
+func (io *SaverIO) Write(val int64) {
 	io.output = append(io.output, val)
 	logger.LogF("output: %v", val)
 }
 
-func (io *SaverIO) Written() []int {
+func (io *SaverIO) Written() []int64 {
 	return io.output
 }
 
@@ -49,7 +49,7 @@ func (io *SaverIO) String() string {
 }
 
 type ChanIOMessage struct {
-	Val int
+	Val int64
 	Err error
 }
 
@@ -64,7 +64,7 @@ func NewChanIO(in, out chan *ChanIOMessage) IO {
 	}
 }
 
-func (io *chanIO) Read() int {
+func (io *chanIO) Read() int64 {
 	msg, ok := <-io.in
 	if !ok {
 		panic("sender closed unexpectedly")
@@ -73,6 +73,6 @@ func (io *chanIO) Read() int {
 	return msg.Val
 }
 
-func (io *chanIO) Write(val int) {
+func (io *chanIO) Write(val int64) {
 	io.out <- &ChanIOMessage{Val: val}
 }
