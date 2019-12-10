@@ -16,7 +16,7 @@ func CheckRam(t *testing.T, ram Ram, vals []int) {
 	}
 }
 
-func CheckEmptyOutput(t *testing.T, io *ioImpl) {
+func CheckEmptyOutput(t *testing.T, io *SaverIO) {
 	if got := io.Written(); !reflect.DeepEqual(got, []int{}) {
 		t.Errorf("output = %v, want []", got)
 	}
@@ -79,9 +79,10 @@ type InstructionTestCase struct {
 func CheckInstruction(t *testing.T, startRam Ram, startPC int, testCases []InstructionTestCase) {
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
+			saverIO := NewSaverIO()
 			r := &Resources{
 				ram: startRam.Clone(),
-				io:  NewIO(),
+				io:  saverIO,
 			}
 
 			var wantNPC int
@@ -99,7 +100,7 @@ func CheckInstruction(t *testing.T, startRam Ram, startPC int, testCases []Instr
 				CheckRam(t, r.ram, tc.expectedRam)
 			}
 
-			CheckEmptyOutput(t, r.io.(*ioImpl))
+			CheckEmptyOutput(t, saverIO)
 		})
 
 	}
@@ -195,9 +196,10 @@ func TestInstructions(t *testing.T) {
 }
 
 func TestInputInstruction(t *testing.T) {
+	saverIO := NewSaverIO(5)
 	r := &Resources{
 		ram: NewRam(10, 11, 12),
-		io:  NewIO(5),
+		io:  saverIO,
 	}
 
 	var inst Instruction = &Input{&PositionOperand{1}}
@@ -206,14 +208,15 @@ func TestInputInstruction(t *testing.T) {
 		t.Errorf("npc = %v, want %v", npc, 3)
 	}
 
-	CheckEmptyOutput(t, r.io.(*ioImpl))
+	CheckEmptyOutput(t, saverIO)
 	CheckRam(t, r.ram, []int{10, 5, 12})
 }
 
 func TestOutputInstruction(t *testing.T) {
+	saverIO := NewSaverIO()
 	r := &Resources{
 		ram: NewRam(10, 11, 12),
-		io:  NewIO(),
+		io:  saverIO,
 	}
 
 	var inst Instruction = &Output{&PositionOperand{1}}
@@ -221,7 +224,7 @@ func TestOutputInstruction(t *testing.T) {
 		t.Errorf("npc = %v, want %v", npc, 3)
 	}
 
-	if got := r.io.(*ioImpl).Written(); !reflect.DeepEqual(got, []int{11}) {
+	if got := saverIO.Written(); !reflect.DeepEqual(got, []int{11}) {
 		t.Errorf("Written() = %v, want [11]")
 	}
 
@@ -229,9 +232,10 @@ func TestOutputInstruction(t *testing.T) {
 }
 
 func TestSetRelBaseInstruction(t *testing.T) {
+	saverIO := NewSaverIO()
 	r := &Resources{
 		ram:     NewRam(-10, -11, -12),
-		io:      NewIO(),
+		io:      saverIO,
 		relBase: 100,
 	}
 

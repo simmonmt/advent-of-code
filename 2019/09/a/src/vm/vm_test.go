@@ -83,7 +83,7 @@ func TestRun(t *testing.T) {
 			logger.LogF("running case %d", i)
 
 			ram := NewRam(tc.ramVals...)
-			io := NewIO(tc.input...)
+			io := NewSaverIO(tc.input...)
 
 			if err := Run(ram, io, 0); err != nil {
 				t.Errorf("run failed: %v", err)
@@ -91,7 +91,7 @@ func TestRun(t *testing.T) {
 			}
 
 			if tc.expectedOutput != nil {
-				if got := io.(*ioImpl).Written(); !reflect.DeepEqual(got, tc.expectedOutput) {
+				if got := io.Written(); !reflect.DeepEqual(got, tc.expectedOutput) {
 					t.Errorf("output = %v, want %v", got, tc.expectedOutput)
 				}
 			}

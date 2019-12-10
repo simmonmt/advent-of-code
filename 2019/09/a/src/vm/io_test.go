@@ -7,7 +7,7 @@ import (
 )
 
 func TestInput(t *testing.T) {
-	io := NewIO(1, 2, 3, 4)
+	io := NewSaverIO(1, 2, 3, 4)
 
 	got := []int{}
 	for i := 0; i < 4; i++ {

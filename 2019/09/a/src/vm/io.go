@@ -11,21 +11,21 @@ type IO interface {
 	Write(int)
 }
 
-type ioImpl struct {
+type SaverIO struct {
 	input     []int
 	inputAddr int
 	output    []int
 }
 
-func NewIO(input ...int) IO {
-	return &ioImpl{
+func NewSaverIO(input ...int) *SaverIO {
+	return &SaverIO{
 		input:     input,
 		inputAddr: 0,
 		output:    []int{},
 	}
 }
 
-func (io *ioImpl) Read() int {
+func (io *SaverIO) Read() int {
 	if io.inputAddr >= len(io.input) {
 		panic("out of input")
 	}
@@ -35,16 +35,16 @@ func (io *ioImpl) Read() int {
 	return in
 }
 
-func (io *ioImpl) Write(val int) {
+func (io *SaverIO) Write(val int) {
 	io.output = append(io.output, val)
 	logger.LogF("output: %v", val)
 }
 
-func (io *ioImpl) Written() []int {
+func (io *SaverIO) Written() []int {
 	return io.output
 }
 
-func (io *ioImpl) String() string {
+func (io *SaverIO) String() string {
 	return fmt.Sprintf("in=[%v]", io.input[io.inputAddr:])
 }
 
