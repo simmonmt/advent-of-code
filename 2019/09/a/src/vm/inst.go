@@ -243,3 +243,23 @@ func (i *Equals) Execute(r *Resources, pc int) (npc int) {
 func (i *Equals) String() string {
 	return fmt.Sprintf("eq %s==%s => %s", i.a, i.b, i.c)
 }
+
+type SetRelBase struct {
+	a Operand
+}
+
+func (i *SetRelBase) Size() int {
+	return 2
+}
+
+func (i *SetRelBase) Execute(r *Resources, pc int) (npc int) {
+	a := i.a.Read(r, pc)
+	logger.LogF("setrelbase exec: old %v + %d", r.relBase, a)
+	r.relBase += a
+	npc = pc + i.Size()
+	return
+}
+
+func (i *SetRelBase) String() string {
+	return fmt.Sprintf("setrelbase %s", i.a)
+}

@@ -68,6 +68,13 @@ func TestRun(t *testing.T) {
 			input:          []int{},
 			expectedOutput: []int{1, 0},
 		},
+		TestCase{ // relbase
+			ramVals: []int{
+				109, 10, // 0: setrelbase 10
+				99,
+			},
+			expectedRam: []int{109, 10, 99},
+		},
 	}
 
 	for i, tc := range testCases {

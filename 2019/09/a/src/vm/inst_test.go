@@ -201,7 +201,6 @@ func TestOutputInstruction(t *testing.T) {
 	}
 
 	var inst Instruction = &Output{&PositionOperand{1}}
-
 	if npc := inst.Execute(r, 1); npc != 3 {
 		t.Errorf("npc = %v, want %v", npc, 3)
 	}
@@ -211,4 +210,21 @@ func TestOutputInstruction(t *testing.T) {
 	}
 
 	CheckRam(t, r.ram, []int{10, 11, 12})
+}
+
+func TestSetRelBaseInstruction(t *testing.T) {
+	r := &Resources{
+		ram:     NewRam(-10, -11, -12),
+		io:      NewIO(),
+		relBase: 100,
+	}
+
+	var inst Instruction = &SetRelBase{&PositionOperand{1}}
+	if npc := inst.Execute(r, 1); npc != 3 {
+		t.Errorf("npc = %v, want %v", npc, 3)
+	}
+
+	if r.relBase != 89 {
+		t.Errorf("relBase = %v, want 89", r.relBase)
+	}
 }

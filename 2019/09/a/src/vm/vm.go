@@ -34,8 +34,9 @@ func readBytes(ram Ram, pc, sz int) []int {
 }
 
 type Resources struct {
-	ram Ram
-	io  IO
+	ram     Ram
+	io      IO
+	relBase int
 }
 
 func decode(r *Resources, pc int) (Instruction, error) {
@@ -94,6 +95,11 @@ func decode(r *Resources, pc int) (Instruction, error) {
 			a: ctorA(r.ram.Read(pc + 1)),
 			b: ctorB(r.ram.Read(pc + 2)),
 			c: ctorC(r.ram.Read(pc + 3)),
+		}
+		break
+	case 9:
+		inst = &SetRelBase{
+			a: ctorA(r.ram.Read(pc + 1)),
 		}
 		break
 	case 99:
