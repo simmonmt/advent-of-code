@@ -7,8 +7,8 @@ import (
 )
 
 type Operand interface {
-	Read(ram Ram, pc int) int
-	Write(raw Ram, pc, val int)
+	Read(r *Resources, pc int) int
+	Write(r *Resources, pc, val int)
 	String() string
 }
 
@@ -16,11 +16,11 @@ type ImmediateOperand struct {
 	imm int
 }
 
-func (o *ImmediateOperand) Read(ram Ram, pc int) int {
+func (o *ImmediateOperand) Read(r *Resources, pc int) int {
 	return o.imm
 }
 
-func (o *ImmediateOperand) Write(ram Ram, pc, val int) {
+func (o *ImmediateOperand) Write(r *Resources, pc, val int) {
 	panic("attempt to write immediate")
 }
 
@@ -32,12 +32,12 @@ type PositionOperand struct {
 	loc int
 }
 
-func (o *PositionOperand) Read(ram Ram, pc int) int {
-	return ram.Read(o.loc)
+func (o *PositionOperand) Read(r *Resources, pc int) int {
+	return r.ram.Read(o.loc)
 }
 
-func (o *PositionOperand) Write(ram Ram, pc, val int) {
-	ram.Write(o.loc, val)
+func (o *PositionOperand) Write(r *Resources, pc, val int) {
+	r.ram.Write(o.loc, val)
 }
 
 func (o *PositionOperand) String() string {
@@ -46,7 +46,7 @@ func (o *PositionOperand) String() string {
 
 type Instruction interface {
 	Size() int
-	Execute(ram Ram, io IO, pc int) (npc int)
+	Execute(r *Resources, pc int) (npc int)
 	String() string
 }
 
@@ -58,12 +58,12 @@ func (i *Add) Size() int {
 	return 4
 }
 
-func (i *Add) Execute(ram Ram, io IO, pc int) (npc int) {
-	a := i.a.Read(ram, pc)
-	b := i.b.Read(ram, pc)
+func (i *Add) Execute(r *Resources, pc int) (npc int) {
+	a := i.a.Read(r, pc)
+	b := i.b.Read(r, pc)
 	out := a + b
 	logger.LogF("add exec: %d + %d (=%d) => %s", a, b, out, i.c)
-	i.c.Write(ram, pc, out)
+	i.c.Write(r, pc, out)
 	npc = pc + i.Size()
 	return
 }
@@ -80,8 +80,8 @@ func (i *Multiply) Size() int {
 	return 4
 }
 
-func (i *Multiply) Execute(ram Ram, io IO, pc int) (npc int) {
-	i.c.Write(ram, pc, i.a.Read(ram, pc)*i.b.Read(ram, pc))
+func (i *Multiply) Execute(r *Resources, pc int) (npc int) {
+	i.c.Write(r, pc, i.a.Read(r, pc)*i.b.Read(r, pc))
 	npc = pc + i.Size()
 	return
 }
@@ -98,10 +98,10 @@ func (i *Input) Size() int {
 	return 2
 }
 
-func (i *Input) Execute(ram Ram, io IO, pc int) (npc int) {
-	in := io.Read()
+func (i *Input) Execute(r *Resources, pc int) (npc int) {
+	in := r.io.Read()
 	logger.LogF("in exec: %d => %s", in, i.a)
-	i.a.Write(ram, pc, in)
+	i.a.Write(r, pc, in)
 	return pc + i.Size()
 }
 
@@ -117,10 +117,10 @@ func (i *Output) Size() int {
 	return 2
 }
 
-func (i *Output) Execute(ram Ram, io IO, pc int) (npc int) {
-	out := i.a.Read(ram, pc)
+func (i *Output) Execute(r *Resources, pc int) (npc int) {
+	out := i.a.Read(r, pc)
 	logger.LogF("out exec: write %d", out)
-	io.Write(i.a.Read(ram, pc))
+	r.io.Write(i.a.Read(r, pc))
 	return pc + i.Size()
 }
 
@@ -134,7 +134,7 @@ func (i *Halt) Size() int {
 	return 1
 }
 
-func (i *Halt) Execute(ram Ram, io IO, pc int) (npc int) {
+func (i *Halt) Execute(r *Resources, pc int) (npc int) {
 	return -1
 }
 
@@ -150,9 +150,9 @@ func (i *JumpIfTrue) Size() int {
 	return 3
 }
 
-func (i *JumpIfTrue) Execute(ram Ram, io IO, pc int) (npc int) {
-	a := i.a.Read(ram, pc)
-	b := i.b.Read(ram, pc)
+func (i *JumpIfTrue) Execute(r *Resources, pc int) (npc int) {
+	a := i.a.Read(r, pc)
+	b := i.b.Read(r, pc)
 	logger.LogF("jit exec: %d ? goto %v", a, b)
 	if a > 0 {
 		npc = b
@@ -174,9 +174,9 @@ func (i *JumpIfFalse) Size() int {
 	return 3
 }
 
-func (i *JumpIfFalse) Execute(ram Ram, io IO, pc int) (npc int) {
-	a := i.a.Read(ram, pc)
-	b := i.b.Read(ram, pc)
+func (i *JumpIfFalse) Execute(r *Resources, pc int) (npc int) {
+	a := i.a.Read(r, pc)
+	b := i.b.Read(r, pc)
 	logger.LogF("jif exec: %d =0? goto %v", a, b)
 	if a == 0 {
 		npc = b
@@ -198,9 +198,9 @@ func (i *LessThan) Size() int {
 	return 4
 }
 
-func (i *LessThan) Execute(ram Ram, io IO, pc int) (npc int) {
-	a := i.a.Read(ram, pc)
-	b := i.b.Read(ram, pc)
+func (i *LessThan) Execute(r *Resources, pc int) (npc int) {
+	a := i.a.Read(r, pc)
+	b := i.b.Read(r, pc)
 
 	out := 0
 	if a < b {
@@ -208,7 +208,7 @@ func (i *LessThan) Execute(ram Ram, io IO, pc int) (npc int) {
 	}
 
 	logger.LogF("lt exec: %d<%d? %d => %d", a, b, out, i.c)
-	i.c.Write(ram, pc, out)
+	i.c.Write(r, pc, out)
 	npc = pc + i.Size()
 	return
 }
@@ -225,9 +225,9 @@ func (i *Equals) Size() int {
 	return 4
 }
 
-func (i *Equals) Execute(ram Ram, io IO, pc int) (npc int) {
-	a := i.a.Read(ram, pc)
-	b := i.b.Read(ram, pc)
+func (i *Equals) Execute(r *Resources, pc int) (npc int) {
+	a := i.a.Read(r, pc)
+	b := i.b.Read(r, pc)
 
 	out := 0
 	if a == b {
@@ -235,7 +235,7 @@ func (i *Equals) Execute(ram Ram, io IO, pc int) (npc int) {
 	}
 
 	logger.LogF("eq exec: %d==%d? %d => %d", a, b, out, i.c)
-	i.c.Write(ram, pc, out)
+	i.c.Write(r, pc, out)
 	npc = pc + i.Size()
 	return
 }

@@ -115,7 +115,7 @@ func run(r *Resources, pc int) error {
 			return err
 		}
 
-		npc := inst.Execute(r.ram, r.io, pc)
+		npc := inst.Execute(r, pc)
 		if npc == -1 {
 			return nil
 		}

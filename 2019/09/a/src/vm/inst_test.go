@@ -24,35 +24,34 @@ func CheckEmptyOutput(t *testing.T, io *ioImpl) {
 
 func TestImmediateOperand(t *testing.T) {
 	ramVals := []int{10, 11, 12, 13, 14}
-	ram := NewRam(ramVals...)
 
+	r := &Resources{ram: NewRam(ramVals...)}
 	var op Operand = &ImmediateOperand{imm: 2}
 
-	if got := op.Read(ram, 0); got != 2 {
+	if got := op.Read(r, 0); got != 2 {
 		t.Errorf("Read(ram, 0) = %d, want %d", got, 2)
 	}
 
 	testutils.AssertPanic(t, "write failed to panic",
-		func() { op.Write(ram, 0, 99) })
+		func() { op.Write(r, 0, 99) })
 
-	CheckRam(t, ram, ramVals)
+	CheckRam(t, r.ram, ramVals)
 }
 
 func TestPositionOperand(t *testing.T) {
-	ram := NewRam(10, 11, 12, 13, 14)
-
+	r := &Resources{ram: NewRam(10, 11, 12, 13, 14)}
 	var op Operand = &PositionOperand{loc: 2}
 
-	if got := op.Read(ram, 0); got != 12 {
+	if got := op.Read(r, 0); got != 12 {
 		t.Errorf("Read(ram, 0) = %d, want %d", got, 12)
 	}
 
-	op.Write(ram, 0, 99)
-	if got := op.Read(ram, 0); got != 99 {
+	op.Write(r, 0, 99)
+	if got := op.Read(r, 0); got != 99 {
 		t.Errorf("Read(ram, 0) = %d, want %d", got, 99)
 	}
 
-	CheckRam(t, ram, []int{10, 11, 99, 13, 14})
+	CheckRam(t, r.ram, []int{10, 11, 99, 13, 14})
 }
 
 type InstructionTestCase struct {
@@ -64,8 +63,10 @@ type InstructionTestCase struct {
 func CheckInstruction(t *testing.T, startRam Ram, startPC int, testCases []InstructionTestCase) {
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
-			ram := startRam.Clone()
-			io := NewIO()
+			r := &Resources{
+				ram: startRam.Clone(),
+				io:  NewIO(),
+			}
 
 			var wantNPC int
 			if tc.expectedNPC != 0 {
@@ -74,15 +75,15 @@ func CheckInstruction(t *testing.T, startRam Ram, startPC int, testCases []Instr
 				wantNPC = startPC + tc.inst.Size()
 			}
 
-			if npc := tc.inst.Execute(ram, io, startPC); npc != wantNPC {
+			if npc := tc.inst.Execute(r, startPC); npc != wantNPC {
 				t.Errorf("Execute, npc=%v, want %v", npc, wantNPC)
 			}
 
 			if tc.expectedRam != nil {
-				CheckRam(t, ram, tc.expectedRam)
+				CheckRam(t, r.ram, tc.expectedRam)
 			}
 
-			CheckEmptyOutput(t, io.(*ioImpl))
+			CheckEmptyOutput(t, r.io.(*ioImpl))
 		})
 
 	}
@@ -178,32 +179,36 @@ func TestInstructions(t *testing.T) {
 }
 
 func TestInputInstruction(t *testing.T) {
-	ram := NewRam(10, 11, 12)
-	io := NewIO(5)
+	r := &Resources{
+		ram: NewRam(10, 11, 12),
+		io:  NewIO(5),
+	}
 
 	var inst Instruction = &Input{&PositionOperand{1}}
 
-	if npc := inst.Execute(ram, io, 1); npc != 3 {
+	if npc := inst.Execute(r, 1); npc != 3 {
 		t.Errorf("npc = %v, want %v", npc, 3)
 	}
 
-	CheckEmptyOutput(t, io.(*ioImpl))
-	CheckRam(t, ram, []int{10, 5, 12})
+	CheckEmptyOutput(t, r.io.(*ioImpl))
+	CheckRam(t, r.ram, []int{10, 5, 12})
 }
 
 func TestOutputInstruction(t *testing.T) {
-	ram := NewRam(10, 11, 12)
-	io := NewIO()
+	r := &Resources{
+		ram: NewRam(10, 11, 12),
+		io:  NewIO(),
+	}
 
 	var inst Instruction = &Output{&PositionOperand{1}}
 
-	if npc := inst.Execute(ram, io, 1); npc != 3 {
+	if npc := inst.Execute(r, 1); npc != 3 {
 		t.Errorf("npc = %v, want %v", npc, 3)
 	}
 
-	if got := io.(*ioImpl).Written(); !reflect.DeepEqual(got, []int{11}) {
+	if got := r.io.(*ioImpl).Written(); !reflect.DeepEqual(got, []int{11}) {
 		t.Errorf("Written() = %v, want [11]")
 	}
 
-	CheckRam(t, ram, []int{10, 11, 12})
+	CheckRam(t, r.ram, []int{10, 11, 12})
 }
