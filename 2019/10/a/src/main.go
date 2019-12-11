@@ -53,4 +53,8 @@ func main() {
 	asteroids := puzzle.ParseMap(lines)
 	bestPos, bestVisible := puzzle.FindBest(asteroids)
 	fmt.Printf("best is %v visible from %+v\n", bestVisible, bestPos)
+
+	vapes := puzzle.FindAll(bestPos, asteroids)
+	winner := vapes[199]
+	fmt.Printf("winner is %+v: %d\n", winner, winner.X*100+winner.Y)
 }

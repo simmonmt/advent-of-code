@@ -1,30 +1,106 @@
 package puzzle
 
 import (
+	"math"
+	"sort"
+
 	"github.com/simmonmt/aoc/2019/common/logger"
 )
 
-func FindNumVisible(ctr Pos, all map[Pos]bool) int {
-	visible := map[Pos]bool{}
+func findVisible(ctr Pos, all map[Pos]bool) map[Pos][]Pos {
+	visible := map[Pos][]Pos{}
 
 	for p := range all {
 		if p.X == ctr.X && p.Y == ctr.Y {
 			continue
 		}
 
-		slope := Pos{
+		rel := Pos{
 			X: p.X - ctr.X,
 			Y: p.Y - ctr.Y,
 		}
 
-		var simplified Pos
-		simplified.Y, simplified.X = Factor(slope.Y, slope.X)
+		var slope Pos
+		slope.Y, slope.X = Factor(rel.Y, rel.X)
 
-		logger.LogF("considering %+v from %+v slope %d/%d simp %d/%d",
-			p, ctr, slope.Y, slope.X, simplified.Y, simplified.X)
-		visible[simplified] = true
+		if _, found := visible[slope]; !found {
+			visible[slope] = []Pos{rel}
+		} else {
+			visible[slope] = append(visible[slope], rel)
+		}
 	}
 
+	return visible
+}
+
+const (
+	negOneHalfPi = -math.Pi / 2.0
+)
+
+func FindAll(ctr Pos, all map[Pos]bool) []Pos {
+	visible := findVisible(ctr, all)
+	angleToSlope := map[float64]Pos{}
+	angles := []float64{}
+
+	logger.LogF("visible: %v", visible)
+
+	for s := range visible {
+		// Sort the groups with the same slope so the first is
+		// closest. This will make it easier to decide which to vaporize
+		// first.
+		sort.Sort(ByManhattanOriginDistance(visible[s]))
+
+		// atan2 returns values (-pi,pi] with 0 on the right (+x,0), pi
+		// on the left (-x,0), and -pi/2 on the top (0,-y). It's a nicer
+		// version of atan that deals well with zeroes in the numerator
+		// or denominator. See https://en.wikipedia.org/wiki/Atan2
+		angle := math.Atan2(float64(s.Y), float64(s.X))
+		logger.LogF("got angle %f for %+v", angle, s)
+		angleToSlope[angle] = s
+		angles = append(angles, angle)
+	}
+
+	sort.Float64s(angles)
+	for _, a := range angles {
+		logger.LogF("%f: %+v", a, angleToSlope[a])
+	}
+
+	// We want to walk angles CW -pi/2, so find the starting point. Angles
+	// is sorted, with values (-pi,pi), so we can stop at the first value >=
+	// -pi/2.
+	var startIdx int
+	for i, theta := range angles {
+		if theta >= negOneHalfPi {
+			startIdx = i
+			break
+		}
+	}
+
+	vapes := []Pos{}
+
+	vaporized := true
+	for vaporized {
+		vaporized = false
+		for i := 0; i < len(angles); i++ {
+			angle := angles[(i+startIdx)%len(angles)]
+			slope := angleToSlope[angle]
+
+			if len(visible[slope]) == 0 {
+				continue
+			}
+
+			relVape := visible[slope][0]
+			vapes = append(vapes, Pos{ctr.X + relVape.X, ctr.Y + relVape.Y})
+			visible[slope] = visible[slope][1:]
+			vaporized = true
+		}
+	}
+
+	return vapes
+}
+
+func FindNumVisible(ctr Pos, all map[Pos]bool) int {
+	visible := findVisible(ctr, all)
 	return len(visible)
 }
 
@@ -33,7 +109,7 @@ func FindBest(all map[Pos]bool) (Pos, int) {
 	bestVisible := -1
 	for ctr := range all {
 		numVisible := FindNumVisible(ctr, all)
-		logger.LogF("%+v visible %v\n", ctr, numVisible)
+		//logger.LogF("%+v visible %v", ctr, numVisible)
 		if bestVisible == -1 || bestVisible < numVisible {
 			bestPos = ctr
 			bestVisible = numVisible

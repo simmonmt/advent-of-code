@@ -21,7 +21,11 @@ go_test(
     srcs = [
         "factor_test.go",
         "find_test.go",
+        "puzzle_test.go",
     ],
     embed = [":go_default_library"],
-    deps = ["//common/testutils:go_default_library"],
+    deps = [
+        "//common/logger:go_default_library",
+        "//common/testutils:go_default_library",
+    ],
 )
