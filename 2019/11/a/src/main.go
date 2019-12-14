@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	verbose = flag.Bool("verbose", false, "verbose")
-	ramPath = flag.String("ram", "", "path to file containing ram values")
+	verbose    = flag.Bool("verbose", false, "verbose")
+	ramPath    = flag.String("ram", "", "path to file containing ram values")
+	startWhite = flag.Bool("start_white", false, "if true, make the starting panel white")
 )
 
 type Dir int
@@ -157,6 +158,10 @@ func main() {
 	curPos := pos.P2{0, 0}
 	dir := DIR_UP
 
+	if *startWhite {
+		board[curPos] = true
+	}
+
 	async := vm.RunAsync("vm", ram)
 	dumpBoard(board, curPos, dir)
 	var turnNo int
@@ -179,4 +184,6 @@ func main() {
 
 	fmt.Printf("program terminated after %d turns\n", turnNo)
 	fmt.Printf("number of cells painted at least once: %v\n", len(board))
+
+	dumpBoard(board, curPos, dir)
 }
