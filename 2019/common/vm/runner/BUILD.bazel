@@ -7,6 +7,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//common/logger:go_default_library",
+        "//common/strutil:go_default_library",
         "//common/vm:go_default_library",
     ],
 )
