@@ -86,7 +86,7 @@ func TestRun(t *testing.T) {
 			ram := NewRam(tc.ramVals...)
 			io := NewSaverIO(tc.input...)
 
-			if err := Run(ram, io, 0); err != nil {
+			if err := Run(ram, io); err != nil {
 				t.Errorf("run failed: %v", err)
 				return
 			}
@@ -105,6 +105,38 @@ func TestRun(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func okMsg(val int64) *ChanIOMessage {
+	return &ChanIOMessage{Val: val}
+}
+
+func TestAsync(t *testing.T) {
+	ram := NewRam(
+		3, 17, // 0: in *17
+		101, 1, 17, 17, // 2: add 1,*17 -> *17
+		4, 17, // 6: out *17
+		3, 17, // 8: in *17
+		101, 2, 17, 17, // 10: add 1,*17 -> *17
+		4, 17, // 14: out *17
+		99, // 16: hlt
+	)
+
+	a := RunAsync("test", ram)
+
+	a.In <- &ChanIOMessage{Val: 7}
+	if m, ok := <-a.Out; !ok || !reflect.DeepEqual(m, okMsg(8)) {
+		t.Errorf("round 1: want 8,ok, got %v, %v", m, ok)
+	}
+
+	a.In <- &ChanIOMessage{Val: 10}
+	if m, ok := <-a.Out; !ok || !reflect.DeepEqual(m, okMsg(12)) {
+		t.Errorf("round 1: want 12,ok, got %v, %v", m, ok)
+	}
+
+	if m, ok := <-a.Out; ok {
+		t.Errorf("expected _, !ok, got %v, %v", m, ok)
 	}
 }
 

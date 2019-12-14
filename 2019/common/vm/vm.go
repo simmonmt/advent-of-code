@@ -136,12 +136,39 @@ func run(r *Resources, pc int64) error {
 	}
 }
 
-func Run(ram Ram, io IO, pc int64) error {
+func Run(ram Ram, io IO) error {
 	r := &Resources{
 		ram:     ram,
 		io:      io,
 		relBase: 0,
 	}
 
-	return run(r, pc)
+	return run(r, 0)
+}
+
+type Async struct {
+	In  chan *ChanIOMessage
+	Out chan *ChanIOMessage
+}
+
+func RunAsync(id string, ram Ram) *Async {
+	async := &Async{
+		In:  make(chan *ChanIOMessage, 2),
+		Out: make(chan *ChanIOMessage, 2),
+	}
+
+	io := NewChanIO(async.In, async.Out)
+
+	go func() {
+		if err := Run(ram, io); err != nil {
+			async.Out <- &ChanIOMessage{
+				Err: fmt.Errorf("vm %s failed: %v", id, err),
+			}
+		}
+
+		close(async.Out)
+		fmt.Sprintf("vm %s terminating\n", id)
+	}()
+
+	return async
 }
