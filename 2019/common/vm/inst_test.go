@@ -8,14 +8,6 @@ import (
 	"github.com/simmonmt/aoc/2019/common/testutils"
 )
 
-func CheckRam(t *testing.T, ram Ram, vals []int64) {
-	for i, val := range vals {
-		if got := ram.Read(int64(i)); got != val {
-			t.Errorf("verify mismatch at %v: got %v want %v", i, got, val)
-		}
-	}
-}
-
 func CheckEmptyOutput(t *testing.T, io *SaverIO) {
 	if got := io.Written(); !reflect.DeepEqual(got, []int64{}) {
 		t.Errorf("output = %v, want []", got)
