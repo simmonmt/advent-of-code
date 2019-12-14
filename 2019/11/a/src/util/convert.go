@@ -71,7 +71,7 @@ func main() {
 	for _, line := range lines {
 		parts := strings.Split(line, " ")
 		in := parts[1]
-		outs := parts[3:4]
+		outs := parts[3:5]
 
 		addInstruction(3, scratchAddr) // in *scratchAddr
 		if in == "0" {
@@ -100,5 +100,6 @@ func main() {
 		}
 		fmt.Print(strconv.Itoa(v))
 	}
+
 	fmt.Println()
 }
