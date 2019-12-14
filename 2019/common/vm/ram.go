@@ -1,6 +1,13 @@
 package vm
 
-import "fmt"
+import (
+	"bufio"
+	"fmt"
+	"io"
+	"os"
+	"strconv"
+	"strings"
+)
 
 type Ram interface {
 	Read(addr int64) int64
@@ -43,4 +50,38 @@ func (r *ramImpl) Clone() Ram {
 
 func (r *ramImpl) Dump() {
 	fmt.Println(r.r)
+}
+
+func NewRamFromReader(r io.Reader) (Ram, error) {
+	var line string
+
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		line = scanner.Text()
+		break
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("read failed: %v", err)
+	}
+
+	ram := NewRam()
+	for i, str := range strings.Split(line, ",") {
+		val, err := strconv.Atoi(str)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse %v: %v", str, err)
+		}
+		ram.Write(int64(i), int64(val))
+	}
+
+	return ram, nil
+}
+
+func NewRamFromFile(path string) (Ram, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	return NewRamFromReader(f)
 }

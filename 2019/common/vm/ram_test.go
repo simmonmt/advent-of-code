@@ -2,6 +2,7 @@ package vm
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -44,4 +45,15 @@ func TestClone(t *testing.T) {
 			t.Errorf("clone %v = %v, want %v", addr, got, val)
 		}
 	}
+}
+
+func TestRamFromReader(t *testing.T) {
+	in := "10,11,12,13"
+	ram, err := NewRamFromReader(strings.NewReader(in))
+	if err != nil {
+		t.Errorf("NewRamFromReader() = _, %v, want _, nil", err)
+		return
+	}
+
+	CheckRam(t, ram, []int64{10, 11, 12, 13})
 }
