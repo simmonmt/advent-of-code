@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["board.go"],
+    importpath = "github.com/simmonmt/aoc/2019/13/b/src/puzzle",
+    visibility = ["//visibility:public"],
+    deps = ["//common/intmath:go_default_library"],
+)
