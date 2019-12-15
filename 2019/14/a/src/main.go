@@ -14,8 +14,9 @@ import (
 )
 
 var (
-	verbose = flag.Bool("verbose", false, "verbose")
-	input   = flag.String("input", "", "input file")
+	verbose  = flag.Bool("verbose", false, "verbose")
+	input    = flag.String("input", "", "input file")
+	wantFuel = flag.Int("wantfuel", 1, "desired fuel")
 )
 
 type Ingredient struct {
@@ -118,7 +119,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	have := map[string]int{"FUEL": 1}
+	have := map[string]int{"FUEL": *wantFuel}
 	extra := map[string]int{}
 	for {
 		names := []string{}
@@ -145,7 +146,7 @@ func main() {
 		if extraQty, found := extra[name]; found {
 			qty -= extraQty
 			extra[name] = 0
-			fmt.Printf("found %d extra %s, qty now %d\n", extraQty, name, qty)
+			//fmt.Printf("found %d extra %s, qty now %d\n", extraQty, name, qty)
 		}
 
 		formula, found := reactions[name]
@@ -155,8 +156,8 @@ func main() {
 
 		formulaTimes := (qty + formula.Out.Qty - 1) / formula.Out.Qty
 		left := (formulaTimes * formula.Out.Qty) - qty
-		fmt.Printf("have %d %s, formula %v making it %dx (left %d)\n",
-			qty, name, formula, formulaTimes, left)
+		//fmt.Printf("have %d %s, formula %v making it %dx (left %d)\n",
+		//qty, name, formula, formulaTimes, left)
 
 		if left > 0 {
 			extra[formula.Out.Name] += left
@@ -169,8 +170,9 @@ func main() {
 
 		delete(have, name)
 
-		fmt.Printf("have: %v, extra: %v\n", have, extra)
+		//fmt.Printf("have: %v, extra: %v\n", have, extra)
 	}
 
-	fmt.Println(have)
+	fmt.Printf("%d FUEL needs %d ORE (delta from 1T: %d)\n",
+		*wantFuel, have["ORE"], (1e12 - have["ORE"]))
 }
