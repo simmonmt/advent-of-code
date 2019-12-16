@@ -79,9 +79,14 @@ func main() {
 
 	async := vm.RunAsync("vm", ram)
 
-	puzzle.Explore(b, start, func(pos pos.P2, dir puzzle.Dir) (newPos pos.P2, t puzzle.Tile) {
-		return moveTo(b, async, pos, dir)
-	})
+	goalPos := puzzle.Explore(b, start,
+		func(pos pos.P2, dir puzzle.Dir) (newPos pos.P2, t puzzle.Tile) {
+			return moveTo(b, async, pos, dir)
+		})
 
 	puzzle.PrintBoard(b, pos.P2{0, 0})
+
+	fmt.Printf("goal is at %v\n", goalPos)
+
+	fmt.Printf("dist is %v\n", puzzle.Fill(b, goalPos))
 }

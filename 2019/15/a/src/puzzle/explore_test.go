@@ -17,6 +17,14 @@ var (
 		" #.#  ",
 		"  #   ",
 	}
+
+	refBoard2Str = []string{
+		" ##   ",
+		"#..## ",
+		"#.#..#",
+		"#.S.# ",
+		" ###  ",
+	}
 )
 
 func runeToTile(r rune) Tile {
@@ -106,5 +114,15 @@ func TestExplore(t *testing.T) {
 		PrintBoard(refBoard, pos.P2{-1, -1})
 		fmt.Println()
 		PrintBoard(refBoard, pos.P2{-1, -1})
+	}
+}
+
+func TestFill(t *testing.T) {
+	b, refStart := parseStringBoard(refBoard2Str)
+	b = b.CenterAt(refStart)
+
+	start := pos.P2{0, 0}
+	if max := Fill(b, start); max != 4 {
+		t.Errorf("Fill(b, start) = %d, want 4", max)
 	}
 }
