@@ -49,26 +49,54 @@ func makePattern(base []int, rep int) []int {
 	return out
 }
 
-func sumDigits(in []uint8, prevSum int, prevStart, start, end int) int {
-	out := 0
-	for i := start; i < len(in) && i <= end; i++ {
+func sumDigits(in []uint8, prevSum int, prevStart, prevEnd, start, end int) int {
+	if prevStart < 0 {
+		// There is no previous sum, so calculate the hard way
+		out := 0
+		for i := start; i < len(in) && i <= end; i++ {
+			out += int(in[i])
+		}
+		return out
+	}
+
+	// There is a previous sum which we can reuse. We'll be asked
+	// to sum overlapping ranges, with the new range starting
+	// after the first starts and ending after the end starts. So
+	// the first call may be for [7,13] while the next is for
+	// [8,15]. If that's the case, prevSum is the sum of digits
+	// [7,13], with prevStart=7 and prevEnd=13. To calculate
+	// [8,15], we'll throw out digit 7 and add 14 and 15. This is
+	// silly when the ranges are tight like this, but in practice
+	// they'll be much longer so the optimization is worth it.
+	out := prevSum
+	for i := prevStart; i < start && i < len(in); i++ {
+		out -= int(in[i])
+	}
+
+	for i := prevEnd + 1; i <= end && i < len(in); i++ {
 		out += int(in[i])
 	}
 	return out
+
 }
 
 func calculate(in []uint8, off int) (out []uint8) {
 	out = make([]uint8, len(in))
-	// lastSumPos, lastSumNeg := 0, 0
-	// lastStartPos, lastStartNeg := -1, -1
+	lastPos, lastNeg := 0, 0
+	lastStartPos, lastStartNeg := -1, -1
+	lastEndPos, lastEndNeg := -1, -1
 	for digit := off; digit < len(in); digit++ {
-		// pos := sumDigits(in, lastSumPos, lastStartPos, digit, 2*digit-1)
-		// neg := sumDigits(in, lastSumNeg, lastStartNeg, 3*digit, 3*digit-1)
+		posStart, posEnd := digit, 2*digit-1
+		negStart, negEnd := 3*digit, 3*digit-1
+		pos := sumDigits(in, lastPos, lastStartPos, lastEndPos, posStart, posEnd)
+		neg := sumDigits(in, lastNeg, lastStartNeg, lastEndNeg, negStart, negEnd)
 
-		// out[digit] = uint8(intmath.Abs(pos-neg) * 10)
+		lastPos, lastStartPos, lastEndPos = pos, posStart, posEnd
+		lastNeg, lastStartNeg, lastEndNeg = neg, negStart, negEnd
 
-		out[digit] = uint8(intmath.Abs(sumDigits(in, 0, 0, digit, 2*digit-1)-
-			sumDigits(in, 0, 0, 3*digit, 4*digit-1)) % 10)
+		d1 := uint8(intmath.Abs(pos-neg) % 10)
+
+		out[digit] = d1
 	}
 
 	return out
