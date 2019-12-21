@@ -19,4 +19,5 @@ go_test(
     name = "go_default_test",
     srcs = ["board_test.go"],
     embed = [":go_default_library"],
+    deps = ["//common/pos:go_default_library"],
 )
