@@ -98,6 +98,8 @@ func main() {
 		copy(signal[off:off+len(line)], vals)
 	}
 
+	fmt.Printf("signal len %d\n", len(signal))
+
 	offStr := line[0:7]
 	off, err := strconv.Atoi(offStr)
 	if err != nil {
@@ -105,6 +107,10 @@ func main() {
 	}
 
 	fmt.Printf("offset is %d\n", off)
+
+	if off*4 < len(signal) {
+		panic("needs repeat")
+	}
 
 	for phase := 1; phase <= 100; phase++ {
 		out := calculate(signal, off)
