@@ -1,0 +1,15 @@
+# Solution to 2019 17b. Figured out by printing the scaffolding map,
+# translating that to the individual commands needed to traverse that
+# map, then finding appropriately-sized groups. Thankfully they didn't
+# try anything clever -- no short straights or 180-degree turns.
+#
+# Main function
+A,A,B,C,B,C,B,C,C,A
+# Function A
+L,10,R,8,R,8
+# Function B
+L,10,L,12,R,8,R,10
+# Function C
+R,10,L,12,R,10
+# Continuous?
+n
