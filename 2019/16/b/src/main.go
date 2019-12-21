@@ -68,7 +68,7 @@ func calculate(in []uint8, off int) (out []uint8) {
 		// out[digit] = uint8(intmath.Abs(pos-neg) * 10)
 
 		out[digit] = uint8(intmath.Abs(sumDigits(in, 0, 0, digit, 2*digit-1)-
-			sumDigits(in, 0, 0, 3*digit, 3*digit-1)) % 10)
+			sumDigits(in, 0, 0, 3*digit, 4*digit-1)) % 10)
 	}
 
 	return out
