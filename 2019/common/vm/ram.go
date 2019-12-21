@@ -85,3 +85,19 @@ func NewRamFromFile(path string) (Ram, error) {
 
 	return NewRamFromReader(f)
 }
+
+type roRam struct {
+	Ram
+}
+
+func (r *roRam) Write(addr, val int64) {
+	panic("write to r/o ram")
+}
+
+func (r *roRam) Clone() Ram {
+	return r
+}
+
+func NewReadOnlyRam(ram Ram) Ram {
+	return &roRam{ram}
+}

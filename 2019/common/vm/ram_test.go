@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/simmonmt/aoc/2019/common/testutils"
 )
 
 func TestRam(t *testing.T) {
@@ -56,4 +58,15 @@ func TestRamFromReader(t *testing.T) {
 	}
 
 	CheckRam(t, ram, []int64{10, 11, 12, 13})
+}
+
+func TestReadOnlyRam(t *testing.T) {
+	vals := []int64{10, 11, 12, 13}
+	ram := NewReadOnlyRam(NewRam(vals...))
+
+	if got, want := ram.Read(2), int64(12); got != want {
+		t.Errorf("ram.Read(2) = %v, want %v", got, want)
+	}
+
+	testutils.AssertPanic(t, "write", func() { ram.Write(2, 1) })
 }
