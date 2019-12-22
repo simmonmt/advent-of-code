@@ -3,8 +3,8 @@ load("@bazel_gazelle//:def.bzl", "gazelle")
 # gazelle:prefix github.com/simmonmt/aoc/2019
 gazelle(
     name = "gazelle",
-    external = "vendored",
     command = "fix",
+    external = "vendored",
     extra_args = [
         "--mode=diff",
     ],
@@ -12,6 +12,8 @@ gazelle(
 
 gazelle(
     name = "gazelle_fix",
-    external = "vendored",
     command = "fix",
+    external = "vendored",
 )
+
+gazelle(name = "gazelle_cmd")
