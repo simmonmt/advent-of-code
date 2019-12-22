@@ -9,7 +9,7 @@ go_binary(
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
-    importpath = "github.com/simmonmt/aoc/2019/19/a/src",
+    importpath = "github.com/simmonmt/aoc/2019/19/b/src",
     visibility = ["//visibility:private"],
     deps = [
         "//common/logger:go_default_library",
