@@ -16,6 +16,9 @@ import (
 type ClientInterface interface {
 	AllNeighbors(start string) []string
 	EstimateDistance(start, end string) uint
+
+	// NeighborDistance returns the distance between two known direct
+	// neighbors (i.e. a pair derived using AllNeighbors).
 	NeighborDistance(n1, n2 string) uint
 	GoalReached(cand, goal string) bool
 }
@@ -88,7 +91,7 @@ func reconstructPath(cameFrom map[string]string, current string) []string {
 }
 
 func AStar(start, goal string, client ClientInterface) []string {
-	logger.LogF("astar start %v goal %v\n", start, goal)
+	logger.LogF("astar start %v goal %v", start, goal)
 
 	closedSet := map[string]bool{}
 	openSet := map[string]bool{start: true}
@@ -114,11 +117,11 @@ func AStar(start, goal string, client ClientInterface) []string {
 	openFScore.Set(start, client.EstimateDistance(start, goal))
 
 	for round := 0; len(openSet) > 0; round++ {
-		logger.LogF("===round %v\n", round)
-		logger.LogF("closed set %v\n", closedSet)
-		logger.LogF("open set %v\n", openSet)
-		logger.LogF("gScore %+v\n", gScore)
-		logger.LogF("fScore %+v\n", fScore)
+		logger.LogF("===round %v", round)
+		logger.LogF("closed set %v", closedSet)
+		logger.LogF("open set %v", openSet)
+		logger.LogF("gScore %+v", gScore)
+		logger.LogF("fScore %+v", fScore)
 
 		current := ""
 		var currentFScore uint
@@ -134,7 +137,7 @@ func AStar(start, goal string, client ClientInterface) []string {
 			panic("nothing found in fscore")
 		}
 
-		logger.LogF("current %v\n", current)
+		logger.LogF("current %v", current)
 
 		if client.GoalReached(current, goal) {
 			return reconstructPath(cameFrom, current)
@@ -158,7 +161,7 @@ func AStar(start, goal string, client ClientInterface) []string {
 			if _, found := openSet[neighbor]; !found {
 				openSet[neighbor] = true
 			} else if neighborGScore >= gScore.GetWithDefault(neighbor, math.MaxUint32) {
-				logger.LogF("%v to %v isn't better\n", current, neighbor)
+				logger.LogF("%v to %v isn't better", current, neighbor)
 				continue // not a better path
 			}
 
