@@ -18,26 +18,37 @@ type astarState struct {
 
 func parseNode(s string) (p pos.P2, keys map[string]bool) {
 	parts := strings.Split(s, "_")
-	if len(parts) != 2 {
-		panic(fmt.Sprintf("bad node '%s'", s))
-	}
 
-	p, err := pos.P2FromString(parts[0])
-	if err != nil {
-		panic(fmt.Sprintf("bad pos '%s'", parts[0]))
+	pStrs := parts[0:(len(parts) - 1)]
+	keyStr := parts[len(parts)-1]
+
+	ps := []pos.P2{}
+	for _, pStr := range pStrs {
+		p, err := pos.P2FromString(parts[0])
+		if err != nil {
+			panic(fmt.Sprintf("bad pos '%s'", pStr))
+		}
+		ps = append(ps, p)
 	}
 
 	keys = map[string]bool{}
-	for _, key := range strings.Split(parts[1], ",") {
+	for _, key := range strings.Split(keyStr, ",") {
 		if key != "" {
 			keys[key] = true
 		}
 	}
 
-	return p, keys
+	return ps[0], keys
 }
 
 func nodeToString(p pos.P2, keys map[string]bool) string {
+	ps := []pos.P2{p}
+
+	outs := make([]string, len(ps)+1)
+	for i := 0; i < len(ps); i++ {
+		outs[i] = ps[i].String()
+	}
+
 	keyArr := make([]string, len(keys))
 	i := 0
 	for key := range keys {
@@ -46,7 +57,8 @@ func nodeToString(p pos.P2, keys map[string]bool) string {
 	}
 	sort.Strings(keyArr)
 
-	return fmt.Sprintf("%s_%s", p.String(), strings.Join(keyArr, ","))
+	outs[len(ps)] = strings.Join(keyArr, ",")
+	return strings.Join(outs, "_")
 }
 
 func (a *astarState) pathsFromPos(p pos.P2) []Path {
