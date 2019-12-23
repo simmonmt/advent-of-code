@@ -150,6 +150,7 @@ func AStar(start, goal string, client ClientInterface) []string {
 		currentGScore := gScore.GetWithDefault(current, math.MaxUint32)
 
 		neighbors := client.AllNeighbors(current)
+		logger.LogF("neighbors of %v: %v", current, neighbors)
 		for _, neighbor := range neighbors {
 			if _, found := closedSet[neighbor]; found {
 				continue
