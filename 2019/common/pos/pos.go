@@ -38,6 +38,10 @@ func (p *P2) Equals(o P2) bool {
 	return p.X == o.X && p.Y == o.Y
 }
 
+func (p *P2) String() string {
+	return fmt.Sprintf("%d,%d", p.X, p.Y)
+}
+
 type P3 struct {
 	X, Y, Z int
 }
