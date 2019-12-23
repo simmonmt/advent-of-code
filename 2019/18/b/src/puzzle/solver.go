@@ -16,13 +16,13 @@ type astarState struct {
 	numKeys int
 }
 
-func parseNode(s string) (p pos.P2, keys map[string]bool) {
+func parseNode(s string) (ps []pos.P2, keys map[string]bool) {
 	parts := strings.Split(s, "_")
 
 	pStrs := parts[0:(len(parts) - 1)]
 	keyStr := parts[len(parts)-1]
 
-	ps := []pos.P2{}
+	ps = []pos.P2{}
 	for _, pStr := range pStrs {
 		p, err := pos.P2FromString(parts[0])
 		if err != nil {
@@ -38,12 +38,10 @@ func parseNode(s string) (p pos.P2, keys map[string]bool) {
 		}
 	}
 
-	return ps[0], keys
+	return ps, keys
 }
 
-func nodeToString(p pos.P2, keys map[string]bool) string {
-	ps := []pos.P2{p}
-
+func nodeToString(ps []pos.P2, keys map[string]bool) string {
 	outs := make([]string, len(ps)+1)
 	for i := 0; i < len(ps); i++ {
 		outs[i] = ps[i].String()
@@ -81,40 +79,46 @@ func (a *astarState) pathsFromPos(p pos.P2) []Path {
 }
 
 func (a *astarState) AllNeighbors(start string) []string {
-	startPos, keys := parseNode(start)
+	startPosns, keys := parseNode(start)
 
-	if t := a.board.Get(startPos); t == TILE_KEY {
-		keys[a.board.KeyAtLoc(startPos)] = true
-	}
+	neighbors := []string{}
+	for startPosIdx, startPos := range startPosns {
+		if t := a.board.Get(startPos); t == TILE_KEY {
+			keys[a.board.KeyAtLoc(startPos)] = true
+		}
 
-	paths := a.pathsFromPos(startPos)
+		paths := a.pathsFromPos(startPos)
 
-	avail := []Path{}
-	for _, path := range paths {
-		allowed := true
-		//fmt.Printf("eval path %v\n", path)
-		for _, needDoor := range path.Doors {
-			needKey := string(needDoor[0] - 'A' + 'a')
-			if _, have := keys[needKey]; !have {
-				allowed = false
-				break
+		avail := []Path{}
+		for _, path := range paths {
+			allowed := true
+			//fmt.Printf("eval path %v\n", path)
+			for _, needDoor := range path.Doors {
+				needKey := string(needDoor[0] - 'A' + 'a')
+				if _, have := keys[needKey]; !have {
+					allowed = false
+					break
+				}
 			}
+
+			if !allowed {
+				continue
+			}
+
+			//fmt.Printf("path allowed\n")
+
+			avail = append(avail, path)
 		}
 
-		if !allowed {
-			continue
+		//fmt.Printf("search: avail: %v\n", avail)
+
+		newPosns := make([]pos.P2, len(startPosns))
+		copy(newPosns, startPosns)
+
+		for i := 0; i < len(avail); i++ {
+			newPosns[startPosIdx] = a.board.KeyLoc(avail[i].Dest)
+			neighbors = append(neighbors, nodeToString(newPosns, keys))
 		}
-
-		//fmt.Printf("path allowed\n")
-
-		avail = append(avail, path)
-	}
-
-	//fmt.Printf("search: avail: %v\n", avail)
-
-	neighbors := make([]string, len(avail))
-	for i := 0; i < len(avail); i++ {
-		neighbors[i] = nodeToString(a.board.KeyLoc(avail[i].Dest), keys)
 	}
 
 	logger.LogF("neighbors of %s are %v", start, neighbors)
@@ -131,48 +135,62 @@ func (a *astarState) EstimateDistance(start, end string) uint {
 	return uint(len(endKeys) - len(startKeys))
 }
 
-func (a *astarState) NeighborDistance(n1, n2 string) uint {
-	n1Pos, _ := parseNode(n1)
-	n2Pos, _ := parseNode(n2)
+func findChangedPosIdx(a, b []pos.P2) int {
+	if len(a) != len(b) {
+		panic("mismatch")
+	}
 
-	n2Key := a.board.KeyAtLoc(n2Pos)
-
-	for _, path := range a.pathsFromPos(n1Pos) {
-		if path.Dest == n2Key {
-			return uint(path.Dist)
+	for i := range a {
+		if !a[i].Equals(b[i]) {
+			return i
 		}
 	}
 
-	panic(fmt.Sprintf("%s and %s have no path", n1Pos, n2Pos))
+	panic("no change")
+}
+
+func (a *astarState) findCostFromChange(from, to []pos.P2) int {
+	changedIdx := findChangedPosIdx(from, to)
+
+	n2Key := a.board.KeyAtLoc(to[changedIdx])
+
+	for _, path := range a.pathsFromPos(from[changedIdx]) {
+		if path.Dest == n2Key {
+			return path.Dist
+		}
+	}
+
+	panic("unable to find change")
+}
+
+func (a *astarState) NeighborDistance(n1, n2 string) uint {
+	n1Posns, _ := parseNode(n1)
+	n2Posns, _ := parseNode(n2)
+
+	return uint(a.findCostFromChange(n1Posns, n2Posns))
 }
 
 func (a *astarState) GoalReached(cand, goal string) bool {
-	p, candKeys := parseNode(cand)
+	posns, candKeys := parseNode(cand)
 
-	if a.board.Get(p) != TILE_KEY {
-		return false
+	// For each robot that's on a key, pretend its key is in the keys
+	// list. A* doesn't know that being on a key means it's picked up --
+	// from its perspective keys are only picked up when we leave a node.
+	for _, p := range posns {
+		if a.board.Get(p) == TILE_KEY {
+			candKeys[a.board.KeyAtLoc(p)] = true
+		}
 	}
 
-	// Pretend pos is in the keys list because we're standing on
-	// that node. A* just doesn't know that means it's been picked
-	// up -- from its perspective keys are only picked up when we
-	// leave a node.
-	candKeys[a.board.KeyAtLoc(p)] = true
 	return len(candKeys) == a.numKeys
 }
 
 func (a *astarState) findPathCost(path []string) int {
 	cost := 0
 	for i := len(path) - 1; i >= 1; i-- {
-		curPos, _ := parseNode(path[i])
-		nextPos, _ := parseNode(path[i-1])
-
-		for _, path := range a.pathsFromPos(curPos) {
-			if path.Dest == a.board.KeyAtLoc(nextPos) {
-				cost += path.Dist
-				break
-			}
-		}
+		curPosns, _ := parseNode(path[i])
+		nextPosns, _ := parseNode(path[i-1])
+		cost += a.findCostFromChange(curPosns, nextPosns)
 	}
 
 	return cost
@@ -185,7 +203,7 @@ func FindShortestPath(board *Board, graph map[string][]Path, numKeys int, start 
 		numKeys: numKeys,
 	}
 
-	startNode := nodeToString(start, nil)
+	startNode := nodeToString([]pos.P2{start}, nil)
 	path := astar.AStar(startNode, "", state)
 
 	cost := state.findPathCost(path)

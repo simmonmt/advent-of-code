@@ -52,16 +52,16 @@ func TestAllNeighbors(t *testing.T) {
 
 	testCases := []TestCase{
 		TestCase{
-			initial: nodeToString(start, makeKeyMap()),
+			initial: nodeToString([]pos.P2{start}, makeKeyMap()),
 			neighbors: []string{
-				nodeToString(board.KeyLoc("a"), makeKeyMap()),
+				nodeToString([]pos.P2{board.KeyLoc("a")}, makeKeyMap()),
 			},
 		},
 		TestCase{
-			initial: nodeToString(start, makeKeyMap("a")),
+			initial: nodeToString([]pos.P2{start}, makeKeyMap("a")),
 			neighbors: []string{
-				nodeToString(board.KeyLoc("a"), makeKeyMap("a")),
-				nodeToString(board.KeyLoc("b"), makeKeyMap("a")),
+				nodeToString([]pos.P2{board.KeyLoc("a")}, makeKeyMap("a")),
+				nodeToString([]pos.P2{board.KeyLoc("b")}, makeKeyMap("a")),
 			},
 		},
 	}
