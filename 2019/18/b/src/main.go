@@ -52,8 +52,8 @@ func main() {
 
 	b, starts := puzzle.NewBoard(lines)
 
-	graph := puzzle.FindAllPaths(b, starts[0])
-	_, cost := puzzle.FindShortestPath(b, graph, starts[0])
+	graphs := puzzle.FindAllPathsMulti(b, starts)
+	_, cost := puzzle.FindShortestPathMulti(b, graphs, starts)
 
 	fmt.Printf("cost: %d\n", cost)
 }

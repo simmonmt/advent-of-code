@@ -81,12 +81,16 @@ func (a *astarState) AllNeighbors(start string) []string {
 	startPosns, keys := parseNode(start)
 	//fmt.Printf("start %v => %v, %v\n", start, startPosns, keys)
 
-	neighbors := []string{}
-	for startPosIdx, startPos := range startPosns {
+	// Update the keys based on current robot positions first, as we need
+	// all updates to be visible in the next loop.
+	for _, startPos := range startPosns {
 		if t := a.board.Get(startPos); t == TILE_KEY {
 			keys[a.board.KeyAtLoc(startPos)] = true
 		}
+	}
 
+	neighbors := []string{}
+	for startPosIdx, startPos := range startPosns {
 		//fmt.Printf("eval pos %v keys %v\n", startPos, keys)
 
 		paths := a.pathsFromPos(startPos)
@@ -211,6 +215,15 @@ func FindShortestPath(board *Board, graph map[string][]Path, start pos.P2) ([]st
 	return path, cost
 }
 
-func FindShortestPathMultiStart(board *Board, graphs map[pos.P2]map[string][]Path, starts []pos.P2) ([]string, int) {
-	return nil, 0
+func FindShortestPathMulti(board *Board, graphs map[pos.P2]map[string][]Path, starts []pos.P2) ([]string, int) {
+	state := &astarState{
+		board:  board,
+		graphs: graphs,
+	}
+
+	startNode := nodeToString(starts, nil)
+	path := astar.AStar(startNode, "", state)
+
+	cost := state.findPathCost(path)
+	return path, cost
 }

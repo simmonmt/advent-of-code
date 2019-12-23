@@ -224,12 +224,15 @@ func TestFindShortestPathMultiStart(t *testing.T) {
 	}
 
 	testCases := []TestCase{
-		makeTestCase(fourStartMap1, 0), //8),
+		makeTestCase(fourStartMap1, 8),
+		makeTestCase(fourStartMap2, 24),
+		makeTestCase(fourStartMap3, 32),
+		makeTestCase(fourStartMap4, 72),
 	}
 
 	for i, tc := range testCases {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			path, cost := FindShortestPathMultiStart(
+			path, cost := FindShortestPathMulti(
 				tc.board, tc.graphs, tc.starts)
 			if cost != tc.expectedCost {
 				t.Errorf("FindShortestPathMultiStart() = %v, %v, want cost %v",
