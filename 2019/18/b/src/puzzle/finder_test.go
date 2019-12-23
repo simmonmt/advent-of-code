@@ -33,9 +33,9 @@ func TestFindAllPaths(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			b, start := NewBoard(tc.Map)
-			if got := FindAllPaths(b, start); !reflect.DeepEqual(got, tc.ExpectedPaths) {
-				t.Errorf("FindAllPaths(_, %v) = %v, %v, want %v", start, got, tc.ExpectedPaths)
+			b, starts := NewBoard(tc.Map)
+			if got := FindAllPaths(b, starts[0]); !reflect.DeepEqual(got, tc.ExpectedPaths) {
+				t.Errorf("FindAllPaths(_, %v) = %v, %v, want %v", starts[0], got, tc.ExpectedPaths)
 			}
 		})
 	}
@@ -52,14 +52,14 @@ var (
 )
 
 func TestFindAllPathsToKey(t *testing.T) {
-	b, start := NewBoard(box)
+	b, starts := NewBoard(box)
 
 	expected := []Path{
 		Path{Dest: "b", Dist: 4, Doors: []string{"A"}},
 		Path{Dest: "b", Dist: 4, Doors: []string{"C"}},
 	}
 
-	paths := FindAllPathsToKey(b, start, "b")
+	paths := FindAllPathsToKey(b, starts[0], "b")
 	sort.Sort(PathsByDest(paths))
 
 	if !reflect.DeepEqual(paths, expected) {

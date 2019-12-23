@@ -25,7 +25,7 @@ type Board struct {
 	doorsByLoc map[pos.P2]string
 }
 
-func NewBoard(lines []string) (*Board, pos.P2) {
+func NewBoard(lines []string) (*Board, []pos.P2) {
 	b := &Board{
 		w:          len(lines[0]),
 		h:          len(lines),
@@ -37,12 +37,12 @@ func NewBoard(lines []string) (*Board, pos.P2) {
 
 	b.c = make([]Tile, b.w*b.h)
 
-	var start pos.P2
+	starts := []pos.P2{}
 	for y, line := range lines {
 		for x, r := range line {
 			p := pos.P2{x, y}
 			if r == '@' {
-				start = p
+				starts = append(starts, p)
 				b.set(p, '.')
 			} else {
 				b.set(p, r)
@@ -50,7 +50,7 @@ func NewBoard(lines []string) (*Board, pos.P2) {
 		}
 	}
 
-	return b, start
+	return b, starts
 }
 
 func (b *Board) set(p pos.P2, r rune) {

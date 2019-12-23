@@ -50,9 +50,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	b, start := puzzle.NewBoard(lines)
+	b, starts := puzzle.NewBoard(lines)
 
-	graph := puzzle.FindAllPaths(b, start)
+	graph := puzzle.FindAllPaths(b, starts[0])
 	_, cost := puzzle.FindShortestPath(graph, len(b.Keys()), "@")
 
 	fmt.Printf("cost: %d\n", cost)

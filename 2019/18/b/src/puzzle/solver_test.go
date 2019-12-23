@@ -44,8 +44,8 @@ func TestFindShortestPath(t *testing.T) {
 	}
 
 	makeTestCase := func(lines []string, expectedCost int) TestCase {
-		b, start := NewBoard(lines)
-		graph := FindAllPaths(b, start)
+		b, starts := NewBoard(lines)
+		graph := FindAllPaths(b, starts[0])
 
 		return TestCase{
 			graph:        graph,
