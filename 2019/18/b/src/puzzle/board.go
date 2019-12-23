@@ -94,6 +94,10 @@ func (b *Board) Keys() []string {
 	return out
 }
 
+func (b *Board) NumKeys() int {
+	return len(b.keys)
+}
+
 func (b *Board) KeyLoc(key string) pos.P2 {
 	if p, ok := b.keys[key]; ok {
 		return p

@@ -144,3 +144,11 @@ func FindAllPaths(b *Board, start pos.P2) map[string][]Path {
 
 	return allPathsFromAllKeys
 }
+
+func FindAllPathsMulti(board *Board, starts []pos.P2) map[pos.P2]map[string][]Path {
+	graphs := map[pos.P2]map[string][]Path{}
+	for _, start := range starts {
+		graphs[start] = FindAllPaths(board, start)
+	}
+	return graphs
+}

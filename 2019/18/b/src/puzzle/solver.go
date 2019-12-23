@@ -11,24 +11,23 @@ import (
 )
 
 type astarState struct {
-	board   *Board
-	graphs  map[pos.P2]map[string][]Path
-	numKeys int
+	board  *Board
+	graphs map[pos.P2]map[string][]Path
 }
 
-func parseNode(s string) (ps []pos.P2, keys map[string]bool) {
+func parseNode(s string) (posns []pos.P2, keys map[string]bool) {
 	parts := strings.Split(s, "_")
 
 	pStrs := parts[0:(len(parts) - 1)]
 	keyStr := parts[len(parts)-1]
 
-	ps = []pos.P2{}
+	posns = []pos.P2{}
 	for _, pStr := range pStrs {
-		p, err := pos.P2FromString(parts[0])
+		p, err := pos.P2FromString(pStr)
 		if err != nil {
 			panic(fmt.Sprintf("bad pos '%s'", pStr))
 		}
-		ps = append(ps, p)
+		posns = append(posns, p)
 	}
 
 	keys = map[string]bool{}
@@ -38,13 +37,13 @@ func parseNode(s string) (ps []pos.P2, keys map[string]bool) {
 		}
 	}
 
-	return ps, keys
+	return posns, keys
 }
 
-func nodeToString(ps []pos.P2, keys map[string]bool) string {
-	outs := make([]string, len(ps)+1)
-	for i := 0; i < len(ps); i++ {
-		outs[i] = ps[i].String()
+func nodeToString(posns []pos.P2, keys map[string]bool) string {
+	outs := make([]string, len(posns)+1)
+	for i := 0; i < len(posns); i++ {
+		outs[i] = posns[i].String()
 	}
 
 	keyArr := make([]string, len(keys))
@@ -55,7 +54,7 @@ func nodeToString(ps []pos.P2, keys map[string]bool) string {
 	}
 	sort.Strings(keyArr)
 
-	outs[len(ps)] = strings.Join(keyArr, ",")
+	outs[len(posns)] = strings.Join(keyArr, ",")
 	return strings.Join(outs, "_")
 }
 
@@ -80,12 +79,15 @@ func (a *astarState) pathsFromPos(p pos.P2) []Path {
 
 func (a *astarState) AllNeighbors(start string) []string {
 	startPosns, keys := parseNode(start)
+	//fmt.Printf("start %v => %v, %v\n", start, startPosns, keys)
 
 	neighbors := []string{}
 	for startPosIdx, startPos := range startPosns {
 		if t := a.board.Get(startPos); t == TILE_KEY {
 			keys[a.board.KeyAtLoc(startPos)] = true
 		}
+
+		//fmt.Printf("eval pos %v keys %v\n", startPos, keys)
 
 		paths := a.pathsFromPos(startPos)
 
@@ -128,7 +130,7 @@ func (a *astarState) AllNeighbors(start string) []string {
 func (a *astarState) EstimateDistance(start, end string) uint {
 	_, startKeys := parseNode(start)
 	if end == "" {
-		return uint(a.numKeys - len(startKeys))
+		return uint(a.board.NumKeys() - len(startKeys))
 	}
 
 	_, endKeys := parseNode(end)
@@ -182,7 +184,7 @@ func (a *astarState) GoalReached(cand, goal string) bool {
 		}
 	}
 
-	return len(candKeys) == a.numKeys
+	return len(candKeys) == a.board.NumKeys()
 }
 
 func (a *astarState) findPathCost(path []string) int {
@@ -196,11 +198,10 @@ func (a *astarState) findPathCost(path []string) int {
 	return cost
 }
 
-func FindShortestPath(board *Board, graph map[string][]Path, numKeys int, start pos.P2) ([]string, int) {
+func FindShortestPath(board *Board, graph map[string][]Path, start pos.P2) ([]string, int) {
 	state := &astarState{
-		board:   board,
-		graphs:  map[pos.P2]map[string][]Path{start: graph},
-		numKeys: numKeys,
+		board:  board,
+		graphs: map[pos.P2]map[string][]Path{start: graph},
 	}
 
 	startNode := nodeToString([]pos.P2{start}, nil)
@@ -210,6 +211,6 @@ func FindShortestPath(board *Board, graph map[string][]Path, numKeys int, start 
 	return path, cost
 }
 
-func FindShortestPathMultiStart(board *Board, graphs map[pos.P2]map[string][]Path, numKeys int, starts []pos.P2) ([]string, int) {
+func FindShortestPathMultiStart(board *Board, graphs map[pos.P2]map[string][]Path, starts []pos.P2) ([]string, int) {
 	return nil, 0
 }

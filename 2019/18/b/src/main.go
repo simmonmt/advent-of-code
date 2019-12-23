@@ -53,7 +53,7 @@ func main() {
 	b, starts := puzzle.NewBoard(lines)
 
 	graph := puzzle.FindAllPaths(b, starts[0])
-	_, cost := puzzle.FindShortestPath(b, graph, len(b.Keys()), starts[0])
+	_, cost := puzzle.FindShortestPath(b, graph, starts[0])
 
 	fmt.Printf("cost: %d\n", cost)
 }

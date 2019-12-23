@@ -9,7 +9,68 @@ import (
 	"github.com/simmonmt/aoc/2019/common/pos"
 )
 
-func TestAllNeighbors(t *testing.T) {
+func makeKeyMap(keys ...string) map[string]bool {
+	out := map[string]bool{}
+	for _, key := range keys {
+		out[key] = true
+	}
+	return out
+}
+
+func TestNode(t *testing.T) {
+	type TestCase struct {
+		posns []pos.P2
+		keys  map[string]bool
+		str   string
+	}
+
+	testCases := []TestCase{
+		TestCase{
+			posns: []pos.P2{pos.P2{1, 1}},
+			keys:  makeKeyMap(),
+			str:   "1,1_",
+		},
+		TestCase{
+			posns: []pos.P2{pos.P2{1, 1}, pos.P2{2, 2}},
+			keys:  makeKeyMap("a", "b"),
+			str:   "1,1_2,2_a,b",
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			if got := nodeToString(tc.posns, tc.keys); got != tc.str {
+				t.Errorf(`nodeToString(%v, %v) = "%v", want "%v"`,
+					tc.posns, tc.keys, got, tc.str)
+			}
+
+			if posns, keys := parseNode(tc.str); !reflect.DeepEqual(posns, tc.posns) || !reflect.DeepEqual(keys, tc.keys) {
+				t.Errorf(`parseNode("%v") = %v, %v, want %v, %v`,
+					tc.str, posns, keys, tc.posns, tc.keys)
+			}
+		})
+	}
+}
+
+type AllNeighborsTestCase struct {
+	state     *astarState
+	initial   string
+	neighbors []string
+}
+
+func testAllNeighbors(t *testing.T, testCases []AllNeighborsTestCase) {
+	for i, tc := range testCases {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			got := tc.state.AllNeighbors(tc.initial)
+			if !reflect.DeepEqual(got, tc.neighbors) {
+				t.Errorf("AllNeighbors(%v) = %v, want %v",
+					tc.initial, got, tc.neighbors)
+			}
+		})
+	}
+}
+
+func TestAllNeighborsSingle(t *testing.T) {
 	board, starts := NewBoard(map1)
 	if len(starts) != 1 {
 		t.Errorf("wanted %d starts, got %d", 1, len(starts))
@@ -19,45 +80,21 @@ func TestAllNeighbors(t *testing.T) {
 
 	state := &astarState{
 		board: board,
-
 		graphs: map[pos.P2]map[string][]Path{
-			start: map[string][]Path{
-				"@": []Path{
-					Path{"a", 2, nil},
-					Path{"b", 4, []string{"A"}},
-				},
-				"a": []Path{
-					Path{"b", 6, []string{"A"}},
-				},
-				"b": []Path{
-					Path{"a", 6, []string{"A"}},
-				},
-			},
+			start: FindAllPaths(board, start),
 		},
-		numKeys: 2,
 	}
 
-	type TestCase struct {
-		initial   string
-		neighbors []string
-	}
-
-	makeKeyMap := func(keys ...string) map[string]bool {
-		out := map[string]bool{}
-		for _, key := range keys {
-			out[key] = true
-		}
-		return out
-	}
-
-	testCases := []TestCase{
-		TestCase{
+	testCases := []AllNeighborsTestCase{
+		AllNeighborsTestCase{
+			state:   state,
 			initial: nodeToString([]pos.P2{start}, makeKeyMap()),
 			neighbors: []string{
 				nodeToString([]pos.P2{board.KeyLoc("a")}, makeKeyMap()),
 			},
 		},
-		TestCase{
+		AllNeighborsTestCase{
+			state:   state,
 			initial: nodeToString([]pos.P2{start}, makeKeyMap("a")),
 			neighbors: []string{
 				nodeToString([]pos.P2{board.KeyLoc("a")}, makeKeyMap("a")),
@@ -66,15 +103,59 @@ func TestAllNeighbors(t *testing.T) {
 		},
 	}
 
-	for i, tc := range testCases {
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			got := state.AllNeighbors(tc.initial)
-			if !reflect.DeepEqual(got, tc.neighbors) {
-				t.Errorf("AllNeighbors(%v) = %v, want %v",
-					tc.initial, got, tc.neighbors)
-			}
-		})
+	testAllNeighbors(t, testCases)
+}
+
+func TestAllNeighborsMulti(t *testing.T) {
+	board, starts := NewBoard(fourStartMap1)
+	graphs := FindAllPathsMulti(board, starts)
+
+	state := &astarState{
+		board:  board,
+		graphs: graphs,
 	}
+
+	testCases := []AllNeighborsTestCase{
+		AllNeighborsTestCase{
+			state:   state,
+			initial: nodeToString(starts, makeKeyMap()),
+			neighbors: []string{
+				nodeToString([]pos.P2{
+					board.KeyLoc("a"), starts[1], starts[2], starts[3],
+				}, makeKeyMap()),
+			},
+		},
+		AllNeighborsTestCase{
+			state:   state,
+			initial: nodeToString(starts, makeKeyMap("c")),
+			neighbors: []string{
+				nodeToString([]pos.P2{
+					board.KeyLoc("a"), starts[1], starts[2], starts[3],
+				}, makeKeyMap("c")),
+				nodeToString([]pos.P2{
+					starts[0], board.KeyLoc("d"), starts[2], starts[3],
+				}, makeKeyMap("c")),
+			},
+		},
+		AllNeighborsTestCase{
+			// Start with all initial positions except the first
+			// robot, which starts on 'a'. This means it'll
+			// immediately get 'a', which will allow the fourth
+			// robot to move to 'b'.
+			state: state,
+			initial: nodeToString([]pos.P2{
+				board.KeyLoc("a"), starts[1], starts[2], starts[3],
+			}, makeKeyMap()),
+			neighbors: []string{
+				nodeToString([]pos.P2{
+					board.KeyLoc("a"), starts[1], starts[2],
+					board.KeyLoc("b"),
+				}, makeKeyMap("a")),
+			},
+		},
+	}
+
+	testAllNeighbors(t, testCases)
 }
 
 func TestFindShortestPathOneStart(t *testing.T) {
@@ -82,7 +163,6 @@ func TestFindShortestPathOneStart(t *testing.T) {
 		board        *Board
 		start        pos.P2
 		graph        map[string][]Path
-		numKeys      int
 		expectedCost int
 	}
 
@@ -99,7 +179,6 @@ func TestFindShortestPathOneStart(t *testing.T) {
 			board:        b,
 			start:        start,
 			graph:        graph,
-			numKeys:      len(b.Keys()),
 			expectedCost: expectedCost,
 		}
 	}
@@ -115,7 +194,7 @@ func TestFindShortestPathOneStart(t *testing.T) {
 	for i, tc := range testCases {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			path, cost := FindShortestPath(
-				tc.board, tc.graph, tc.numKeys, tc.start)
+				tc.board, tc.graph, tc.start)
 			if cost != tc.expectedCost {
 				t.Errorf("FindShortestPath() = %v, %v, want cost %v",
 					path, cost, tc.expectedCost)
@@ -129,23 +208,17 @@ func TestFindShortestPathMultiStart(t *testing.T) {
 		board        *Board
 		starts       []pos.P2
 		graphs       map[pos.P2]map[string][]Path
-		numKeys      int
 		expectedCost int
 	}
 
 	makeTestCase := func(lines []string, expectedCost int) TestCase {
-		b, starts := NewBoard(lines)
-
-		graphs := map[pos.P2]map[string][]Path{}
-		for _, start := range starts {
-			graphs[start] = FindAllPaths(b, start)
-		}
+		board, starts := NewBoard(lines)
+		graphs := FindAllPathsMulti(board, starts)
 
 		return TestCase{
-			board:        b,
+			board:        board,
 			starts:       starts,
 			graphs:       graphs,
-			numKeys:      len(b.Keys()),
 			expectedCost: expectedCost,
 		}
 	}
@@ -157,7 +230,7 @@ func TestFindShortestPathMultiStart(t *testing.T) {
 	for i, tc := range testCases {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			path, cost := FindShortestPathMultiStart(
-				tc.board, tc.graphs, tc.numKeys, tc.starts)
+				tc.board, tc.graphs, tc.starts)
 			if cost != tc.expectedCost {
 				t.Errorf("FindShortestPathMultiStart() = %v, %v, want cost %v",
 					path, cost, tc.expectedCost)
