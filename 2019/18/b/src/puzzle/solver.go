@@ -7,17 +7,24 @@ import (
 
 	"github.com/simmonmt/aoc/2019/common/astar"
 	"github.com/simmonmt/aoc/2019/common/logger"
+	"github.com/simmonmt/aoc/2019/common/pos"
 )
 
 type astarState struct {
-	graph   map[string][]Path
+	board   *Board
+	graphs  map[pos.P2]map[string][]Path
 	numKeys int
 }
 
-func parseNode(s string) (pos string, keys map[string]bool) {
+func parseNode(s string) (p pos.P2, keys map[string]bool) {
 	parts := strings.Split(s, "_")
 	if len(parts) != 2 {
 		panic(fmt.Sprintf("bad node '%s'", s))
+	}
+
+	p, err := pos.P2FromString(parts[0])
+	if err != nil {
+		panic(fmt.Sprintf("bad pos '%s'", parts[0]))
 	}
 
 	keys = map[string]bool{}
@@ -27,10 +34,10 @@ func parseNode(s string) (pos string, keys map[string]bool) {
 		}
 	}
 
-	return parts[0], keys
+	return p, keys
 }
 
-func nodeToString(pos string, keys map[string]bool) string {
+func nodeToString(p pos.P2, keys map[string]bool) string {
 	keyArr := make([]string, len(keys))
 	i := 0
 	for key := range keys {
@@ -39,22 +46,39 @@ func nodeToString(pos string, keys map[string]bool) string {
 	}
 	sort.Strings(keyArr)
 
-	return fmt.Sprintf("%s_%s", pos, strings.Join(keyArr, ","))
+	return fmt.Sprintf("%s_%s", p.String(), strings.Join(keyArr, ","))
+}
+
+func (a *astarState) pathsFromPos(p pos.P2) []Path {
+	t := a.board.Get(p)
+	if t == TILE_KEY {
+		keyName := a.board.KeyAtLoc(p)
+		for _, g := range a.graphs {
+			if paths, found := g[keyName]; found {
+				return paths
+			}
+		}
+	} else {
+		for graphPos, graph := range a.graphs {
+			if p.Equals(graphPos) {
+				return graph["@"]
+			}
+		}
+	}
+	panic(fmt.Sprintf("no graph for %v", p))
 }
 
 func (a *astarState) AllNeighbors(start string) []string {
-	pos, keys := parseNode(start)
+	startPos, keys := parseNode(start)
 
-	//fmt.Printf("allneigbors %v => %v,%v\n", start, pos, keys)
-
-	if pos != "@" {
-		keys[pos] = true
+	if t := a.board.Get(startPos); t == TILE_KEY {
+		keys[a.board.KeyAtLoc(startPos)] = true
 	}
 
-	//fmt.Printf("keys now %s\n", keys)
+	paths := a.pathsFromPos(startPos)
 
 	avail := []Path{}
-	for _, path := range a.graph[pos] {
+	for _, path := range paths {
 		allowed := true
 		//fmt.Printf("eval path %v\n", path)
 		for _, needDoor := range path.Doors {
@@ -78,7 +102,7 @@ func (a *astarState) AllNeighbors(start string) []string {
 
 	neighbors := make([]string, len(avail))
 	for i := 0; i < len(avail); i++ {
-		neighbors[i] = nodeToString(avail[i].Dest, keys)
+		neighbors[i] = nodeToString(a.board.KeyLoc(avail[i].Dest), keys)
 	}
 
 	logger.LogF("neighbors of %s are %v", start, neighbors)
@@ -99,8 +123,10 @@ func (a *astarState) NeighborDistance(n1, n2 string) uint {
 	n1Pos, _ := parseNode(n1)
 	n2Pos, _ := parseNode(n2)
 
-	for _, path := range a.graph[n1Pos] {
-		if path.Dest == n2Pos {
+	n2Key := a.board.KeyAtLoc(n2Pos)
+
+	for _, path := range a.pathsFromPos(n1Pos) {
+		if path.Dest == n2Key {
 			return uint(path.Dist)
 		}
 	}
@@ -109,8 +135,9 @@ func (a *astarState) NeighborDistance(n1, n2 string) uint {
 }
 
 func (a *astarState) GoalReached(cand, goal string) bool {
-	pos, candKeys := parseNode(cand)
-	if pos == "@" {
+	p, candKeys := parseNode(cand)
+
+	if a.board.Get(p) != TILE_KEY {
 		return false
 	}
 
@@ -118,18 +145,18 @@ func (a *astarState) GoalReached(cand, goal string) bool {
 	// that node. A* just doesn't know that means it's been picked
 	// up -- from its perspective keys are only picked up when we
 	// leave a node.
-	candKeys[pos] = true
+	candKeys[a.board.KeyAtLoc(p)] = true
 	return len(candKeys) == a.numKeys
 }
 
-func findPathCost(graph map[string][]Path, path []string) int {
+func (a *astarState) findPathCost(path []string) int {
 	cost := 0
 	for i := len(path) - 1; i >= 1; i-- {
 		curPos, _ := parseNode(path[i])
 		nextPos, _ := parseNode(path[i-1])
 
-		for _, path := range graph[curPos] {
-			if path.Dest == nextPos {
+		for _, path := range a.pathsFromPos(curPos) {
+			if path.Dest == a.board.KeyAtLoc(nextPos) {
 				cost += path.Dist
 				break
 			}
@@ -139,15 +166,20 @@ func findPathCost(graph map[string][]Path, path []string) int {
 	return cost
 }
 
-func FindShortestPath(graph map[string][]Path, numKeys int, start string) ([]string, int) {
+func FindShortestPath(board *Board, graph map[string][]Path, numKeys int, start pos.P2) ([]string, int) {
 	state := &astarState{
-		graph:   graph,
+		board:   board,
+		graphs:  map[pos.P2]map[string][]Path{start: graph},
 		numKeys: numKeys,
 	}
 
 	startNode := nodeToString(start, nil)
 	path := astar.AStar(startNode, "", state)
 
-	cost := findPathCost(graph, path)
+	cost := state.findPathCost(path)
 	return path, cost
+}
+
+func FindShortestPathMultiStart(board *Board, graphs map[pos.P2]map[string][]Path, numKeys int, starts []pos.P2) ([]string, int) {
+	return nil, 0
 }
