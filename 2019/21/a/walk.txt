@@ -1,0 +1,7 @@
+NOT A J
+NOT B T
+OR T J   # J = NOT(A)+NOT(B)
+NOT C T
+OR T J   # J = NOT(A)+NOT(B)+NOT(C)
+AND D J
+WALK
