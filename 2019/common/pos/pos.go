@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/simmonmt/aoc/2019/common/intmath"
 )
 
 func fromString(str string, wantParts int) ([]int, error) {
@@ -36,6 +38,20 @@ func P2FromString(str string) (P2, error) {
 
 func (p *P2) Equals(o P2) bool {
 	return p.X == o.X && p.Y == o.Y
+}
+
+func (p *P2) LessThan(o P2) bool {
+	if p.X < o.X {
+		return true
+	} else if p.X > o.X {
+		return false
+	} else {
+		return p.Y < o.Y
+	}
+}
+
+func (p *P2) ManhattanDistance(o P2) int {
+	return intmath.Abs(o.X-p.X) + intmath.Abs(o.Y-p.Y)
 }
 
 func (p *P2) String() string {
