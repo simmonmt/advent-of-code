@@ -26,4 +26,5 @@ go_test(
         "solver_test.go",
     ],
     embed = [":go_default_library"],
+    deps = ["//common/pos:go_default_library"],
 )
