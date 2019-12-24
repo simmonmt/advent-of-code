@@ -1,0 +1,14 @@
+NOT A J
+NOT B T
+OR T J   # J = NOT(A)+NOT(B)
+NOT C T
+OR T J   # J = NOT(A)+NOT(B)+NOT(C)
+AND D J  # J = D(NOT(A)+NOT(B)+NOT(C)
+#
+NOT E T
+AND E T  # T now zero
+#
+OR E T
+OR H T
+AND T J
+RUN

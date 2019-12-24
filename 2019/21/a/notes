@@ -1,0 +1,73 @@
+####.#######
+####.#..####
+####...#####
+####..#.####
+
+Tests:
+
+R1: #####.##..#.#####
+    00000000001111111
+    01234567890123456
+  2:   abcdefghi
+  6:       abcdefghi
+ 10:           abcdefghi
+
+jump at 2, 6, 10
+  2: ab de  h
+  6: a  d fghi
+ 10:  bcdefghi
+
+R2: #####.#.#..######
+    00000000001111111
+    01234567890123456
+  4:     abcdefghi
+  8:         abcdefghi
+
+jump at 4, 8
+  4:  b d  ghi
+  8:   cdefghi
+
+R3: #####...#.#.#.###
+    00000000001111111
+    01234567890123456
+  4:     abcdefghi
+  8:         abcdefghi
+ 12:             abcdefghi
+
+jump at 4, 8, 12
+  4:    d f h
+  8:  b d fghi
+ 12:  bcdefghi
+
+R4: #####.#...#..####
+    00000000001111111
+    01234567890123456
+  2:   abcdefghi
+  6:       abcdefghi
+ 10:           abcdefghi
+
+jump at 2, 6, 12
+  2: ab d   h
+  6:    d  ghi
+ 10:   cdefghi
+
+R5: #####..###...####
+    00000000001111111
+    01234567890123456
+OR3:    abcdefghi
+OR4:     abcdefghi
+  9:          abcdefghi
+
+jump at 3 or 4, then 9
+OR3: a  def
+OR4:   cde   i
+  9:    defghi
+-----------
+
+a'+b'+c' -- always one off
+d        -- always on
+h        -- always on
+
+tried:
+  hd(a'+b'+c'): failed R5
+  (e+h)d(a'+b'+c'): success
