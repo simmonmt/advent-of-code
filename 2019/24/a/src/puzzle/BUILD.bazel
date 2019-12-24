@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["board.go"],
+    importpath = "github.com/simmonmt/aoc/2019/24/a/src/puzzle",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//common/dir:go_default_library",
+        "//common/pos:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["board_test.go"],
+    embed = [":go_default_library"],
+)
