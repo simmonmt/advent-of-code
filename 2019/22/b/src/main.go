@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/simmonmt/aoc/2019/22/b/src/puzzle"
 	"github.com/simmonmt/aoc/2019/common/logger"
@@ -30,7 +31,9 @@ func readInput(path string) ([]string, error) {
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		line := scanner.Text()
-		lines = append(lines, line)
+		if !strings.HasPrefix(line, "#") {
+			lines = append(lines, line)
+		}
 	}
 	if err := scanner.Err(); err != nil {
 		return nil, fmt.Errorf("read failed: %v", err)
@@ -66,15 +69,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	cards := make([]int, 10007)
-	for i := range cards {
-		cards[i] = i
-	}
-
-	cards = puzzle.RunCommands(cards, cmds)
-
-	fmt.Printf("card 2019 location: %v\n", findValue(cards, 2019))
-
 	// Found via experimentation. I took a bunch of primes (10007
 	// is prime) and looked for when they started to repeat. Note
 	// that in some cases they repeat sooner, but there's always a
@@ -98,31 +92,31 @@ func main() {
 	// 	cards[i] = i
 	// }
 
-	// fmt.Println("forward")
-	// n := int64(2020)
-	// for i := 1; *maxRuns < 0 || i <= *maxRuns; i++ {
-	// 	// cards = puzzle.RunCommands(cards, cmds)
-	// 	// fmt.Printf("%v\n", cards[0:10])
+	fmt.Println("forward")
+	n := int64(2020)
+	for i := 1; *maxRuns < 0 || i <= *maxRuns; i++ {
+		// 	// cards = puzzle.RunCommands(cards, cmds)
+		// 	// fmt.Printf("%v\n", cards[0:10])
 
-	// 	n = puzzle.ForwardCommandsForIndex(cmds, int64(*numCards), n)
+		n = puzzle.ForwardCommandsForIndex(cmds, int64(*numCards), n)
 
-	// 	fmt.Println(n)
-	// 	// fmt.Printf("now i=%d %d value %d\n", i, n, cards[n])
+		fmt.Println(n)
+		// 	// fmt.Printf("now i=%d %d value %d\n", i, n, cards[n])
 
-	// 	if n == 0 {
-	// 		fmt.Printf("repeat at %d (%d)\n", i, int(*numCards)/i)
-	// 		return
-	// 	}
-	// 	if i%100000 == 0 {
-	// 		fmt.Printf("i=%d n=%v\n", i, n)
-	// 	}
-	// 	// if when, found := fwdCache[n]; found {
-	// 	// 	fmt.Printf("fwd %d repeat from %d\n", i, when)
-	// 	// 	break
-	// 	// } else {
-	// 	// 	fwdCache[n] = i
-	// 	// }
-	// }
+		// 	if n == 0 {
+		// 		fmt.Printf("repeat at %d (%d)\n", i, int(*numCards)/i)
+		// 		return
+		// 	}
+		// 	if i%100000 == 0 {
+		// 		fmt.Printf("i=%d n=%v\n", i, n)
+		// 	}
+		// 	// if when, found := fwdCache[n]; found {
+		// 	// 	fmt.Printf("fwd %d repeat from %d\n", i, when)
+		// 	// 	break
+		// 	// } else {
+		// 	// 	fwdCache[n] = i
+		// 	// }
+	}
 
 	// fmt.Println("reverse")
 	// n := 2020
