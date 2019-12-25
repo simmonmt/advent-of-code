@@ -55,4 +55,6 @@ func main() {
 	for i := 1; i <= 200; i++ {
 		b = b.Evolve()
 	}
+
+	fmt.Printf("num bugs %d\n", b.NumBugs())
 }
