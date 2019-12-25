@@ -128,9 +128,11 @@ func TestCommands(t *testing.T) {
 		TestCase{
 			in: []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
 			cmds: []*Command{
-				&Command{VERB_DEAL_WITH_INCREMENT, -3},
+				&Command{VERB_DEAL_WITH_INCREMENT, -1},
+				&Command{VERB_CUT_LEFT, 1},
+				&Command{VERB_DEAL_INTO_NEW_STACK, 0},
 			},
-			out: []int{0, 3, 6, 9, 2, 5, 8, 1, 4, 7},
+			out: []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
 		},
 		TestCase{
 			in: []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
