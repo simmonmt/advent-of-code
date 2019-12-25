@@ -1,0 +1,115 @@
+hull breach
+  n - to gift wrapping center
+  s - to navigation
+  w - to science lab
+
+science lab
+  e - to hull breach
+  w - to warp drive maintenance
+
+  obj cake
+
+warp drive maintenance
+  e - to science lab
+  s - to arcade
+  w - to engineering
+
+  obj pointer
+
+arcade
+  n - to warp drive maintenance
+
+  obj monolith
+
+engineering
+  e - to warp drive maintenance
+  s - to stables
+
+  obj escape pod - launches into space
+
+stables
+  n - to engineering
+  e - to passages
+
+  obj tambourine
+
+passages 1
+  e - to corridor
+  s - to observatory
+  w - to stables
+
+  obj photons - eaten by a grue
+
+corridor
+  e - to holodeck
+  w - to passages 1
+
+observatory
+  n - to passages
+
+  obj molten lava - melt
+
+holodeck
+  w - to corridor
+
+  obj mug
+
+gift wrapping center
+  s - to hull breach
+
+navigation
+  n - to hull breach
+  e - to kitchen
+  s - to crew quarters
+
+  obj coin
+
+kitchen
+  s - to sick bay
+  w - to navigation
+
+  obj mouse
+
+sick bay
+  n - to kitchen
+  s - to storage
+
+storage
+  n - sick bay
+
+  obj hypercube
+
+crew quarters
+  n - to navigation
+  w - to hot chocolate fountain
+
+hot chocolate fountain
+  n - to hallway
+  e - to crew quarters
+
+  obj infinite loop  DON'T TAKE
+
+hallway
+  n - to security checkpoint
+  s - to hot chocolate fountain
+
+  obj giant electromagnet  prevents movement
+
+security checkpoint
+  n - to ...
+  s - to hallway
+
+
+===============
+
+
+objects
+
+- pointer
+- hypercube
+- cake
+- tambourine
+- mouse
+- coin
+- mug
+- monolith

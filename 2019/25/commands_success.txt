@@ -1,0 +1,46 @@
+west
+take cake
+west
+take pointer
+south
+take monolith
+north
+west
+south
+take tambourine
+east # to passages 1
+east
+east
+take mug  # in holodeck
+west
+west
+south
+north  # to passages
+west
+north
+east
+east
+east
+south
+take coin  # in navigation
+east
+take mouse  # in kitchen
+south
+south
+take hypercube # in storage
+north
+north
+west   # back to navigation
+south
+west
+north  # hallway
+north  # to sec chkpt
+drop pointer
+drop hypercube
+drop cake
+drop tambourine
+drop mouse
+drop coin
+drop mug
+drop monolith
+north
