@@ -96,8 +96,8 @@ func TestReverseCommandsForIndexSmall(t *testing.T) {
 			out := make([]int, len(tc.in))
 			for i := range tc.in {
 				rev := ReverseCommandsForIndex(tc.cmds, len(tc.in), i)
-				fwd := ForwardCommandsForIndex(tc.cmds, len(tc.in), rev)
-				if fwd != i {
+				fwd := ForwardCommandsForIndex(tc.cmds, int64(len(tc.in)), int64(rev))
+				if fwd != int64(i) {
 					t.Errorf("fwd %d != i %d", fwd, i)
 				}
 
@@ -122,8 +122,13 @@ func TestCommands(t *testing.T) {
 			in: []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
 			cmds: []*Command{
 				&Command{VERB_DEAL_WITH_INCREMENT, 7},
-				&Command{VERB_DEAL_INTO_NEW_STACK, 0},
-				&Command{VERB_DEAL_INTO_NEW_STACK, 0},
+			},
+			out: []int{0, 3, 6, 9, 2, 5, 8, 1, 4, 7},
+		},
+		TestCase{
+			in: []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+			cmds: []*Command{
+				&Command{VERB_DEAL_WITH_INCREMENT, -3},
 			},
 			out: []int{0, 3, 6, 9, 2, 5, 8, 1, 4, 7},
 		},

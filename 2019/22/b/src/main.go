@@ -66,6 +66,15 @@ func main() {
 		log.Fatal(err)
 	}
 
+	cards := make([]int, 10007)
+	for i := range cards {
+		cards[i] = i
+	}
+
+	cards = puzzle.RunCommands(cards, cmds)
+
+	fmt.Printf("card 2019 location: %v\n", findValue(cards, 2019))
+
 	// Found via experimentation. I took a bunch of primes (10007
 	// is prime) and looked for when they started to repeat. Note
 	// that in some cases they repeat sooner, but there's always a
@@ -84,34 +93,36 @@ func main() {
 
 	//numCards := int64(119315717514047)
 
-	cards := make([]int, *numCards)
-	for i := range cards {
-		cards[i] = i
-	}
+	// cards := make([]int, *numCards)
+	// for i := range cards {
+	// 	cards[i] = i
+	// }
 
-	fmt.Println("forward")
-	n := int64(0)
-	for i := 1; *maxRuns < 0 || i <= *maxRuns; i++ {
-		cards = puzzle.RunCommands(cards, cmds)
-		fmt.Printf("%v\n", cards[0:10])
+	// fmt.Println("forward")
+	// n := int64(2020)
+	// for i := 1; *maxRuns < 0 || i <= *maxRuns; i++ {
+	// 	// cards = puzzle.RunCommands(cards, cmds)
+	// 	// fmt.Printf("%v\n", cards[0:10])
 
-		n = puzzle.ForwardCommandsForIndex(cmds, int64(*numCards), n)
-		// fmt.Printf("now i=%d %d value %d\n", i, n, cards[n])
+	// 	n = puzzle.ForwardCommandsForIndex(cmds, int64(*numCards), n)
 
-		if n == 0 {
-			fmt.Printf("repeat at %d (%d)\n", i, int(*numCards)/i)
-			return
-		}
-		if i%100000 == 0 {
-			fmt.Printf("i=%d n=%v\n", i, n)
-		}
-		// if when, found := fwdCache[n]; found {
-		// 	fmt.Printf("fwd %d repeat from %d\n", i, when)
-		// 	break
-		// } else {
-		// 	fwdCache[n] = i
-		// }
-	}
+	// 	fmt.Println(n)
+	// 	// fmt.Printf("now i=%d %d value %d\n", i, n, cards[n])
+
+	// 	if n == 0 {
+	// 		fmt.Printf("repeat at %d (%d)\n", i, int(*numCards)/i)
+	// 		return
+	// 	}
+	// 	if i%100000 == 0 {
+	// 		fmt.Printf("i=%d n=%v\n", i, n)
+	// 	}
+	// 	// if when, found := fwdCache[n]; found {
+	// 	// 	fmt.Printf("fwd %d repeat from %d\n", i, when)
+	// 	// 	break
+	// 	// } else {
+	// 	// 	fwdCache[n] = i
+	// 	// }
+	// }
 
 	// fmt.Println("reverse")
 	// n := 2020
@@ -120,7 +131,7 @@ func main() {
 	// }
 	// fmt.Printf("n=%d\n", n)
 
-	fmt.Println("done")
+	// fmt.Println("done")
 
 	// fmt.Printf("at pos 2020 is %v\n", cards[2020])
 }

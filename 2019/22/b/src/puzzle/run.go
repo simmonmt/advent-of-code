@@ -35,7 +35,12 @@ func DealIntoNewStack(in []int, _ int) []int {
 func DealWithIncrement(in []int, inc int) []int {
 	out := make([]int, len(in))
 	for i := range out {
-		out[i*inc%len(in)] = in[i]
+		newI := i * inc
+		for newI < 0 {
+			newI += len(in)
+		}
+		newI = newI % len(in)
+		out[newI] = in[i]
 	}
 	return out
 }
