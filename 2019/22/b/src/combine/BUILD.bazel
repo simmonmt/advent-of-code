@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_binary(
+    name = "combine",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:private"],
+)
+
+go_library(
+    name = "go_default_library",
+    srcs = ["combine.go"],
+    importpath = "github.com/simmonmt/aoc/2019/22/b/src/combine",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//22/b/src/puzzle:go_default_library",
+        "//common/logger:go_default_library",
+    ],
+)
