@@ -33,6 +33,10 @@ var (
 // 99997: 59490684611703
 // 99998: 49742805710047
 // 99999: 87378128651512
+//
+// fast forward algorithm here:
+//
+//   http://number-none.com/blow/blog/programming/2016/07/08/fabian-on-lcg-fast-forward.html
 
 func main() {
 	mod := big.NewInt(*modFlag)
