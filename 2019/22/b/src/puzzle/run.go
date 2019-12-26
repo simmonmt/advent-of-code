@@ -136,7 +136,10 @@ func ForwardCommandsForIndex(cmds []*Command, sz int64, index int64) int64 {
 			index = sz - index - 1
 			break
 		case VERB_DEAL_WITH_INCREMENT:
-			index = (index * int64(cmd.Val)) % sz
+			newIndex := big.NewInt(int64(index))
+			newIndex.Mul(newIndex, big.NewInt(int64(cmd.Val)))
+			newIndex.Mod(newIndex, big.NewInt(sz))
+			index = newIndex.Int64()
 			break
 		case VERB_CUT_LEFT:
 			if index < int64(cmd.Val) {

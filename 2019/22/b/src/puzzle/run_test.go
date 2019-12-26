@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestLarge(t *testing.T) {
+func TestLargeReverse(t *testing.T) {
 	sz := 119315717514047
 	inc := 70
 	in1 := 119315717513557
@@ -16,6 +16,74 @@ func TestLarge(t *testing.T) {
 		sz, in1)
 	if got != want {
 		t.Errorf("got %v, want %v", got, want)
+	}
+}
+
+func TestLargeForward(t *testing.T) {
+	type TestCase struct {
+		in   int64
+		mod  int64
+		cmds []*Command
+		want []int64
+	}
+
+	testCases := []TestCase{
+		TestCase{
+			in:  2020,
+			mod: 119315717514047,
+			cmds: []*Command{
+				&Command{VERB_CUT_RIGHT, 2739},
+				&Command{VERB_CUT_LEFT, 1},
+			},
+			want: []int64{4758, 7496, 10234},
+		},
+		TestCase{
+			in:  2020,
+			mod: 119315717514047,
+			cmds: []*Command{
+				&Command{VERB_DEAL_WITH_INCREMENT, -1133987316},
+				//&Command{VERB_DEAL_WITH_INCREMENT, 14762},
+				//&Command{VERB_DEAL_WITH_INCREMENT, -76818},
+			},
+			want: []int64{117025063135727, 40379196481625, 9004652742799},
+		},
+		TestCase{
+			in:  2020,
+			mod: 119315717514047,
+			cmds: []*Command{
+				&Command{VERB_CUT_LEFT, 1},
+				//&Command{VERB_DEAL_WITH_INCREMENT, 14762},
+				//&Command{VERB_DEAL_WITH_INCREMENT, -76818},
+			},
+			// the value that was in index 2020 has moved to 2019
+			want: []int64{2019},
+		},
+		TestCase{
+			in:  2020,
+			mod: 119315717514047,
+
+			cmds: []*Command{
+				&Command{VERB_DEAL_WITH_INCREMENT, -100444802940351},
+				&Command{VERB_CUT_LEFT, 12314082813961},
+			},
+			want: []int64{45219469070966, 107704627827469, 12081248964804},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			got := []int64{}
+			v := tc.in
+
+			for _ = range tc.want {
+				v = ForwardCommandsForIndex(tc.cmds, int64(tc.mod), v)
+				got = append(got, v)
+			}
+
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("fwd got %v, want %v", got, tc.want)
+			}
+		})
 	}
 }
 
@@ -47,6 +115,14 @@ func TestReverseCommandsForIndexSmall(t *testing.T) {
 				&Command{VERB_CUT_LEFT, 3},
 			},
 			out: []int{3, 4, 5, 6, 7, 8, 9, 0, 1, 2},
+		},
+		TestCase{
+			in: []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+			cmds: []*Command{
+				&Command{VERB_CUT_RIGHT, 3},
+				//&Command{VERB_CUT_LEFT, 1},
+			},
+			out: []int{7, 8, 9, 0, 1, 2, 3, 4, 5, 6},
 		},
 		TestCase{
 			in: []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
@@ -121,14 +197,14 @@ func TestCommands(t *testing.T) {
 		TestCase{
 			in: []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
 			cmds: []*Command{
-				&Command{VERB_DEAL_WITH_INCREMENT, 7},
+				&Command{VERB_DEAL_WITH_INCREMENT, 17},
 			},
 			out: []int{0, 3, 6, 9, 2, 5, 8, 1, 4, 7},
 		},
 		TestCase{
 			in: []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
 			cmds: []*Command{
-				&Command{VERB_DEAL_WITH_INCREMENT, -1},
+				&Command{VERB_DEAL_WITH_INCREMENT, -11},
 				&Command{VERB_CUT_LEFT, 1},
 				&Command{VERB_DEAL_INTO_NEW_STACK, 0},
 			},
