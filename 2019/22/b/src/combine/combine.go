@@ -19,6 +19,7 @@ var (
 	input     = flag.String("input", "", "input file")
 	mod       = flag.Int("mod", 119315717514047, "mod")
 	numRuns   = flag.Int("num_runs", -1, "num combining runs")
+	verifyLen = flag.Int("verify_len", 10, "verify values")
 )
 
 func readInput(path string) ([]string, error) {
@@ -232,7 +233,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	refVals := runCommands(cmds, *indexFlag, 10)
+	refVals := runCommands(cmds, *indexFlag, *verifyLen)
 
 	changed := true
 	for num := 0; *numRuns == -1 || num < *numRuns; num++ {
