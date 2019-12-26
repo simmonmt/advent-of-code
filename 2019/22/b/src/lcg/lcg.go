@@ -34,12 +34,31 @@ var (
 // 99998: 49742805710047
 // 99999: 87378128651512
 
-func computeAN(a *big.Int, n int64) *big.Int {
-	// This is horribly slow for large n, need to use
-	// https://en.wikipedia.org/wiki/Modular_exponentiation instead
-	an := big.NewInt(0)
-	an.Exp(a, big.NewInt(n), nil)
-	return an
+func computeANSlow(a, mod *big.Int, n int64) *big.Int {
+	val := big.NewInt(0)
+	val.Exp(a, big.NewInt(n), nil)
+	return val
+}
+
+func computeANFast(a, mod *big.Int, n int64) *big.Int {
+	// fast .. but doesn't work yet
+	// https://en.wikipedia.org/w/index.php?title=Modular_exponentiation&action=edit&section=3
+
+	base := big.NewInt(0)
+	*base = *a
+
+	result := big.NewInt(1)
+	base.Mod(base, mod)
+	for n > 0 {
+		if (n & 1) != 0 {
+			result.Mul(result, base)
+			result.Mod(result, mod)
+		}
+		n >>= 1
+		base.Mul(base, base)
+		base.Mod(base, mod)
+	}
+	return result
 }
 
 func main() {
@@ -75,7 +94,7 @@ func main() {
 	// fast forwarding and reversing described here
 	// https://www.nayuki.io/page/fast-skipping-in-a-linear-congruential-generator
 
-	an := computeAN(a, n)
+	an := computeANSlow(a, mod, n)
 
 	num, numMod, den, frac := big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0)
 
