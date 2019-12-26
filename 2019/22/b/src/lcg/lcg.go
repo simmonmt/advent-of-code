@@ -33,10 +33,6 @@ var (
 // 99997: 59490684611703
 // 99998: 49742805710047
 // 99999: 87378128651512
-//
-// fast forward algorithm here:
-//
-//   http://number-none.com/blow/blog/programming/2016/07/08/fabian-on-lcg-fast-forward.html
 
 func main() {
 	mod := big.NewInt(*modFlag)
@@ -51,12 +47,53 @@ func main() {
 		c.Add(c, mod)
 	}
 
-	val := big.NewInt(*seed)
-	for i := 0; i < 100000; i++ {
+	seed := big.NewInt(*seed)
+
+	val := big.NewInt(0)
+	*val = *seed
+	for i := 0; i < 10; i++ {
 		fmt.Printf("%d: %v\n", i, val)
 
 		val.Mul(val, a)
 		val.Add(val, c)
 		val.Mod(val, mod)
 	}
+
+	x := big.NewInt(0)
+	*x = *seed
+
+	curA, curC := big.NewInt(0), big.NewInt(0)
+	*curA, *curC = *a, *c
+
+	n := 9
+
+	// Algorithm for fast-forwarding an LCG from
+	// http://number-none.com/blow/blog/programming/2016/07/08/fabian-on-lcg-fast-forward.html
+	for n > 0 {
+		if (n & 1) != 0 {
+			x.Mul(curA, x)
+			x.Add(x, curC)
+			x.Mod(x, mod)
+		}
+
+		var val big.Int
+		val.Add(curA, big.NewInt(1))
+		curC.Mul(curC, &val)
+		curC.Mod(curC, mod)
+
+		curA.Mul(curA, curA)
+		curA.Mod(curA, mod)
+
+		n >>= 1
+
+	}
+
+	// Tried n=101741582076661, which gave 1608694956433: wrong
+	//
+	// because n=y tells you where the seed value will end up after that
+	// many repetitions.
+	//
+	// we want to find the y that gives us the result 2020
+
+	fmt.Printf("%v\n", x)
 }
