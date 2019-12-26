@@ -15,6 +15,21 @@ const (
 	VERB_CUT_RIGHT
 )
 
+func (v Verb) String() string {
+	switch v {
+	case VERB_DEAL_INTO_NEW_STACK:
+		return "new_stack"
+	case VERB_DEAL_WITH_INCREMENT:
+		return "increment"
+	case VERB_CUT_LEFT:
+		return "cut_left"
+	case VERB_CUT_RIGHT:
+		return "cut_right"
+	default:
+		panic("bad verb")
+	}
+}
+
 type Command struct {
 	Verb Verb
 	Val  int
