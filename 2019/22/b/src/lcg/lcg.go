@@ -34,6 +34,14 @@ var (
 // 99998: 49742805710047
 // 99999: 87378128651512
 
+func computeAN(a *big.Int, n int64) *big.Int {
+	// This is horribly slow for large n, need to use
+	// https://en.wikipedia.org/wiki/Modular_exponentiation instead
+	an := big.NewInt(0)
+	an.Exp(a, big.NewInt(n), nil)
+	return an
+}
+
 func main() {
 	mod := big.NewInt(*modFlag)
 
@@ -62,38 +70,38 @@ func main() {
 	x := big.NewInt(0)
 	*x = *seed
 
-	curA, curC := big.NewInt(0), big.NewInt(0)
-	*curA, *curC = *a, *c
+	n := int64(8)
 
-	n := 9
+	// fast forwarding and reversing described here
+	// https://www.nayuki.io/page/fast-skipping-in-a-linear-congruential-generator
 
-	// Algorithm for fast-forwarding an LCG from
-	// http://number-none.com/blow/blog/programming/2016/07/08/fabian-on-lcg-fast-forward.html
-	for n > 0 {
-		if (n & 1) != 0 {
-			x.Mul(curA, x)
-			x.Add(x, curC)
-			x.Mod(x, mod)
-		}
+	an := computeAN(a, n)
 
-		var val big.Int
-		val.Add(curA, big.NewInt(1))
-		curC.Mul(curC, &val)
-		curC.Mod(curC, mod)
+	num, numMod, den, frac := big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0)
 
-		curA.Mul(curA, curA)
-		curA.Mod(curA, mod)
+	numMod.Sub(a, big.NewInt(1))
+	numMod.Mul(numMod, mod)
 
-		n >>= 1
+	num.Sub(an, big.NewInt(1))
+	num.Mod(num, numMod)
 
-	}
+	den.Sub(a, big.NewInt(1))
+	frac.Div(num, den)
+	frac.Mul(frac, c)
 
-	// Tried n=101741582076661, which gave 1608694956433: wrong
+	result := big.NewInt(0)
+	result.Mul(an, seed)
+	result.Mod(result, mod)
+	result.Add(result, frac)
+	result.Mod(result, mod)
+
+	// Tried fast forwarding with
+	// n=101741582076661, which gave 1608694956433: wrong
 	//
 	// because n=y tells you where the seed value will end up after that
 	// many repetitions.
 	//
 	// we want to find the y that gives us the result 2020
 
-	fmt.Printf("%v\n", x)
+	fmt.Printf("%v\n", result)
 }
