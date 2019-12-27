@@ -98,10 +98,7 @@ func computeForward(x *big.Int, n int64, a, c, m *big.Int) *big.Int {
 	frac.Div(num, aMinus1)
 	frac.Mul(frac, c)
 
-	//val := computeANX(a, x, n, m)
-	val := &big.Int{}
-	val.Exp(a, big.NewInt(n), nil)
-	val.Mul(val, x)
+	val := computeANX(a, x, n, m)
 	val.Add(val, frac)
 	val.Mod(val, m)
 
