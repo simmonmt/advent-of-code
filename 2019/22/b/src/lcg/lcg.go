@@ -36,6 +36,19 @@ var (
 // 99999: 87378128651512
 
 // calculate ainv such that a*ainv mod m == 1
+//
+// extended euclidean calculates x and y
+//    ax+by=gcd(a,b)
+//
+// for a given a and b. in this case, a=a and b=m from the top-level
+// program. gcd is expected to be 1 since both values are prime. (note the
+// variable names in reciprocalMod are .. confusing. x is gcd -- i think). the
+// returned value, which comes from a in the routine, is x above in the
+// euclidean formula. in ax+by=gcd(a,b) we want to find x such that ax=gcd=1
+// (which also means b must be 0).
+
+// in this case a and b are prime, so gcd(a,b) = 1
+
 func reciprocalMod(xIn, m *big.Int) *big.Int {
 	y := &big.Int{}
 	y.Set(xIn)
