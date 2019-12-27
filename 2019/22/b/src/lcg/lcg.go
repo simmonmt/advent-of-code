@@ -35,15 +35,40 @@ var (
 // 99998: 49742805710047
 // 99999: 87378128651512
 
-func extGCD(a, b int) (s, t int) {
-	x, y, u, v := 0, 1, 1, 0
-	for a != 0 {
-		q, r := b/a, b%a
-		m, n := x-u*q, y-v*q
-		b, a, x, y, u, v = a, r, u, v, m, n
+// calculate ainv such that a*ainv mod m == 1
+func reciprocalMod(xIn, m *big.Int) *big.Int {
+	y := &big.Int{}
+	y.Set(xIn)
+
+	x := &big.Int{}
+	x.Set(m)
+
+	a := big.NewInt(0)
+	b := big.NewInt(1)
+
+	zero, one := big.NewInt(0), big.NewInt(1)
+
+	for y.Cmp(zero) != 0 {
+		tmp := &big.Int{}
+		tmp.Div(x, y)
+		tmp.Mul(tmp, b)
+		tmp.Sub(a, tmp)
+
+		a.Set(b)
+		b.Set(tmp)
+
+		tmp.Mod(x, y)
+		x.Set(y)
+		y.Set(tmp)
 	}
 
-	return x, y
+	if x.Cmp(one) == 0 {
+		r := &big.Int{}
+		r.Mod(a, m)
+		return r
+	} else {
+		return nil
+	}
 }
 
 func computeANSlow(a, mod big.Int, n int64) big.Int {
@@ -162,15 +187,18 @@ func main() {
 	bigN := int64(101741582076661)
 	fmt.Printf("ffwd %v = %v\n", bigN, computeForward(seed, bigN, a, c, mod))
 
-	s, t := extGCD(int(a.Int64()), int(mod.Int64()))
+	ainv := reciprocalMod(a, mod)
 
-	fmt.Printf("s %v t %v\n", s, t)
+	{
+		tmp := &big.Int{}
+		tmp.Mul(a, ainv)
+		tmp.Mod(tmp, mod)
 
-	inv := &big.Int{}
-	inv.Mul(a, big.NewInt(int64(t)))
-	inv.Mod(a, mod)
-
-	fmt.Printf("as = %v\n", inv)
+		fmt.Printf("a %v * ainv %v = %v\n", a, ainv, tmp)
+		if tmp.Cmp(big.NewInt(1)) != 0 {
+			log.Fatalf("inverse verification failed")
+		}
+	}
 
 	// Tried fast forwarding with
 	// n=101741582076661, which gave 1608694956433: wrong
