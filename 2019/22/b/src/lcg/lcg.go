@@ -87,12 +87,18 @@ func computeForward(x *big.Int, n int64, a, c, m *big.Int) *big.Int {
 
 	//	fmt.Printf("x %v n %v a %v c %v m %v\n", x, n, a, c, m)
 
-	aMinus1 := &big.Int{}
-	aMinus1.Sub(a, big.NewInt(1))
+	one := big.NewInt(1)
 
-	num := &big.Int{}
-	num.Exp(a, big.NewInt(n), nil)
-	num.Sub(num, big.NewInt(1))
+	aMinus1 := &big.Int{}
+	aMinus1.Sub(a, one)
+
+	numMod := &big.Int{}
+	numMod.Set(aMinus1)
+	numMod.Mul(numMod, m)
+
+	num := computeANX(a, one, n, numMod)
+	num.Sub(num, one)
+	num.Mod(num, numMod)
 
 	frac := &big.Int{}
 	frac.Div(num, aMinus1)
@@ -101,34 +107,6 @@ func computeForward(x *big.Int, n int64, a, c, m *big.Int) *big.Int {
 	val := computeANX(a, x, n, m)
 	val.Add(val, frac)
 	val.Mod(val, m)
-
-	// //fmt.Printf("a-1 %v\n", aMinus1)
-
-	// // num[erator]M = (a-1)m
-	// numM := &big.Int{}
-	// numM.Set(aMinus1)
-	// numM.Mul(numM, m)
-
-	// // (a^n-1) mod (a-1)m
-	// //
-	// // Which we compute as ((a^n mod (a-1)m) - 1) mod (a-1)m
-	// num := computeANX(a, big.NewInt(1), n, numM)
-	// num.Sub(num, big.NewInt(1))
-	// num.Mod(num, numM)
-
-	// num = computeANX(a, big.NewInt(1), n, m)
-	// num.Sub(num, big.NewInt(1))
-	// num.Mul(num, c)
-
-	// frac := &big.Int{}
-	// frac.Div(num, aMinus1)
-
-	// // a^n*x mod m + the fraction
-	// val := computeANX(a, x, n, m)
-	// val.Add(val, frac)
-	// val.Mod(val, m)
-
-	//fmt.Printf("x %v n %v a %v c %v m %v\n", x, n, a, c, m)
 	return val
 }
 
@@ -180,6 +158,9 @@ func main() {
 	if !forwardMatch {
 		log.Fatalf("forward test failed")
 	}
+
+	bigN := int64(101741582076661)
+	fmt.Printf("ffwd %v = %v\n", bigN, computeForward(seed, bigN, a, c, mod))
 
 	s, t := extGCD(int(a.Int64()), int(mod.Int64()))
 
