@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["astar.go"],
+    importpath = "github.com/simmonmt/aoc/2020/common/astar",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//common/logger:go_default_library",
+        "//vendor/github.com/google/btree:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["astar_test.go"],
+    embed = [":go_default_library"],
+    deps = [
+        "//common/logger:go_default_library",
+    ],
+)
