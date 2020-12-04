@@ -40,6 +40,11 @@ func (p *P2) Equals(o P2) bool {
 	return p.X == o.X && p.Y == o.Y
 }
 
+func (p *P2) Add(o P2) {
+	p.X += o.X
+	p.Y += o.Y
+}
+
 func (p *P2) LessThan(o P2) bool {
 	if p.X < o.X {
 		return true
@@ -54,7 +59,7 @@ func (p *P2) ManhattanDistance(o P2) int {
 	return intmath.Abs(o.X-p.X) + intmath.Abs(o.Y-p.Y)
 }
 
-func (p *P2) String() string {
+func (p P2) String() string {
 	return fmt.Sprintf("%d,%d", p.X, p.Y)
 }
 
@@ -72,4 +77,8 @@ func P3FromString(str string) (P3, error) {
 		return P3{}, err
 	}
 	return P3{vs[0], vs[1], vs[2]}, nil
+}
+
+func (p P3) String() string {
+	return fmt.Sprintf("%d,%d,%d", p.X, p.Y, p.Z)
 }

@@ -51,6 +51,13 @@ func TestP2(t *testing.T) {
 				t.Errorf("manhattan distance %v, %v = %v, want %v",
 					tc.p2, tc.p1, got, tc.manhattanDistance)
 			}
+
+			p := tc.p1
+			p.Add(P2{2, 1})
+			want := P2{tc.p1.X + 2, tc.p1.Y + 1}
+			if !p.Equals(want) {
+				t.Errorf("%v.Add({2,1}) = %v, got %v", want, p)
+			}
 		})
 	}
 }
