@@ -83,6 +83,9 @@ func validNumber(str string, digits int, min, max uint64) bool {
 		return false
 	}
 
+	// The digits check turns out to be completely useless in practice
+	// because the min and max we're given in all uses have the right number
+	// of digits. Sigh.
 	if digits > 0 && len(str) != digits {
 		return false
 	}
