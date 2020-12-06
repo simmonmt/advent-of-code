@@ -216,7 +216,7 @@ func TestOutputInstruction(t *testing.T) {
 	}
 
 	if got := saverIO.Written(); !reflect.DeepEqual(got, []int64{11}) {
-		t.Errorf("Written() = %v, want [11]")
+		t.Errorf("Written() = %v, want [11]", got)
 	}
 
 	CheckRam(t, r.ram, []int64{10, 11, 12})

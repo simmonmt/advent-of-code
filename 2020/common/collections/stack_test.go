@@ -15,7 +15,7 @@ func TestStack(t *testing.T) {
 
 	s.Push(4)
 	if got := s.Peek(); got.(int) != 4 {
-		t.Errorf("s.Peek() = %v, want 4")
+		t.Errorf("s.Peek() = %v, want 4", got)
 	}
 	if s.Empty() {
 		t.Errorf("s.Empty() = true, want false")
@@ -23,19 +23,19 @@ func TestStack(t *testing.T) {
 
 	s.Push(5)
 	if got := s.Peek(); got.(int) != 5 {
-		t.Errorf("s.Peek() = %v, want 5")
+		t.Errorf("s.Peek() = %v, want 5", got)
 	}
 
 	if got := s.Pop(); got.(int) != 5 {
-		t.Errorf("s.Pop() = %v, want 5")
+		t.Errorf("s.Pop() = %v, want 5", got)
 	}
 
 	if got := s.Peek(); got.(int) != 4 {
-		t.Errorf("s.Peek() = %v, want 4")
+		t.Errorf("s.Peek() = %v, want 4", got)
 	}
 
 	if got := s.Pop(); got.(int) != 4 {
-		t.Errorf("s.Pop() = %v, want 4")
+		t.Errorf("s.Pop() = %v, want 4", got)
 	}
 
 	testutils.AssertPanic(t, "pop", func() { s.Pop() })
