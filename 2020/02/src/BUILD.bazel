@@ -2,17 +2,17 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_binary(
     name = "solution",
-    embed = [":go_default_library"],
+    embed = [":src_lib"],
     visibility = ["//visibility:public"],
 )
 
 go_library(
-    name = "go_default_library",
+    name = "src_lib",
     srcs = ["main.go"],
     importpath = "github.com/simmonmt/aoc/2020/02/src",
     visibility = ["//visibility:private"],
     deps = [
-        "//common/intmath:go_default_library",
-        "//common/logger:go_default_library",
+        "//common/intmath",
+        "//common/logger",
     ],
 )
