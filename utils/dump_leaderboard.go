@@ -84,6 +84,13 @@ func AtoiOrDie(s string) int {
 	return val
 }
 
+func MemberName(name string) string {
+	if len(name) == 0 {
+		return "Anonymous"
+	}
+	return name
+}
+
 func main() {
 	flag.Parse()
 
@@ -176,9 +183,9 @@ func main() {
 		sort.Sort(ByTimestamp(starResults))
 
 		fmt.Printf("== star %d\n", starNum)
-		for _, r := range starResults {
+		for i, r := range starResults {
 			if r.Ts.Year() != 1 {
-				fmt.Printf("%-20s %v\n", r.Name, r.Ts)
+				fmt.Printf("%3d %-30s %v\n", i+1, MemberName(r.Name), r.Ts)
 			}
 		}
 	}
@@ -190,7 +197,7 @@ func dumpDailyRanks(members []Member, results []map[int][]Result) {
 	for day := range [26]int{} {
 		dayNums += strconv.Itoa((day+1)%10) + "_ "
 	}
-	fmt.Printf("%-20s %s\n", "== Day: ", dayNums)
+	fmt.Printf("%-30s %s\n", "== Day: ", dayNums)
 
 	// Gather ranks in a separate array with member order matching members.
 	ranks := make([]string, len(members))
@@ -204,9 +211,7 @@ func dumpDailyRanks(members []Member, results []map[int][]Result) {
 	for i := range members {
 		member := &members[i]
 		rank := ranks[i]
-		fmt.Printf("%-20s %s\n",
-			map[bool]string{true: member.Name, false: "Anonymous"}[len(member.Name) > 0],
-			rank)
+		fmt.Printf("%-30s %s\n", MemberName(member.Name), rank)
 	}
 
 	if *sortFlag == "default" {
