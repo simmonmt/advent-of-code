@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 )
 
 func Lines(path string) ([]string, error) {
@@ -30,6 +31,24 @@ func linesFromReader(r io.Reader) ([]string, error) {
 	}
 
 	return lines, nil
+}
+
+func Numbers(path string) ([]int, error) {
+	lines, err := Lines(path)
+	if err != nil {
+		return nil, err
+	}
+
+	nums := []int{}
+	for i, line := range lines {
+		num, err := strconv.Atoi(line)
+		if err != nil {
+			return nil, fmt.Errorf("%d: failed to parse %v: %v",
+				i, line, err)
+		}
+		nums = append(nums, num)
+	}
+	return nums, nil
 }
 
 func BlankSeparatedGroups(path string) ([][]string, error) {
