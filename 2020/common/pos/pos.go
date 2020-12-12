@@ -55,7 +55,7 @@ func (p *P2) LessThan(o P2) bool {
 	}
 }
 
-func (p *P2) ManhattanDistance(o P2) int {
+func (p P2) ManhattanDistance(o P2) int {
 	return intmath.Abs(o.X-p.X) + intmath.Abs(o.Y-p.Y)
 }
 
