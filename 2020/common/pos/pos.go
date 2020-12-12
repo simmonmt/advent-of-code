@@ -63,6 +63,28 @@ func (p P2) String() string {
 	return fmt.Sprintf("%d,%d", p.X, p.Y)
 }
 
+func (p P2) AllNeighbors(includeDiag bool) []P2 {
+	num := 4
+	if includeDiag {
+		num = 8
+	}
+
+	out := make([]P2, num)
+	out[0] = P2{p.X - 1, p.Y}
+	out[1] = P2{p.X + 1, p.Y}
+	out[2] = P2{p.X, p.Y - 1}
+	out[3] = P2{p.X, p.Y + 1}
+
+	if includeDiag {
+		out[4] = P2{p.X - 1, p.Y - 1}
+		out[5] = P2{p.X + 1, p.Y - 1}
+		out[6] = P2{p.X - 1, p.Y + 1}
+		out[7] = P2{p.X + 1, p.Y + 1}
+	}
+
+	return out
+}
+
 type P3 struct {
 	X, Y, Z int
 }
