@@ -22,4 +22,5 @@ go_test(
     name = "src_test",
     srcs = ["main_test.go"],
     embed = [":src_lib"],
+    deps = ["//common/logger"],
 )
