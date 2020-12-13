@@ -7,20 +7,27 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
 var (
-	path     = flag.String("path", "", "leaderboard path")
-	dayFlag  = flag.Int("day", 0, "day num")
-	sortFlag = flag.String("sort", "default", "member sort")
+	path          = flag.String("path", "", "leaderboard path")
+	dayFlag       = flag.Int("day", 0, "day num")
+	sortFlag      = flag.String("sort", "default", "member sort")
+	sessionCookie = flag.String("session", "", "session cookie")
+	sessionFile   = flag.String("session_file", "",
+		"file containing session cookie")
+	lbURL = flag.String("url", "", "leaderboard url")
 
 	allowedSorts = "names, stars"
 )
@@ -136,16 +143,64 @@ func getRank(sortedDayResults []Result, name string) string {
 	return rank
 }
 
+func fetchLeaderboard(url string) ([]byte, error) {
+	cookie := &http.Cookie{
+		Name: "session",
+	}
+
+	if *sessionCookie != "" {
+		cookie.Value = *sessionCookie
+	} else if *sessionFile != "" {
+		cArr, err := ioutil.ReadFile(*sessionFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read cookie from %v: %v",
+				*sessionFile, err)
+		}
+		cookie.Value = strings.TrimSpace(string(cArr))
+	} else {
+		return nil, fmt.Errorf("--session(_file) is required with --url")
+	}
+
+	req, err := http.NewRequestWithContext(
+		context.Background(), "GET", *lbURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %v", err)
+	}
+
+	req.AddCookie(cookie)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("failed request: %v", resp.Status)
+	}
+
+	contents, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read body: %v", err)
+	}
+
+	return contents, nil
+}
+
 func main() {
 	flag.Parse()
 
-	if *path == "" {
-		log.Fatalf("--path is required")
-	}
-
-	contents, err := ioutil.ReadFile(*path)
-	if err != nil {
-		log.Fatal(err)
+	var contents []byte
+	var err error
+	if *path != "" {
+		contents, err = ioutil.ReadFile(*path)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else if *lbURL != "" {
+		contents, err = fetchLeaderboard(*lbURL)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	var board LeaderboardJSON
