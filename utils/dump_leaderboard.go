@@ -91,6 +91,51 @@ func MemberName(name string) string {
 	return name
 }
 
+func dumpDailyRanks(members []Member, results []map[int][]Result) {
+	// Print header with day numbers.
+	var dayNums = ""
+	for day := range [26]int{} {
+		dayNums += strconv.Itoa((day+1)%10) + "_ "
+	}
+	fmt.Printf("%-30s %s\n", "== Day: ", dayNums)
+
+	// Gather ranks in a separate array with member order matching members.
+	ranks := make([]string, len(members))
+	for day := range results {
+		for i, member := range members {
+			ranks[i] += getRank(results[day][1], member.Name) + getRank(results[day][2], member.Name) + " "
+		}
+	}
+
+	// Print rows with each player's daily ranks.
+	for i := range members {
+		member := &members[i]
+		rank := ranks[i]
+		fmt.Printf("%-30s %s\n", MemberName(member.Name), rank)
+	}
+
+	if *sortFlag == "default" {
+		fmt.Printf("== Add --sort flag for day ranks with times (flags: %s)\n", allowedSorts)
+	} else {
+		fmt.Printf("== Other sort flags: %s\n", allowedSorts) // Could filter out current flag.
+	}
+}
+
+func getRank(sortedDayResults []Result, name string) string {
+	rank := "."
+	for ndx, result := range sortedDayResults {
+		if result.Name == name {
+			numRank := ndx + 1
+			if numRank >= 10 {
+				rank = ">"
+			} else {
+				rank = strconv.Itoa(numRank)
+			}
+		}
+	}
+	return rank
+}
+
 func main() {
 	flag.Parse()
 
@@ -189,49 +234,4 @@ func main() {
 			}
 		}
 	}
-}
-
-func dumpDailyRanks(members []Member, results []map[int][]Result) {
-	// Print header with day numbers.
-	var dayNums = ""
-	for day := range [26]int{} {
-		dayNums += strconv.Itoa((day+1)%10) + "_ "
-	}
-	fmt.Printf("%-30s %s\n", "== Day: ", dayNums)
-
-	// Gather ranks in a separate array with member order matching members.
-	ranks := make([]string, len(members))
-	for day := range results {
-		for i, member := range members {
-			ranks[i] += getRank(results[day][1], member.Name) + getRank(results[day][2], member.Name) + " "
-		}
-	}
-
-	// Print rows with each player's daily ranks.
-	for i := range members {
-		member := &members[i]
-		rank := ranks[i]
-		fmt.Printf("%-30s %s\n", MemberName(member.Name), rank)
-	}
-
-	if *sortFlag == "default" {
-		fmt.Printf("== Add --sort flag for day ranks with times (flags: %s)\n", allowedSorts)
-	} else {
-		fmt.Printf("== Other sort flags: %s\n", allowedSorts) // Could filter out current flag.
-	}
-}
-
-func getRank(sortedDayResults []Result, name string) string {
-	rank := "."
-	for ndx, result := range sortedDayResults {
-		if result.Name == name {
-			numRank := ndx + 1
-			if numRank >= 10 {
-				rank = ">"
-			} else {
-				rank = strconv.Itoa(numRank)
-			}
-		}
-	}
-	return rank
 }
