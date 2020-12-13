@@ -1,11 +1,14 @@
 package main
 
 import (
+	"os"
 	"strconv"
 	"testing"
+
+	"github.com/simmonmt/aoc/2020/common/logger"
 )
 
-func TestSolveB(t *testing.T) {
+func TestFindCumAlignment(t *testing.T) {
 	type TestCase struct {
 		in   []int
 		want int64
@@ -28,4 +31,9 @@ func TestSolveB(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMain(m *testing.M) {
+	logger.Init(true)
+	os.Exit(m.Run())
 }

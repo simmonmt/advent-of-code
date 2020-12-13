@@ -40,26 +40,11 @@ type FirstEvery struct {
 	every int64
 }
 
-func findCommon(a, b int64, off int64) FirstEvery {
-	first := int64(-1)
-
-	for ts := a; ; ts += a {
-		if (ts+off)%b == 0 {
-			if first == -1 {
-				logger.LogF("found first %v", ts)
-				first = ts
-			} else {
-				return FirstEvery{first, ts - first}
-			}
-		}
-	}
-}
-
-func findAlignment(a, b FirstEvery) FirstEvery {
+func findPairAlignment(a, b FirstEvery, off int64) FirstEvery {
 	first := int64(-1)
 
 	for ts := a.first; ; ts += a.every {
-		if (ts-b.first)%b.every == 0 {
+		if (ts-b.first+off)%b.every == 0 {
 			if first == -1 {
 				logger.LogF("found first %v", ts)
 				first = ts
@@ -70,42 +55,24 @@ func findAlignment(a, b FirstEvery) FirstEvery {
 	}
 }
 
-func findCumAlignment(busses []int) FirstEvery {
+func findAlignment(busses []int) FirstEvery {
 	logger.LogF("busses: %v", busses)
 
-	alignments := []FirstEvery{}
-
-	a := int64(busses[0])
+	cum := FirstEvery{0, int64(busses[0])}
 	for off := 1; off < len(busses); off++ {
 		if busses[off] == -1 {
 			continue
 		}
 
-		b := int64(busses[off])
-
-		logger.LogF("findCommon %v %v %v", a, b, off)
-		alignment := findCommon(a, b, int64(off))
-
-		logger.LogF("a %v b %v off %v first %v every %v",
-			a, b, off, alignment.first, alignment.every)
-
-		alignments = append(alignments, alignment)
+		b := FirstEvery{0, int64(busses[off])}
+		cum = findPairAlignment(cum, b, int64(off))
 	}
 
-	logger.LogF("alignments %v", alignments)
-	cumAlignment := alignments[0]
-	for i := 1; i < len(alignments); i++ {
-		newAlignment := findAlignment(cumAlignment, alignments[i])
-		logger.LogF("alignment %v %v = %v",
-			cumAlignment, alignments[i], newAlignment)
-		cumAlignment = newAlignment
-	}
-
-	return cumAlignment
+	return cum
 }
 
 func solveB(busses []int) {
-	fmt.Printf("B: %v\n", findCumAlignment(busses).first)
+	fmt.Printf("B: %v\n", findAlignment(busses).first)
 }
 
 func main() {
