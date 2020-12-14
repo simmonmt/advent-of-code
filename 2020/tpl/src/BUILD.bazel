@@ -3,7 +3,6 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 go_binary(
     name = "solution",
     embed = [":src_lib"],
-    tags = ["ibazel_notify_changes"],  # needed for ibazel run
     visibility = ["//visibility:public"],
 )
 
