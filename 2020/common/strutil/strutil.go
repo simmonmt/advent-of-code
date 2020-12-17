@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/simmonmt/aoc/2020/common/intmath"
 )
 
 func StringToInt64s(str string) ([]int64, error) {
@@ -17,4 +19,21 @@ func StringToInt64s(str string) ([]int64, error) {
 		out = append(out, v)
 	}
 	return out, nil
+}
+
+func StringDiff(a, b string) (bool, string) {
+	minLen := intmath.IntMin(len(a), len(b))
+	for i := 0; i < minLen; i++ {
+		if a[i] != b[i] {
+			return true, fmt.Sprintf("mismatch at char %v: %v != %v",
+				i, strconv.Quote(string(a[i])),
+				strconv.Quote(string(b[i])))
+		}
+	}
+
+	if len(a) != len(b) {
+		return true, fmt.Sprintf("len %v != len %v", len(a), len(b))
+	}
+
+	return false, ""
 }
