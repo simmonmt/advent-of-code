@@ -17,7 +17,13 @@ function usage() {
 DAYDIR="$1"
 [[ -d "${DAYDIR}" ]] && die "daydir ${DAYDIR} already exists"
 
-[[ -d tpl ]] || die "../tpl doesn't exist"
+[[ -d tpl ]] || die "tpl doesn't exist"
+
+if [[ ! -x ../utils/get_input ]] ; then
+	pushd ../utils
+	make || die "failed to build utils"
+	popd
+fi
 
 mkdir -p "${DAYDIR}" || die "failed to make ${DAYDIR}"
 
@@ -35,3 +41,8 @@ for tpl_path in tpl/*; do
 done
 
 bazel run :gazelle_fix
+
+../utils/get_input \
+	--session_file ~/keys/aoc_session_cookie \
+	--day $(echo ${DAYDIR} |sed -e 's/^0//') \
+	>${DAYDIR}/input.txt || die "failed to get input"
