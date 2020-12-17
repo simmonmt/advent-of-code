@@ -104,3 +104,77 @@ func P3FromString(str string) (P3, error) {
 func (p P3) String() string {
 	return fmt.Sprintf("%d,%d,%d", p.X, p.Y, p.Z)
 }
+
+func (p P3) AllNeighbors(includeDiag bool) []P3 {
+	num := 6
+	if includeDiag {
+		num = 26
+	}
+
+	out := make([]P3, num)
+	out[0] = P3{p.X - 1, p.Y, p.Z}
+	out[1] = P3{p.X + 1, p.Y, p.Z}
+	out[2] = P3{p.X, p.Y + 1, p.Z}
+	out[3] = P3{p.X, p.Y - 1, p.Z}
+	out[4] = P3{p.X, p.Y, p.Z + 1}
+	out[5] = P3{p.X, p.Y, p.Z - 1}
+
+	if includeDiag {
+		out[6] = P3{p.X + 1, p.Y - 1, p.Z}
+		out[7] = P3{p.X + 1, p.Y + 1, p.Z}
+		out[8] = P3{p.X + 1, p.Y - 1, p.Z - 1}
+		out[9] = P3{p.X + 1, p.Y, p.Z - 1}
+		out[10] = P3{p.X + 1, p.Y + 1, p.Z - 1}
+		out[11] = P3{p.X + 1, p.Y - 1, p.Z + 1}
+		out[12] = P3{p.X + 1, p.Y, p.Z + 1}
+		out[13] = P3{p.X + 1, p.Y + 1, p.Z + 1}
+
+		out[14] = P3{p.X - 1, p.Y - 1, p.Z}
+		out[15] = P3{p.X - 1, p.Y + 1, p.Z}
+		out[16] = P3{p.X - 1, p.Y - 1, p.Z - 1}
+		out[17] = P3{p.X - 1, p.Y, p.Z - 1}
+		out[18] = P3{p.X - 1, p.Y + 1, p.Z - 1}
+		out[19] = P3{p.X - 1, p.Y - 1, p.Z + 1}
+		out[20] = P3{p.X - 1, p.Y, p.Z + 1}
+		out[21] = P3{p.X - 1, p.Y + 1, p.Z + 1}
+
+		out[22] = P3{p.X, p.Y - 1, p.Z - 1}
+		out[23] = P3{p.X, p.Y - 1, p.Z + 1}
+		out[24] = P3{p.X, p.Y + 1, p.Z - 1}
+		out[25] = P3{p.X, p.Y + 1, p.Z + 1}
+	}
+
+	return out
+}
+
+type P4 struct {
+	X, Y, Z, W int
+}
+
+func (p P4) AllNeighbors() []P4 {
+	out := make([]P4, 80)
+
+	span := []int{-1, 0, 1}
+	i := 0
+
+	for _, w := range span {
+		for _, z := range span {
+			for _, y := range span {
+				for _, x := range span {
+					if w == 0 && z == 0 && y == 0 && x == 0 {
+						continue
+					}
+					out[i] = P4{
+						X: p.X + x,
+						Y: p.Y + y,
+						Z: p.Z + z,
+						W: p.W + w,
+					}
+					i++
+				}
+			}
+		}
+	}
+
+	return out
+}

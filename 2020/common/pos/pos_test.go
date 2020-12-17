@@ -1,6 +1,7 @@
 package pos
 
 import (
+	"reflect"
 	"strconv"
 	"testing"
 )
@@ -75,4 +76,188 @@ func TestP3FromStringBad(t *testing.T) {
 	if _, err := P3FromString("1,bob,3"); err == nil {
 		t.Errorf(`P3FromString("1,bob,3") = _, %v, want _, non-nil`, err)
 	}
+}
+
+func TestP3AllNeighbors(t *testing.T) {
+	p := P3{0, 0, 0}
+
+	want := map[P3]bool{
+		// x=-1
+		P3{-1, -1, -1}: true,
+		P3{-1, -1, 0}:  true,
+		P3{-1, -1, 1}:  true,
+
+		P3{-1, 0, -1}: true,
+		P3{-1, 0, 0}:  true,
+		P3{-1, 0, 1}:  true,
+
+		P3{-1, 1, -1}: true,
+		P3{-1, 1, 0}:  true,
+		P3{-1, 1, 1}:  true,
+
+		// x=0
+		P3{0, -1, -1}: true,
+		P3{0, -1, 0}:  true,
+		P3{0, -1, 1}:  true,
+
+		P3{0, 0, -1}: true,
+		//P3{0,0,0}: true,
+		P3{0, 0, 1}: true,
+
+		P3{0, 1, -1}: true,
+		P3{0, 1, 0}:  true,
+		P3{0, 1, 1}:  true,
+
+		// x=1
+		P3{1, -1, -1}: true,
+		P3{1, -1, 0}:  true,
+		P3{1, -1, 1}:  true,
+
+		P3{1, 0, -1}: true,
+		P3{1, 0, 0}:  true,
+		P3{1, 0, 1}:  true,
+
+		P3{1, 1, -1}: true,
+		P3{1, 1, 0}:  true,
+		P3{1, 1, 1}:  true,
+	}
+
+	got := map[P3]bool{}
+	for _, n := range p.AllNeighbors(true) {
+		got[n] = true
+	}
+
+	if reflect.DeepEqual(got, want) {
+		return
+	}
+
+	for n := range got {
+		if _, found := want[n]; !found {
+			t.Errorf("got has %v, not in want", n)
+		}
+	}
+
+	for n := range want {
+		if _, found := got[n]; !found {
+			t.Errorf("want has %v, not in got", n)
+		}
+	}
+
+	t.Errorf("got want mismatch, can't figure out why")
+}
+
+func TestP4AllNeighbors(t *testing.T) {
+	p := P4{0, 0, 0, 0}
+
+	want := map[P4]bool{
+		P4{-1, -1, -1, -1}: true,
+		P4{-1, -1, -1, 0}:  true,
+		P4{-1, -1, -1, 1}:  true,
+		P4{-1, -1, 0, -1}:  true,
+		P4{-1, -1, 0, 0}:   true,
+		P4{-1, -1, 0, 1}:   true,
+		P4{-1, -1, 1, -1}:  true,
+		P4{-1, -1, 1, 0}:   true,
+		P4{-1, -1, 1, 1}:   true,
+		P4{-1, 0, -1, -1}:  true,
+		P4{-1, 0, -1, 0}:   true,
+		P4{-1, 0, -1, 1}:   true,
+		P4{-1, 0, 0, -1}:   true,
+		P4{-1, 0, 0, 0}:    true,
+		P4{-1, 0, 0, 1}:    true,
+		P4{-1, 0, 1, -1}:   true,
+		P4{-1, 0, 1, 0}:    true,
+		P4{-1, 0, 1, 1}:    true,
+		P4{-1, 1, -1, -1}:  true,
+		P4{-1, 1, -1, 0}:   true,
+		P4{-1, 1, -1, 1}:   true,
+		P4{-1, 1, 0, -1}:   true,
+		P4{-1, 1, 0, 0}:    true,
+		P4{-1, 1, 0, 1}:    true,
+		P4{-1, 1, 1, -1}:   true,
+		P4{-1, 1, 1, 0}:    true,
+		P4{-1, 1, 1, 1}:    true,
+
+		P4{0, -1, -1, -1}: true,
+		P4{0, -1, -1, 0}:  true,
+		P4{0, -1, -1, 1}:  true,
+		P4{0, -1, 0, -1}:  true,
+		P4{0, -1, 0, 0}:   true,
+		P4{0, -1, 0, 1}:   true,
+		P4{0, -1, 1, -1}:  true,
+		P4{0, -1, 1, 0}:   true,
+		P4{0, -1, 1, 1}:   true,
+		P4{0, 0, -1, -1}:  true,
+		P4{0, 0, -1, 0}:   true,
+		P4{0, 0, -1, 1}:   true,
+		P4{0, 0, 0, -1}:   true,
+		//P4{0, 0, 0, 0}:    true,
+		P4{0, 0, 0, 1}:   true,
+		P4{0, 0, 1, -1}:  true,
+		P4{0, 0, 1, 0}:   true,
+		P4{0, 0, 1, 1}:   true,
+		P4{0, 1, -1, -1}: true,
+		P4{0, 1, -1, 0}:  true,
+		P4{0, 1, -1, 1}:  true,
+		P4{0, 1, 0, -1}:  true,
+		P4{0, 1, 0, 0}:   true,
+		P4{0, 1, 0, 1}:   true,
+		P4{0, 1, 1, -1}:  true,
+		P4{0, 1, 1, 0}:   true,
+		P4{0, 1, 1, 1}:   true,
+
+		P4{1, -1, -1, -1}: true,
+		P4{1, -1, -1, 0}:  true,
+		P4{1, -1, -1, 1}:  true,
+		P4{1, -1, 0, -1}:  true,
+		P4{1, -1, 0, 0}:   true,
+		P4{1, -1, 0, 1}:   true,
+		P4{1, -1, 1, -1}:  true,
+		P4{1, -1, 1, 0}:   true,
+		P4{1, -1, 1, 1}:   true,
+		P4{1, 0, -1, -1}:  true,
+		P4{1, 0, -1, 0}:   true,
+		P4{1, 0, -1, 1}:   true,
+		P4{1, 0, 0, -1}:   true,
+		P4{1, 0, 0, 0}:    true,
+		P4{1, 0, 0, 1}:    true,
+		P4{1, 0, 1, -1}:   true,
+		P4{1, 0, 1, 0}:    true,
+		P4{1, 0, 1, 1}:    true,
+		P4{1, 1, -1, -1}:  true,
+		P4{1, 1, -1, 0}:   true,
+		P4{1, 1, -1, 1}:   true,
+		P4{1, 1, 0, -1}:   true,
+		P4{1, 1, 0, 0}:    true,
+		P4{1, 1, 0, 1}:    true,
+		P4{1, 1, 1, -1}:   true,
+		P4{1, 1, 1, 0}:    true,
+		P4{1, 1, 1, 1}:    true,
+	}
+
+	got := map[P4]bool{}
+	for _, n := range p.AllNeighbors() {
+		got[n] = true
+	}
+
+	if reflect.DeepEqual(got, want) {
+		return
+	}
+
+	numMismatches := 0
+	for n := range got {
+		if _, found := want[n]; !found {
+			t.Errorf("got has %v, not in want", n)
+			numMismatches++
+		}
+	}
+
+	for n := range want {
+		if _, found := got[n]; !found {
+			t.Errorf("want has %v, not in got", n)
+			numMismatches++
+		}
+	}
+
+	t.Errorf("got want mismatchs: %v", numMismatches)
 }
