@@ -41,6 +41,7 @@ for tpl_path in tpl/*; do
 done
 
 bazel run :gazelle_fix
+bazel test "${DAYDIR}/..."
 
 ../utils/get_input \
 	--session_file ~/keys/aoc_session_cookie \

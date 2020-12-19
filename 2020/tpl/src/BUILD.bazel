@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
 
 go_binary(
     name = "solution",
@@ -13,6 +13,15 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//common/filereader",
+        "//common/logger",
+    ],
+)
+
+go_test(
+    name = "src_test",
+    srcs = ["main_test.go"],
+    embed = [":src_lib"],
+    deps = [
         "//common/logger",
     ],
 )
