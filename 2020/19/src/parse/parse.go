@@ -76,5 +76,5 @@ func Parse(rules []string, num int) (string, error) {
 		return "", nil
 	}
 
-	return "^" + resolve(ruleMap, 0) + "$", nil
+	return resolve(ruleMap, num), nil
 }

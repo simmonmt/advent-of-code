@@ -25,7 +25,7 @@ func TestParse(t *testing.T) {
 				`2: 1 3 | 3 1`,
 				`3: "b"`,
 			},
-			want:    "^a(?:ab|ba)$",
+			want:    "a(?:ab|ba)",
 			matches: []string{"aab", "aba"},
 			fails:   []string{"aaa"},
 		},
@@ -38,7 +38,7 @@ func TestParse(t *testing.T) {
 				`4: "a"`,
 				`5: "b"`,
 			},
-			want: "^a(?:(?:aa|bb)(?:ab|ba)|(?:ab|ba)(?:aa|bb))b$",
+			want: "a(?:(?:aa|bb)(?:ab|ba)|(?:ab|ba)(?:aa|bb))b",
 			matches: []string{
 				"aaaabb",
 				"aaabab",
@@ -69,13 +69,13 @@ func TestParse(t *testing.T) {
 			}
 
 			for _, wantMatch := range tc.matches {
-				if !pat.MatchString(wantMatch) {
+				if sz := len(pat.FindString(wantMatch)); sz != len(wantMatch) {
 					t.Errorf("failed to match %v", wantMatch)
 				}
 			}
 
 			for _, wantFail := range tc.fails {
-				if pat.MatchString(wantFail) {
+				if sz := len(pat.FindString(wantFail)); sz == len(wantFail) {
 					t.Errorf("bad match %v", wantFail)
 				}
 			}
