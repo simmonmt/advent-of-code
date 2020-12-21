@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "tiles",
+    srcs = ["tiles.go"],
+    importpath = "github.com/simmonmt/aoc/2020/20/src/tiles",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//common/dir",
+        "//common/pos",
+    ],
+)
+
+go_test(
+    name = "tiles_test",
+    srcs = ["tiles_test.go"],
+    embed = [":tiles"],
+    deps = [
+        "//common/dir",
+        "//common/logger",
+        "//common/pos",
+    ],
+)

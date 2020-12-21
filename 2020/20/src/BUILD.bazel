@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_binary(
+    name = "solution",
+    embed = [":src_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "src_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/simmonmt/aoc/2020/20/src",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//20/src/tiles",
+        "//common/dir",
+        "//common/filereader",
+        "//common/intmath",
+        "//common/logger",
+        "//common/pos",
+    ],
+)
