@@ -39,9 +39,11 @@ func ParseSide(str string) (Side, error) {
 }
 
 type Tile struct {
-	num   int
-	dim   int
-	sides []Side // N S E W
+	num int
+	dim int
+
+	// sides are stored in increasing-coordinate order.
+	sides []Side // N S W E
 	body  []Side
 }
 
@@ -162,14 +164,56 @@ func (ot *OrientedTile) String() string {
 }
 
 var (
-	otRotateMap = map[dir.Dir][]dir.Dir{
+	// This map is used to map from a post-rotation side to where it was
+	// pre-rotation. See transform() for more details. The key is the
+	// direction that serves as north post-rotation. Index into the value
+	// with the dirSideOff() for the side to be unrotated.
+	//
+	// Example: We've rotated 90 degrees CW, so west now acts as
+	// north. We're interested in what's now (post-rotation) the south
+	// side. Which side was it pre-rotation? The value to retrieve is
+	//
+	//     otRotateReverseMap[DIR_WEST][dirToOff(DIR_SOUTH)]
+	//
+	// In pictures
+	//
+	//     123          741
+	//     456 => CW => 852
+	//     789          963
+	//
+	// We want to know which side '963' was before rotation. The map tells
+	// us it was the east side.
+	otRotateDirMap = map[dir.Dir][]dir.Dir{
 		dir.DIR_NORTH: []dir.Dir{dir.DIR_NORTH, dir.DIR_SOUTH, dir.DIR_WEST, dir.DIR_EAST},
 		dir.DIR_WEST:  []dir.Dir{dir.DIR_WEST, dir.DIR_EAST, dir.DIR_SOUTH, dir.DIR_NORTH},
 		dir.DIR_SOUTH: []dir.Dir{dir.DIR_SOUTH, dir.DIR_NORTH, dir.DIR_EAST, dir.DIR_WEST},
 		dir.DIR_EAST:  []dir.Dir{dir.DIR_EAST, dir.DIR_WEST, dir.DIR_NORTH, dir.DIR_SOUTH},
 	}
 
-	otFlipMap = map[dir.Dir][]bool{
+	// This map is used to indicate whether reversing needs to happen to
+	// undo the effects of rotation. See transform() for more details. The
+	// key is the direction that serves as north post-rotation. Index into
+	// the value with the dirSideOff() for the side to be unrotated. The
+	// result indicates whether reversing is required.
+	//
+	// Example: We've rotated 90 degrees CW, so west now acts as north. We
+	// want to find out whether we need to reverse the value of the
+	// post-rotation south side (which would've been east pre-rotation). The
+	// value to retrieve is
+	//
+	//     otRotateReverseMap[DIR_WEST][dirToOff(DIR_SOUTH)]
+	//
+	// In pictures
+	//
+	//     123          741
+	//     456 => CW => 852
+	//     789          963
+	//                  \-/--- We want this side
+	//
+	// The '147' side was west, now it's north. We want the '963' side,
+	// which is south.
+	//
+	otRotateReverseMap = map[dir.Dir][]bool{
 		dir.DIR_NORTH: []bool{false, false, false, false},
 		dir.DIR_WEST:  []bool{true, true, false, false},
 		dir.DIR_SOUTH: []bool{true, true, true, true},
@@ -178,6 +222,18 @@ var (
 )
 
 func (ot *OrientedTile) transform(d dir.Dir) (newDir dir.Dir, reverse bool) {
+	// We need to peel back the layers of flipping and rotation, mapping the
+	// side direction to the corresponding side on the embedded Tile
+	// instance (which is neither flipped nor rotated).
+
+	// Flipping has two effects -- it swaps two sides and reverses the other
+	// two. Example: A tile with no rotation but which is flipped
+	// horizontally (around the y axis) swaps its east and west sides. That
+	// is, the east side on the unflipped tile is the west side on the
+	// flipped one. The north and south sides are reversed -- a north side
+	// of "###..." is "...###" after a horizontal flip.
+
+	// Undo the swapping part of any flipping that may have occurred.
 	if ot.flipH {
 		if d == dir.DIR_WEST {
 			d = dir.DIR_EAST
@@ -193,24 +249,43 @@ func (ot *OrientedTile) transform(d dir.Dir) (newDir dir.Dir, reverse bool) {
 		}
 	}
 
-	rev := false
-	if otFlipMap[ot.northSide][dirSideOff(d)] {
-		rev = !rev
-	}
+	// Whether the side we're going to read from the Tile needs to be
+	// reversed. Negation of flipping can require reversing, as can negation
+	// of rotation, and sometimes both can call for reversing. This variable
+	// tracks the cumulative effects of the requests for rotation.
+	reverse = false
 
+	// Undo the reversing part of any flipping that may have occurred.
 	if ot.flipH {
 		if d == dir.DIR_NORTH || d == dir.DIR_SOUTH {
-			rev = !rev
+			reverse = !reverse
 		}
 	}
 	if ot.flipV {
 		if d == dir.DIR_EAST || d == dir.DIR_WEST {
-			rev = !rev
+			reverse = !reverse
 		}
 	}
 
-	d = otRotateMap[ot.northSide][dirSideOff(d)]
-	return d, rev
+	// Rotation also has two effects -- it always changes sides and *can*
+	// reverse them. Reversal can happen because the Tile stores its sides
+	// in increasing-X,increasing-Y order. That is, the west side contains
+	// x=0,y=0..max *in that order*. The east side is also stored with
+	// y=0..max. If the west side is rotated up into north position it'll
+	// need to be reversed before it can be used.
+	//
+	//     Example:    1..                 321
+	//                 2.. => rotate CW => ...
+	//                 3..                 ...
+
+	// Undo the reversing part of rotation
+	if otRotateReverseMap[ot.northSide][dirSideOff(d)] {
+		reverse = !reverse
+	}
+
+	// Undo the side-changing part of rotation
+	d = otRotateDirMap[ot.northSide][dirSideOff(d)]
+	return d, reverse
 }
 
 func (ot *OrientedTile) Side(d dir.Dir) Side {

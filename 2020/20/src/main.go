@@ -1,3 +1,13 @@
+// original
+// real    0m23.608s
+// user    0m26.954s
+// sys     0m0.961s
+
+// getTilesToPlace
+// real    0m1.874s
+// user    0m2.099s
+// sys     0m0.106s
+
 // Possible optimization: Some combinations of (dir,fliph,flipv) are
 // redundant. It finishes in less than a minute, though, and I never
 // want to see another sea monster again.
@@ -155,8 +165,9 @@ func makeAllSidesMap(allTiles []*tiles.Tile) map[tiles.Side][]*tiles.OrientedTil
 	return allSides
 }
 
-func findBorderTiles(allTiles []*tiles.Tile, allSides map[tiles.Side][]*tiles.OrientedTile) []*tiles.Tile {
-	borders := []*tiles.Tile{}
+func findBorderTiles(allTiles []*tiles.Tile, allSides map[tiles.Side][]*tiles.OrientedTile) (corners, edges []*tiles.Tile) {
+	corners = []*tiles.Tile{}
+	edges = []*tiles.Tile{}
 
 	for _, tile := range allTiles {
 		numNeighbors := 0
@@ -169,14 +180,16 @@ func findBorderTiles(allTiles []*tiles.Tile, allSides map[tiles.Side][]*tiles.Or
 			}
 		}
 
-		if numNeighbors == 2 || numNeighbors == 3 {
-			borders = append(borders, tile)
+		if numNeighbors == 2 {
+			corners = append(corners, tile)
+		} else if numNeighbors == 3 {
+			edges = append(edges, tile)
 		} else if numNeighbors != 4 {
 			panic("bad matches")
 		}
 	}
 
-	return borders
+	return
 }
 
 func makePerimiterPath(dim int) (path []pos.P2) {
@@ -219,7 +232,7 @@ func pieceWillFit(b *Board, p pos.P2, ot *tiles.OrientedTile) bool {
 	return true
 }
 
-func placeTiles(b *Board, tilesToPlace []*tiles.Tile, path []pos.P2) bool {
+func placeTiles(b *Board, getTilesToPlace func(pos.P2) []*tiles.Tile, path []pos.P2) bool {
 	if len(path) == 0 {
 		return true
 	}
@@ -230,6 +243,7 @@ func placeTiles(b *Board, tilesToPlace []*tiles.Tile, path []pos.P2) bool {
 
 	curPos := path[0]
 
+	tilesToPlace := getTilesToPlace(curPos)
 	for _, tile := range tilesToPlace {
 		if b.Used(tile.Num()) {
 			continue
@@ -250,7 +264,7 @@ func placeTiles(b *Board, tilesToPlace []*tiles.Tile, path []pos.P2) bool {
 
 		for _, cand := range cands {
 			b.Set(curPos, cand)
-			if placeTiles(b, tilesToPlace, path[1:]) {
+			if placeTiles(b, getTilesToPlace, path[1:]) {
 				return true
 			}
 			b.Clear(curPos)
@@ -262,11 +276,18 @@ func placeTiles(b *Board, tilesToPlace []*tiles.Tile, path []pos.P2) bool {
 
 func SolveBoard(b *Board, allTiles []*tiles.Tile) {
 	allSides := makeAllSidesMap(allTiles)
-	borders := findBorderTiles(allTiles, allSides)
+	corners, edges := findBorderTiles(allTiles, allSides)
 	perimiter := makePerimiterPath(b.Dim())
 
 	logger.LogF("solving for borders")
-	placeTiles(b, borders, perimiter)
+	placeTiles(b, func(pos pos.P2) []*tiles.Tile {
+		isCorner := (pos.X == 0 || pos.X == b.Dim()-1) &&
+			(pos.Y == 0 || pos.Y == b.Dim()-1)
+		if isCorner {
+			return corners
+		}
+		return edges
+	}, perimiter)
 
 	inner := makeInnerPath(b.Dim())
 
@@ -278,7 +299,7 @@ func SolveBoard(b *Board, allTiles []*tiles.Tile) {
 	}
 
 	logger.LogF("solving for inner")
-	placeTiles(b, left, inner)
+	placeTiles(b, func(pos pos.P2) []*tiles.Tile { return left }, inner)
 	logger.LogF("done solving")
 }
 
