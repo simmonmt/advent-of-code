@@ -15,7 +15,6 @@ go_library(
         "//19/src/parse",
         "//common/filereader",
         "//common/logger",
-        "//common/strutil",
     ],
 )
 
