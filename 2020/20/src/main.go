@@ -1,3 +1,7 @@
+// Possible optimization: Some combinations of (dir,fliph,flipv) are
+// redundant. It finishes in less than a minute, though, and I never
+// want to see another sea monster again.
+
 package main
 
 import (
