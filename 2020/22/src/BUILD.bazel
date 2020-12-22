@@ -1,0 +1,36 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_binary(
+    name = "solution",
+    embed = [":src_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "src_lib",
+    srcs = [
+        "deck.go",
+        "main.go",
+        "normal.go",
+        "recursive.go",
+    ],
+    importpath = "github.com/simmonmt/aoc/2020/22/src",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//common/filereader",
+        "//common/intmath",
+        "//common/logger",
+    ],
+)
+
+go_test(
+    name = "src_test",
+    srcs = [
+        "deck_test.go",
+        "main_test.go",
+    ],
+    embed = [":src_lib"],
+    deps = [
+        "//common/logger",
+    ],
+)
