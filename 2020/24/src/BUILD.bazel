@@ -14,7 +14,7 @@ go_library(
     deps = [
         "//common/filereader",
         "//common/logger",
-	"//common/pos",
+        "//common/pos",
     ],
 )
 
