@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "filereader",
+    srcs = ["filereader.go"],
+    importpath = "github.com/simmonmt/aoc/2021/common/filereader",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "filereader_test",
+    srcs = ["filereader_test.go"],
+    embed = [":filereader"],
+)

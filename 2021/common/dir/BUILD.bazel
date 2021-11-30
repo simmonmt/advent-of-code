@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "dir",
+    srcs = ["dir.go"],
+    importpath = "github.com/simmonmt/aoc/2021/common/dir",
+    visibility = ["//visibility:public"],
+    deps = ["//common/pos"],
+)

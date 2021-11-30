@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "collections",
+    srcs = ["stack.go"],
+    importpath = "github.com/simmonmt/aoc/2021/common/collections",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "collections_test",
+    srcs = ["stack_test.go"],
+    embed = [":collections"],
+    deps = ["//common/testutils"],
+)
