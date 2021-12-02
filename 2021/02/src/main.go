@@ -72,6 +72,23 @@ func solveA(ps []pos.P2) {
 	fmt.Println("A", cur.X*(-cur.Y))
 }
 
+func solveB(ps []pos.P2) {
+	var cur pos.P2
+	var aim int
+
+	for _, p := range ps {
+		if p.Y != 0 {
+			aim += -p.Y
+		}
+		if p.X != 0 {
+			cur.X += p.X
+			cur.Y += -aim * p.X
+		}
+	}
+
+	fmt.Println("B", cur.X*(-cur.Y))
+}
+
 func main() {
 	flag.Parse()
 	logger.Init(*verbose)
@@ -86,4 +103,5 @@ func main() {
 	}
 
 	solveA(input)
+	solveB(input)
 }
