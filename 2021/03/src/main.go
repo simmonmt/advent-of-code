@@ -18,6 +18,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/simmonmt/aoc/2021/common/filereader"
 	"github.com/simmonmt/aoc/2021/common/logger"
@@ -27,6 +28,24 @@ var (
 	verbose = flag.Bool("verbose", false, "verbose")
 	input   = flag.String("input", "", "input file")
 )
+
+func binToInt(in string) int {
+	val, err := strconv.ParseInt(in, 2, 32)
+	if err != nil {
+		panic("bad bin")
+	}
+	return int(val)
+}
+
+func countBit(lines []string, idx int) int {
+	num := 0
+	for _, line := range lines {
+		if line[idx] == '1' {
+			num++
+		}
+	}
+	return num
+}
 
 func solveA(lines []string) {
 	numLines := len(lines)
@@ -60,7 +79,6 @@ func solveA(lines []string) {
 	}
 
 	gamma := calc(counts, func(num int) bool {
-		fmt.Println(num)
 		return num*2 > numLines
 	})
 	epsilon := calc(counts, func(num int) bool {
@@ -70,6 +88,53 @@ func solveA(lines []string) {
 	fmt.Println("gamma", gamma)
 	fmt.Println("epsilon", epsilon)
 	fmt.Println("A", gamma*epsilon)
+}
+
+func filter(lines []string, idx int, shouldKeepOnes func(numOnes, numLeft int) bool) []string {
+	keepVal := '0'
+	numOnes := countBit(lines, idx)
+	if shouldKeepOnes(numOnes, len(lines)) {
+		keepVal = '1'
+	}
+
+	out := []string{}
+	for _, line := range lines {
+		if rune(line[idx]) == keepVal {
+			out = append(out, line)
+		}
+	}
+
+	//fmt.Printf("numones %v keep val %v => %v\n",
+	//numOnes, string(keepVal), out)
+
+	return out
+}
+
+func filterLoop(lines []string, shouldKeepOnes func(numOnes, numLeft int) bool) string {
+	idx := 0
+	for len(lines) > 1 {
+		lines = filter(lines, idx, shouldKeepOnes)
+		idx++
+	}
+
+	if len(lines) == 0 {
+		panic("no lines")
+	}
+	return lines[0]
+}
+
+func solveB(lines []string) {
+	oxygen := binToInt(filterLoop(lines, func(numOnes, numLeft int) bool {
+		return numOnes*2 >= numLeft
+	}))
+	fmt.Println("oxygen", oxygen)
+
+	co2 := binToInt(filterLoop(lines, func(numOnes, numLeft int) bool {
+		return numOnes*2 < numLeft
+	}))
+	fmt.Println("co2", co2)
+
+	fmt.Println("B", oxygen*co2)
 }
 
 func main() {
@@ -86,4 +151,5 @@ func main() {
 	}
 
 	solveA(lines)
+	solveB(lines)
 }
