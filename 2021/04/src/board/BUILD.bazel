@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "board",
+    srcs = ["board.go"],
+    importpath = "github.com/simmonmt/aoc/2021/04/src/board",
+    visibility = ["//visibility:public"],
+    deps = ["//common/pos"],
+)
+
+go_test(
+    name = "board_test",
+    srcs = ["board_test.go"],
+    embed = [":board"],
+)
