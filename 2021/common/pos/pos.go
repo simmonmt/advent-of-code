@@ -99,6 +99,14 @@ func (p P2) AllNeighbors(includeDiag bool) []P2 {
 	return out
 }
 
+func WalkP2(numY, numX int, cb func(p P2)) {
+	for y := 0; y < numY; y++ {
+		for x := 0; x < numX; x++ {
+			cb(P2{Y: y, X: x})
+		}
+	}
+}
+
 type P3 struct {
 	X, Y, Z int
 }

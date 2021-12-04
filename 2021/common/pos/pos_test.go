@@ -78,6 +78,25 @@ func TestP2(t *testing.T) {
 	}
 }
 
+func TestWalkP2(t *testing.T) {
+	saw := []P2{}
+
+	WalkP2(2, 3, func(p P2) { saw = append(saw, p) })
+
+	expected := []P2{
+		P2{Y: 0, X: 0},
+		P2{Y: 0, X: 1},
+		P2{Y: 0, X: 2},
+		P2{Y: 1, X: 0},
+		P2{Y: 1, X: 1},
+		P2{Y: 1, X: 2},
+	}
+
+	if !reflect.DeepEqual(saw, expected) {
+		t.Errorf("WalkP2 saw %+v, want %+v", saw, expected)
+	}
+}
+
 func TestP3FromStringOK(t *testing.T) {
 	want := P3{1, -2, 3}
 	if got, err := P3FromString("1,-2,3"); err != nil || !got.Equals(want) {
