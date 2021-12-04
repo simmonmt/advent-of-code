@@ -30,14 +30,12 @@ type cell struct {
 type Board struct {
 	valToPos map[int]pos.P2
 	cells    map[pos.P2]*cell
-	won      bool
 }
 
 func New(start [5][5]int) *Board {
 	b := &Board{
 		valToPos: map[int]pos.P2{},
 		cells:    map[pos.P2]*cell{},
-		won:      false,
 	}
 
 	pos.WalkP2(5, 5, func(p pos.P2) {
@@ -53,6 +51,12 @@ func New(start [5][5]int) *Board {
 	return b
 }
 
+func (b *Board) Reset() {
+	for _, cell := range b.cells {
+		cell.marked = false
+	}
+}
+
 func (b *Board) Mark(v int) bool {
 	p, found := b.valToPos[v]
 	if !found {
@@ -66,10 +70,7 @@ func (b *Board) Mark(v int) bool {
 
 	c.marked = true
 
-	if !b.checkWonX(p.X) {
-		b.checkWonY(p.Y)
-	}
-	return b.won
+	return b.checkWonX(p.X) || b.checkWonY(p.Y)
 }
 
 func (b *Board) checkWonX(x int) bool {
@@ -78,7 +79,6 @@ func (b *Board) checkWonX(x int) bool {
 			return false
 		}
 	}
-	b.won = true
 	return true
 }
 
@@ -88,7 +88,6 @@ func (b *Board) checkWonY(y int) bool {
 			return false
 		}
 	}
-	b.won = true
 	return true
 }
 

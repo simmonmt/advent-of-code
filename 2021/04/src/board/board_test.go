@@ -34,7 +34,7 @@ var (
 func TestBoard(t *testing.T) {
 	b := New(start)
 
-	expected := strings.Join([]string{
+	expectedNoMoves := strings.Join([]string{
 		" 22   13   17   11    0 ",
 		"  8    2   23    4   24 ",
 		" 21    9   14   16    7 ",
@@ -44,8 +44,9 @@ func TestBoard(t *testing.T) {
 
 	buf := bytes.Buffer{}
 	b.DumpTo(&buf)
-	if expected != buf.String() {
-		t.Errorf("dump want\n%v\n, got\n%v\n", expected, buf.String())
+	if expectedNoMoves != buf.String() {
+		t.Errorf("dump want\n%v\n, got\n%v\n",
+			expectedNoMoves, buf.String())
 	}
 
 	if won := b.Mark(24); won {
@@ -57,7 +58,7 @@ func TestBoard(t *testing.T) {
 		return
 	}
 
-	expected = strings.Join([]string{
+	expectedMoves := strings.Join([]string{
 		" 22   13   17   11    0 ",
 		"  8    2   23    4  *24*",
 		" 21    9   14   16    7 ",
@@ -67,8 +68,18 @@ func TestBoard(t *testing.T) {
 
 	buf.Reset()
 	b.DumpTo(&buf)
-	if expected != buf.String() {
-		t.Errorf("2mark want\n%v\n, got\n%v\n", expected, buf.String())
+	if expectedMoves != buf.String() {
+		t.Errorf("2mark want\n%v\n, got\n%v\n",
+			expectedMoves, buf.String())
+	}
+
+	b.Reset()
+
+	buf.Reset()
+	b.DumpTo(&buf)
+	if expectedNoMoves != buf.String() {
+		t.Errorf("reset want\n%v\n, got\n%v\n",
+			expectedNoMoves, buf.String())
 	}
 }
 

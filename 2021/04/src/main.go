@@ -117,6 +117,34 @@ func solveA(moves []int, boards []*board.Board) {
 	fmt.Println("A", winningBoard.Score(lastMove))
 }
 
+func playOneBoardGame(moves []int, b *board.Board) (numMoves int) {
+	for i, move := range moves {
+		if b.Mark(move) {
+			return i + 1
+		}
+	}
+	return -1
+}
+
+func solveB(moves []int, boards []*board.Board) {
+	longestNumMoves := -1
+	longestScore := -1
+
+	for _, board := range boards {
+		numMoves := playOneBoardGame(moves, board)
+		if numMoves < 0 {
+			panic("no win")
+		}
+
+		if numMoves > longestNumMoves {
+			longestNumMoves = numMoves
+			longestScore = board.Score(moves[numMoves-1])
+		}
+	}
+
+	fmt.Println("B", longestScore)
+}
+
 func main() {
 	flag.Parse()
 	logger.Init(*verbose)
@@ -134,4 +162,10 @@ func main() {
 	fmt.Println("#boards", len(boards))
 
 	solveA(moves, boards)
+
+	for _, board := range boards {
+		board.Reset()
+	}
+
+	solveB(moves, boards)
 }
