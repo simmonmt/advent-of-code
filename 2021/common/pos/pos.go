@@ -47,7 +47,7 @@ func P2FromString(str string) (P2, error) {
 	if err != nil {
 		return P2{}, err
 	}
-	return P2{vs[0], vs[1]}, nil
+	return P2{X: vs[0], Y: vs[1]}, nil
 }
 
 func (p *P2) Equals(o P2) bool {
