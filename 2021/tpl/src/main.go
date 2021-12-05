@@ -28,6 +28,15 @@ var (
 	input   = flag.String("input", "", "input file")
 )
 
+func readInput(path string) ([]string, error) {
+	lines, err := filereader.Lines(*input)
+	if err != nil {
+		return nil, err
+	}
+
+	return lines, err
+}
+
 func main() {
 	flag.Parse()
 	logger.Init(*verbose)
@@ -36,7 +45,7 @@ func main() {
 		log.Fatalf("--input is required")
 	}
 
-	lines, err := filereader.Lines(*input)
+	lines, err := readInput(*input)
 	if err != nil {
 		log.Fatal(err)
 	}
