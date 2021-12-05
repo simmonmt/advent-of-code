@@ -31,12 +31,51 @@ func TestLinesFromReader(t *testing.T) {
 	}
 }
 
-func TestBlankSeparatedGroups(t *testing.T) {
+func TestBlankSeparatedGroupsFromReader(t *testing.T) {
 	in := "a\nb\n\nd\n"
 	r := strings.NewReader(in)
 	want := [][]string{[]string{"a", "b"}, []string{"d"}}
 	if got, err := blankSeparatedGroupsFromReader(r); err != nil || !reflect.DeepEqual(got, want) {
 		t.Errorf(`blankSeparatedGroupsFromReader("%v") = %v, %v, want %v, nil`,
 			strconv.Quote(in), got, err, want)
+	}
+}
+
+func TestBlankSeparatedGroupsFromLines(t *testing.T) {
+	in := []string{"a", "b", "", "d"}
+	want := [][]string{[]string{"a", "b"}, []string{"d"}}
+	if got, err := BlankSeparatedGroupsFromLines(in); err != nil || !reflect.DeepEqual(got, want) {
+		t.Errorf(`BlankSeparatedGroupsFromLines("%v") = %v, %v, want %v, nil`,
+			in, got, err, want)
+	}
+}
+
+func TestParseNumbersFromLine(t *testing.T) {
+	type TestCase struct {
+		in   string
+		want []int
+	}
+
+	testCases := []TestCase{
+		TestCase{"1,2,3,4", []int{1, 2, 3, 4}},
+		TestCase{"", nil},
+		TestCase{"bad", nil},
+	}
+
+	for i, tc := range testCases {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			got, err := ParseNumbersFromLine(tc.in)
+			if tc.want == nil {
+				if err == nil {
+					t.Errorf(`ParseNumbersFromLine("%v") = %v, %v, want _, non-nil`,
+						tc.in, got, err)
+				}
+			} else {
+				if err != nil || !reflect.DeepEqual(got, tc.want) {
+					t.Errorf(`ParseNumbersFromLine("%v") = %v, %v, want %v, nil`,
+						tc.in, got, err, tc.want)
+				}
+			}
+		})
 	}
 }

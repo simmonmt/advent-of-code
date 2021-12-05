@@ -81,7 +81,13 @@ func blankSeparatedGroupsFromReader(r io.Reader) ([][]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	return BlankSeparatedGroupsFromLines(lines)
+}
+
+func BlankSeparatedGroupsFromLines(lines []string) ([][]string, error) {
 	// So we don't have to special-case the loop end
+	lines = lines[:]
 	lines = append(lines, "")
 
 	groups := [][]string{}
@@ -101,6 +107,18 @@ func blankSeparatedGroupsFromReader(r io.Reader) ([][]string, error) {
 	return groups, nil
 }
 
+func ParseNumbersFromLine(line string) ([]int, error) {
+	nums := []int{}
+	for _, str := range strings.Split(line, ",") {
+		num, err := strconv.Atoi(str)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse %v: %v", str, err)
+		}
+		nums = append(nums, num)
+	}
+	return nums, nil
+}
+
 func OneRowOfNumbers(path string) ([]int, error) {
 	lines, err := Lines(path)
 	if err != nil {
@@ -111,13 +129,5 @@ func OneRowOfNumbers(path string) ([]int, error) {
 		return nil, fmt.Errorf("expected one line, got %v", len(lines))
 	}
 
-	nums := []int{}
-	for _, str := range strings.Split(lines[0], ",") {
-		num, err := strconv.Atoi(str)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse %v: %v", str, err)
-		}
-		nums = append(nums, num)
-	}
-	return nums, nil
+	return ParseNumbersFromLine(lines[0])
 }
