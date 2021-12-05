@@ -84,24 +84,35 @@ func fillGrid(paths []Path) map[pos.P2]int {
 	for _, path := range paths {
 		from, to := path.From, path.To
 
-		if from.X == to.X {
-			if to.Y < from.Y {
-				from, to = to, from
-			}
+		inc := pos.P2{0, 0}
 
-			for y := from.Y; y <= to.Y; y++ {
-				grid[pos.P2{X: from.X, Y: y}]++
-			}
+		if from.X < to.X {
+			inc.X = 1
+		} else if from.X > to.X {
+			inc.X = -1
 		}
 
-		if from.Y == to.Y {
-			if to.X < from.X {
-				from, to = to, from
+		if from.Y < to.Y {
+			inc.Y = 1
+		} else if from.Y > to.Y {
+			inc.Y = -1
+		}
+
+		if inc.X == 0 && inc.Y == 0 {
+			panic(fmt.Sprintf(
+				"bad inc: from %+v to %+v inc %+v\n",
+				from, to, inc))
+		}
+
+		p := from
+		for {
+			grid[p]++
+
+			if p.Equals(to) {
+				break
 			}
 
-			for x := from.X; x <= to.X; x++ {
-				grid[pos.P2{X: x, Y: from.Y}]++
-			}
+			p.Add(inc)
 		}
 	}
 
@@ -140,11 +151,7 @@ func printGrid(grid map[pos.P2]int) {
 	printGridTo(os.Stdout, grid)
 }
 
-func solveA(paths []Path) {
-	paths = hvOnly(paths)
-	logger.LogLn("#hvpaths:", len(paths))
-	logger.LogLn(paths)
-
+func solve(paths []Path) int {
 	grid := fillGrid(paths)
 	if logger.Enabled() {
 		printGrid(grid)
@@ -156,8 +163,19 @@ func solveA(paths []Path) {
 			count++
 		}
 	}
+	return count
+}
 
-	fmt.Println("A", count)
+func solveA(paths []Path) {
+	paths = hvOnly(paths)
+	logger.LogLn("#hvpaths:", len(paths))
+	logger.LogLn(paths)
+
+	fmt.Println("A", solve(paths))
+}
+
+func solveB(paths []Path) {
+	fmt.Println("B", solve(paths))
 }
 
 func main() {
@@ -176,4 +194,5 @@ func main() {
 	logger.LogLn(paths)
 
 	solveA(paths)
+	solveB(paths)
 }
