@@ -37,7 +37,7 @@ func readInput(path string) ([]int, error) {
 	return nums, nil
 }
 
-func solveA(nums []int) {
+func solve(nums []int, costFunc func(dist int) int) int {
 	min, max := -1, -1
 	for _, num := range nums {
 		if min == -1 || num < min {
@@ -58,7 +58,7 @@ func solveA(nums []int) {
 			if dist < 0 {
 				dist = -dist
 			}
-			fuelNeeded += dist
+			fuelNeeded += costFunc(dist)
 		}
 
 		if minFuel == -1 || fuelNeeded < minFuel {
@@ -67,7 +67,37 @@ func solveA(nums []int) {
 		}
 	}
 
-	fmt.Printf("A fuel %v (at %v)\n", minFuel, minFuelPos)
+	logger.LogF("min fuel %v (at %v)", minFuel, minFuelPos)
+	return minFuel
+}
+
+func solveA(nums []int) {
+	fuel := solve(nums, func(dist int) int { return dist })
+	fmt.Println("A", fuel)
+}
+
+// I assume there's some clever way to do this but let's try a cache
+// for now. It's a map from distance to calculated cost.
+var costCache = map[int]int{
+	1: 1,
+	0: 0,
+}
+
+func recursiveCost(dist int) int {
+	if cost, found := costCache[dist]; found {
+		logger.LogF("reused %d", dist)
+		return cost
+	}
+
+	cost := recursiveCost(dist-1) + dist
+	logger.LogF("calculated %d", dist)
+	costCache[dist] = cost
+	return cost
+}
+
+func solveB(nums []int) {
+	fuel := solve(nums, recursiveCost)
+	fmt.Println("B", fuel)
 }
 
 func main() {
@@ -84,4 +114,5 @@ func main() {
 	}
 
 	solveA(lines)
+	solveB(lines)
 }
