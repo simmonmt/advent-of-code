@@ -15,9 +15,11 @@
 package main
 
 import (
+	"container/list"
 	"flag"
 	"fmt"
 	"log"
+	"sort"
 
 	"github.com/simmonmt/aoc/2021/common/filereader"
 	"github.com/simmonmt/aoc/2021/common/logger"
@@ -78,15 +80,25 @@ func (b *Board) Walk(walker func(p pos.P2, d int)) {
 	}
 }
 
+func (b *Board) AllNeighbors(p pos.P2) []pos.P2 {
+	out := []pos.P2{}
+	for _, n := range p.AllNeighbors(false) {
+		if n.X < 0 || n.Y < 0 {
+			continue
+		}
+		if n.X >= b.Width() || n.Y >= b.Height() {
+			continue
+		}
+		out = append(out, n)
+	}
+	return out
+}
+
 func solveA(b *Board) {
 	risk := 0
 
 	b.Walk(func(ctr pos.P2, d int) {
-		for _, n := range ctr.AllNeighbors(false) {
-			if n.X < 0 || n.Y < 0 || n.X >= b.Width() || n.Y >= b.Height() {
-				continue
-			}
-
+		for _, n := range b.AllNeighbors(ctr) {
 			if b.Get(n) <= d {
 				return
 			}
@@ -97,6 +109,102 @@ func solveA(b *Board) {
 	})
 
 	fmt.Println("A", risk)
+}
+
+func bfs(start pos.P2, getNeighbors func(p pos.P2) []pos.P2) {
+	seen := map[pos.P2]bool{}
+
+	queue := list.New()
+	queue.PushBack(start)
+
+	for queue.Front() != nil {
+		p := queue.Remove(queue.Front()).(pos.P2)
+		if _, found := seen[p]; found {
+			continue
+		}
+
+		seen[p] = true
+
+		for _, n := range getNeighbors(p) {
+			if _, found := seen[n]; found {
+				continue
+			}
+			queue.PushBack(n)
+		}
+	}
+}
+
+func basinDump(b *Board, basinNums map[pos.P2]int) {
+	for y := 0; y < b.Height(); y++ {
+		fmt.Print("|")
+		for x := 0; x < b.Width(); x++ {
+			p := pos.P2{X: x, Y: y}
+			num, found := basinNums[p]
+			if found {
+				fmt.Printf("%d", num)
+			} else if b.Get(p) == 9 {
+				fmt.Print("^")
+			} else {
+				fmt.Print(" ")
+			}
+		}
+		fmt.Println("|")
+	}
+}
+
+func solveB(b *Board) {
+	thisBasinNum := 0
+	basinNums := map[pos.P2]int{}
+	basinSizes := map[int]int{}
+
+	b.Walk(func(ctr pos.P2, d int) {
+		if d == 9 {
+			return
+		}
+
+		if _, found := basinNums[ctr]; found {
+			return
+		}
+
+		thisBasinNum++
+		bfs(ctr, func(p pos.P2) []pos.P2 {
+			if b.Get(p) == 9 {
+				return nil
+			}
+
+			if _, found := basinNums[p]; found {
+				basinDump(b, basinNums)
+				panic(fmt.Sprintf(
+					"basin collision; want to put basin num %v at %v; has %v",
+					thisBasinNum, p, basinNums[p]))
+			}
+
+			basinNums[p] = thisBasinNum
+			basinSizes[thisBasinNum]++
+			return b.AllNeighbors(p)
+		})
+	})
+
+	if logger.Enabled() {
+		basinDump(b, basinNums)
+	}
+
+	basinsBySize := []int{}
+	for num := range basinSizes {
+		basinsBySize = append(basinsBySize, num)
+	}
+	sort.Slice(basinsBySize, func(i, j int) bool {
+		return basinSizes[basinsBySize[i]] <
+			basinSizes[basinsBySize[j]]
+	})
+
+	topThree := basinsBySize[len(basinsBySize)-3 : len(basinsBySize)]
+	out := 1
+	for _, num := range topThree {
+		out *= basinSizes[num]
+	}
+
+	fmt.Println("B", out)
 }
 
 func readInput(path string) ([]string, error) {
@@ -123,4 +231,5 @@ func main() {
 
 	b := NewBoard(lines)
 	solveA(b)
+	solveB(b)
 }
