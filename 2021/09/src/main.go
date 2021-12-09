@@ -22,6 +22,7 @@ import (
 	"sort"
 
 	"github.com/simmonmt/aoc/2021/common/filereader"
+	"github.com/simmonmt/aoc/2021/common/grid"
 	"github.com/simmonmt/aoc/2021/common/logger"
 	"github.com/simmonmt/aoc/2021/common/pos"
 )
@@ -31,75 +32,13 @@ var (
 	input   = flag.String("input", "", "input file")
 )
 
-type Board struct {
-	w, h int
-	m    []int
-}
-
-func NewBoard(lines []string) *Board {
-	w, h := len(lines[0]), len(lines)
-
-	b := &Board{
-		w: w,
-		h: h,
-		m: make([]int, w*h),
-	}
-
-	for y, line := range lines {
-		for x, r := range line {
-			d := int(r - '0')
-			b.Set(pos.P2{X: x, Y: y}, d)
-		}
-	}
-
-	return b
-}
-
-func (b *Board) Width() int {
-	return b.w
-}
-
-func (b *Board) Height() int {
-	return b.h
-}
-
-func (b *Board) Set(p pos.P2, d int) {
-	b.m[b.w*p.Y+p.X] = d
-}
-
-func (b *Board) Get(p pos.P2) int {
-	return b.m[b.w*p.Y+p.X]
-}
-
-func (b *Board) Walk(walker func(p pos.P2, d int)) {
-	for y := 0; y < b.h; y++ {
-		for x := 0; x < b.w; x++ {
-			p := pos.P2{X: x, Y: y}
-			walker(p, b.Get(p))
-		}
-	}
-}
-
-func (b *Board) AllNeighbors(p pos.P2) []pos.P2 {
-	out := []pos.P2{}
-	for _, n := range p.AllNeighbors(false) {
-		if n.X < 0 || n.Y < 0 {
-			continue
-		}
-		if n.X >= b.Width() || n.Y >= b.Height() {
-			continue
-		}
-		out = append(out, n)
-	}
-	return out
-}
-
-func solveA(b *Board) {
+func solveA(g *grid.Grid) {
 	risk := 0
 
-	b.Walk(func(ctr pos.P2, d int) {
-		for _, n := range b.AllNeighbors(ctr) {
-			if b.Get(n) <= d {
+	g.Walk(func(ctr pos.P2, v interface{}) {
+		d := v.(int)
+		for _, n := range g.AllNeighbors(ctr, false) {
+			if g.Get(n).(int) <= d {
 				return
 			}
 
@@ -134,15 +73,15 @@ func bfs(start pos.P2, getNeighbors func(p pos.P2) []pos.P2) {
 	}
 }
 
-func basinDump(b *Board, basinNums map[pos.P2]int) {
-	for y := 0; y < b.Height(); y++ {
+func basinDump(g *grid.Grid, basinNums map[pos.P2]int) {
+	for y := 0; y < g.Height(); y++ {
 		fmt.Print("|")
-		for x := 0; x < b.Width(); x++ {
+		for x := 0; x < g.Width(); x++ {
 			p := pos.P2{X: x, Y: y}
 			num, found := basinNums[p]
 			if found {
 				fmt.Printf("%d", num)
-			} else if b.Get(p) == 9 {
+			} else if g.Get(p).(int) == 9 {
 				fmt.Print("^")
 			} else {
 				fmt.Print(" ")
@@ -152,12 +91,12 @@ func basinDump(b *Board, basinNums map[pos.P2]int) {
 	}
 }
 
-func solveB(b *Board) {
+func solveB(g *grid.Grid) {
 	thisBasinNum := 0
 	basinNums := map[pos.P2]int{}
 	basinSizes := map[int]int{}
 
-	b.Walk(func(ctr pos.P2, d int) {
+	g.Walk(func(ctr pos.P2, d interface{}) {
 		if d == 9 {
 			return
 		}
@@ -168,12 +107,12 @@ func solveB(b *Board) {
 
 		thisBasinNum++
 		bfs(ctr, func(p pos.P2) []pos.P2 {
-			if b.Get(p) == 9 {
+			if g.Get(p) == 9 {
 				return nil
 			}
 
 			if _, found := basinNums[p]; found {
-				basinDump(b, basinNums)
+				basinDump(g, basinNums)
 				panic(fmt.Sprintf(
 					"basin collision; want to put basin num %v at %v; has %v",
 					thisBasinNum, p, basinNums[p]))
@@ -181,12 +120,12 @@ func solveB(b *Board) {
 
 			basinNums[p] = thisBasinNum
 			basinSizes[thisBasinNum]++
-			return b.AllNeighbors(p)
+			return g.AllNeighbors(p, false)
 		})
 	})
 
 	if logger.Enabled() {
-		basinDump(b, basinNums)
+		basinDump(g, basinNums)
 	}
 
 	basinsBySize := []int{}
@@ -216,6 +155,20 @@ func readInput(path string) ([]string, error) {
 	return lines, err
 }
 
+func newGrid(lines []string) *grid.Grid {
+	w, h := len(lines[0]), len(lines)
+	g := grid.New(w, h)
+
+	for y, line := range lines {
+		for x, r := range line {
+			d := int(r - '0')
+			g.Set(pos.P2{X: x, Y: y}, d)
+		}
+	}
+
+	return g
+}
+
 func main() {
 	flag.Parse()
 	logger.Init(*verbose)
@@ -229,7 +182,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	b := NewBoard(lines)
-	solveA(b)
-	solveB(b)
+	g := newGrid(lines)
+	solveA(g)
+	solveB(g)
 }

@@ -13,6 +13,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//common/filereader",
+        "//common/grid",
         "//common/logger",
         "//common/pos",
     ],
