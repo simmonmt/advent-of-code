@@ -18,6 +18,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 
 	"github.com/simmonmt/aoc/2021/common/filereader"
@@ -75,9 +76,18 @@ func solveA(lines []Line) {
 	fmt.Println("A", sum)
 }
 
-func makeSegMapCombinations(segMap map[string]map[string]bool) []map[string]string {
+// Given the constraints in segmap, return all possible mappings
+// between signals and segments. The constraints map containts one key
+// for each possible signal. The value is a map containing all
+// possible segment names for that signal.
+//
+// Return value: An array of mappings between signals and segments.
+func makeSegMapCombinations(constraints map[string]map[string]bool) []map[string]string {
+	// A map from signal names to a list of all possible
+	// segments. We can't use the constraints map because its
+	// value can't be indexed numerically.
 	segLists := map[string][]string{}
-	for c, tos := range segMap {
+	for c, tos := range constraints {
 		out := []string{}
 		for to := range tos {
 			out = append(out, to)
@@ -85,13 +95,18 @@ func makeSegMapCombinations(segMap map[string]map[string]bool) []map[string]stri
 		segLists[c] = out
 	}
 
+	// lims and nums are used to build a counter where each digit
+	// has a different base. nums[i] can have values
+	// [0,lims[i]).
 	lims := make([]int, len(segLists))
 	for i, r := range "abcdefg" {
 		lims[i] = len(segLists[string(r)])
 	}
 
-	nums := make([]int, len(segMap))
+	nums := make([]int, len(constraints))
 
+	// Increment the counter stored in nums. Returns true when the
+	// counter overflows.
 	inc := func() bool {
 		for i := 0; i < len(lims); i++ {
 			nums[i]++
@@ -106,6 +121,14 @@ func makeSegMapCombinations(segMap map[string]map[string]bool) []map[string]stri
 		panic("unreachable")
 	}
 
+	// Attempt to create a mapping betwen signals and segments
+	// given the current values in nums. nums[i] is used to select
+	// the candidate segment name (from segLists) for the i'th
+	// signal. Returns the mapping.
+	//
+	// NOTE: The mapping described by nums may not be legal (it
+	// may map multiple signals to the same segment). If that
+	// happens, nil is returned.
 	fill := func() map[string]string {
 		cand := map[string]string{}
 		used := map[string]bool{}
@@ -121,6 +144,7 @@ func makeSegMapCombinations(segMap map[string]map[string]bool) []map[string]stri
 		return cand
 	}
 
+	// Holds all legal mappings.
 	out := []map[string]string{}
 	for {
 		cand := fill()
@@ -133,6 +157,64 @@ func makeSegMapCombinations(segMap map[string]map[string]bool) []map[string]stri
 		}
 	}
 	return out
+}
+
+var (
+	// Maps combinations of segment names to the digits they
+	// indicate. The segment names must be ordered.
+	digits = map[string]int{
+		"ABCEFG":  0,
+		"CF":      1,
+		"ACDEG":   2,
+		"ACDFG":   3,
+		"BCDF":    4,
+		"ABDFG":   5,
+		"ABDEFG":  6,
+		"ACF":     7,
+		"ABCDEFG": 8,
+		"ABCDFG":  9,
+	}
+)
+
+func decodeDigit(str string, comb map[string]string) (int, bool) {
+	translated := make([]string, len(str))
+	for i, r := range str {
+		translated[i] = comb[string(r)]
+	}
+	sort.Strings(translated)
+
+	digit, found := digits[strings.Join(translated, "")]
+	return digit, found
+}
+
+func checkComb(pats []string, comb map[string]string) bool {
+	mappedDigits := map[int]bool{}
+	for _, pat := range pats {
+		digit, found := decodeDigit(pat, comb)
+		if !found {
+			return false
+		}
+
+		if _, found := mappedDigits[digit]; found {
+			panic("double find")
+		}
+
+		mappedDigits[digit] = true
+	}
+	return true
+}
+
+func decodeOutputs(outputs []string, comb map[string]string) int {
+	result := 0
+	for _, output := range outputs {
+		digit, found := decodeDigit(output, comb)
+		if !found {
+			panic("bad decode")
+		}
+
+		result = result*10 + digit
+	}
+	return result
 }
 
 func solveOne(line *Line) int {
@@ -182,10 +264,8 @@ func solveOne(line *Line) int {
 		}
 	}
 
-	fmt.Println(segMap)
-
 	combs := makeSegMapCombinations(segMap)
-	if logger.Enabled() {
+	if false && logger.Enabled() {
 		for _, comb := range combs {
 			for _, r := range "abcdefg" {
 				c := string(r)
@@ -197,17 +277,19 @@ func solveOne(line *Line) int {
 
 	for _, comb := range combs {
 		if checkComb(line.Patterns, comb) {
-			return decodeOutput(line.Outputs, comb)
+			return decodeOutputs(line.Outputs, comb)
 		}
 	}
 
-	return 0
+	return -1
 }
 
 func solveB(lines []Line) {
 	sum := 0
 	for _, line := range lines {
-		sum += solveOne(&line)
+		val := solveOne(&line)
+		logger.LogF("mapping for %v: %v", line, val)
+		sum += val
 	}
 
 	fmt.Println("B", sum)
