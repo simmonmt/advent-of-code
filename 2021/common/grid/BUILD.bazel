@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "grid",
+    srcs = ["grid.go"],
+    importpath = "github.com/simmonmt/aoc/2021/common/grid",
+    visibility = ["//visibility:public"],
+    deps = ["//common/pos"],
+)
+
+go_test(
+    name = "grid_test",
+    srcs = ["grid_test.go"],
+    embed = [":grid"],
+    deps = ["//common/pos"],
+)
