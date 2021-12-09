@@ -75,7 +75,132 @@ func solveA(lines []Line) {
 	fmt.Println("A", sum)
 }
 
+func makeSegMapCombinations(segMap map[string]map[string]bool) []map[string]string {
+	segLists := map[string][]string{}
+	for c, tos := range segMap {
+		out := []string{}
+		for to := range tos {
+			out = append(out, to)
+		}
+		segLists[c] = out
+	}
+
+	lims := make([]int, len(segLists))
+	for i, r := range "abcdefg" {
+		lims[i] = len(segLists[string(r)])
+	}
+
+	nums := make([]int, len(segMap))
+
+	inc := func() bool {
+		for i := 0; i < len(lims); i++ {
+			nums[i]++
+			if nums[i] < lims[i] {
+				return false
+			}
+			if i == len(lims)-1 {
+				return true
+			}
+			nums[i] = 0
+		}
+		panic("unreachable")
+	}
+
+	fill := func() map[string]string {
+		cand := map[string]string{}
+		used := map[string]bool{}
+		for i, num := range nums {
+			from := string("abcdefg"[i])
+			to := segLists[from][num]
+			if _, found := used[to]; found {
+				return nil
+			}
+			cand[from] = to
+			used[to] = true
+		}
+		return cand
+	}
+
+	out := []map[string]string{}
+	for {
+		cand := fill()
+		if cand != nil {
+			out = append(out, cand)
+		}
+
+		if inc() {
+			break
+		}
+	}
+	return out
+}
+
 func solveOne(line *Line) int {
+	one, four, seven := "", "", ""
+	for _, pat := range line.Patterns {
+		switch len(pat) {
+		case 2:
+			one = pat
+		case 3:
+			seven = pat
+		case 4:
+			four = pat
+		}
+	}
+
+	segMap := map[string]map[string]bool{}
+
+	oneChars := map[rune]bool{}
+	for _, r := range one {
+		oneChars[r] = true
+		segMap[string(r)] = map[string]bool{"C": true, "F": true}
+	}
+
+	for _, r := range seven {
+		if _, found := oneChars[r]; !found {
+			segMap[string(r)] = map[string]bool{"A": true}
+		}
+	}
+	for _, r := range four {
+		if _, found := oneChars[r]; !found {
+			segMap[string(r)] = map[string]bool{
+				"B": true,
+				"D": true,
+			}
+		}
+	}
+
+	for _, r := range "abcdefg" {
+		c := string(r)
+		if segMap[c] == nil {
+			segMap[c] = map[string]bool{
+				"B": true,
+				"D": true,
+				"E": true,
+				"G": true,
+			}
+		}
+	}
+
+	fmt.Println(segMap)
+
+	combs := makeSegMapCombinations(segMap)
+	if logger.Enabled() {
+		for _, comb := range combs {
+			for _, r := range "abcdefg" {
+				c := string(r)
+				fmt.Printf("%v=%v ", c, comb[c])
+			}
+			fmt.Println()
+		}
+	}
+
+	for _, comb := range combs {
+		if checkComb(line.Patterns, comb) {
+			return decodeOutput(line.Outputs, comb)
+		}
+	}
+
 	return 0
 }
 
