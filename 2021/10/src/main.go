@@ -19,6 +19,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"sort"
 
 	"github.com/simmonmt/aoc/2021/common/filereader"
 	"github.com/simmonmt/aoc/2021/common/logger"
@@ -53,7 +54,15 @@ func openerFor(r rune) rune {
 	}
 }
 
-func isCorrupt(line string) (rune, bool) {
+type Result int
+
+const (
+	RES_OK Result = iota
+	RES_CORRUPT
+	RES_INCOMPLETE
+)
+
+func validate(line string) (rune, *list.List, Result) {
 	stack := list.New()
 
 	for _, r := range line {
@@ -76,12 +85,12 @@ func isCorrupt(line string) (rune, bool) {
 		case '>':
 			back := stack.Back()
 			if back == nil {
-				return '_', true
+				return r, stack, RES_CORRUPT
 			}
 
 			opener := stack.Remove(back).(rune)
 			if opener != openerFor(r) {
-				return r, true
+				return r, stack, RES_CORRUPT
 			}
 
 		default:
@@ -89,17 +98,32 @@ func isCorrupt(line string) (rune, bool) {
 		}
 	}
 
-	return '0', false
+	if stack.Back() == nil {
+		return '_', nil, RES_OK
+	}
+
+	return '_', stack, RES_INCOMPLETE
+}
+
+func isCorrupt(line string) (rune, bool) {
+	last, _, result := validate(line)
+
+	if result == RES_CORRUPT {
+		return last, true
+	}
+
+	return '_', false
 }
 
 func solveA(lines []string) {
 	score := 0
 	for _, line := range lines {
-		c, corrupt := isCorrupt(line)
-		if corrupt {
-			logger.LogF("corrupt: %v at %v", line, string(c))
 
-			switch c {
+		last, _, result := validate(line)
+		if result == RES_CORRUPT {
+			logger.LogF("corrupt: %v at %v", line, string(last))
+
+			switch last {
 			case ')':
 				score += 3
 			case ']':
@@ -109,12 +133,64 @@ func solveA(lines []string) {
 			case '>':
 				score += 25137
 			default:
-				panic(fmt.Sprintf("bad corrupt: %v", c))
+				panic(fmt.Sprintf("bad corrupt: %v", last))
 			}
 		}
 	}
 
 	fmt.Println("A", score)
+}
+
+func completeSequence(stack *list.List) int {
+	score := 0
+	for stack.Back() != nil {
+		last := stack.Remove(stack.Back()).(rune)
+
+		inc := 0
+		switch last {
+		case '(':
+			inc = 1
+		case '[':
+			inc = 2
+		case '{':
+			inc = 3
+		case '<':
+			inc = 4
+		default:
+			panic("bad last")
+		}
+
+		score = score*5 + inc
+	}
+
+	return score
+}
+
+func solveB(lines []string) {
+	scores := []int{}
+	for _, line := range lines {
+		_, stack, result := validate(line)
+		if result == RES_CORRUPT {
+			continue
+		}
+		if result == RES_OK {
+			panic("unexpected ok")
+		}
+
+		score := completeSequence(stack)
+		logger.LogF("score for %v is %v", line, score)
+		scores = append(scores, score)
+	}
+
+	sort.Ints(scores)
+	logger.LogF("scores %v", scores)
+	if len(scores)%2 == 0 {
+		panic("even scores")
+	}
+
+	score := scores[len(scores)/2]
+
+	fmt.Println("B", score)
 }
 
 func main() {
@@ -131,4 +207,5 @@ func main() {
 	}
 
 	solveA(lines)
+	solveB(lines)
 }
