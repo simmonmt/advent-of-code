@@ -15,14 +15,16 @@
 package grid
 
 import (
+	"bytes"
 	"reflect"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/simmonmt/aoc/2021/common/pos"
 )
 
-func TestSimple(t *testing.T) {
+func TestGrid(t *testing.T) {
 	g := New(5, 6)
 
 	if got := g.Width(); got != 5 {
@@ -53,7 +55,7 @@ func TestSimple(t *testing.T) {
 	}
 }
 
-func TestWalk(t *testing.T) {
+func TestGridWalk(t *testing.T) {
 	g := New(3, 2)
 
 	for y := 0; y < 2; y++ {
@@ -89,7 +91,7 @@ func TestWalk(t *testing.T) {
 	}
 }
 
-func TestAllNeighbors(t *testing.T) {
+func TestGridAllNeighbors(t *testing.T) {
 	type TestCase struct {
 		p           pos.P2
 		includeDiag bool
@@ -138,5 +140,53 @@ func TestAllNeighbors(t *testing.T) {
 					got, tc.want)
 			}
 		})
+	}
+}
+
+func TestIntGrid(t *testing.T) {
+	var g *IntGrid = NewInt(5, 6)
+
+	if got := g.Width(); got != 5 {
+		t.Errorf("g.Width() = %v, want 5", got)
+	}
+
+	if got := g.Height(); got != 6 {
+		t.Errorf("g.Height() = %v, want 6", got)
+	}
+
+	p := pos.P2{1, 2}
+	rp := pos.P2{2, 1}
+	op := pos.P2{3, 4}
+	value1 := 8
+	value2 := 7
+
+	g.SetInt(p, value1)
+	g.SetInt(op, value2)
+
+	if got := g.GetInt(p); !reflect.DeepEqual(got, value1) {
+		t.Errorf("g.Get(%v) = %v, want %v", p, got, value1)
+	}
+	if got, want := g.GetInt(rp), 0; got != want {
+		t.Errorf("g.Get(%v) = %v, want 0", rp, got)
+	}
+	if got := g.GetInt(op); !reflect.DeepEqual(got, value2) {
+		t.Errorf("g.Get(%v) = %v, want %v", op, got, value2)
+	}
+
+	want := strings.Join([]string{
+		"00000",
+		"00000",
+		"08000",
+		"00000",
+		"00070",
+		"00000",
+	}, "\n") + "\n"
+
+	buf := bytes.Buffer{}
+	g.DumpTo(&buf)
+	got := buf.String()
+
+	if got != want {
+		t.Errorf("dump got\n%v\n, want\n%v\n", got, want)
 	}
 }

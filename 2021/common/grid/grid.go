@@ -14,7 +14,13 @@
 
 package grid
 
-import "github.com/simmonmt/aoc/2021/common/pos"
+import (
+	"fmt"
+	"io"
+	"os"
+
+	"github.com/simmonmt/aoc/2021/common/pos"
+)
 
 type Grid struct {
 	w, h int
@@ -68,4 +74,43 @@ func (g *Grid) AllNeighbors(p pos.P2, includeDiag bool) []pos.P2 {
 		out = append(out, n)
 	}
 	return out
+}
+
+type IntGrid struct {
+	Grid
+}
+
+func NewInt(w, h int) *IntGrid {
+	return &IntGrid{
+		Grid: *New(w, h),
+	}
+}
+
+func (g *IntGrid) SetInt(p pos.P2, v int) {
+	g.Set(p, v)
+}
+
+func (g *IntGrid) GetInt(p pos.P2) int {
+	v, _ := g.Get(p).(int)
+	return v
+}
+
+func (g *IntGrid) WalkInt(walker func(p pos.P2, v int)) {
+	g.Walk(func(p pos.P2, v interface{}) {
+		n, _ := v.(int)
+		walker(p, n)
+	})
+}
+
+func (g *IntGrid) DumpTo(w io.Writer) {
+	g.WalkInt(func(p pos.P2, v int) {
+		fmt.Fprintf(w, "%d", v)
+		if p.X == g.w-1 {
+			fmt.Fprintln(w)
+		}
+	})
+}
+
+func (g *IntGrid) Dump() {
+	g.DumpTo(os.Stdout)
 }
