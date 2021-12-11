@@ -93,17 +93,22 @@ func step(g *grid.IntGrid) int {
 }
 
 func solve(g *grid.IntGrid, numSteps int) {
-	numFlashes := 0
-	for i := 1; i <= numSteps; i++ {
-		numFlashes += step(g)
+	totFlashes := 0
+	for stepNum := 1; stepNum <= numSteps; stepNum++ {
+		numFlashes := step(g)
+		if numFlashes == g.Width()*g.Height() {
+			fmt.Println("all flashed at", stepNum)
+		}
+
+		totFlashes += numFlashes
 		if logger.Enabled() {
 			logger.LogLn()
-			logger.LogF("After step %d:", i)
+			logger.LogF("After step %d:", stepNum)
 			g.Dump()
 		}
 	}
 
-	fmt.Println("#flashes", numFlashes)
+	fmt.Println("#flashes", totFlashes)
 }
 
 func main() {
