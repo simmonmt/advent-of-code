@@ -109,7 +109,7 @@ func isSmallNode(name string) bool {
 	return unicode.IsLower(r)
 }
 
-func dfs(g *Graph, curPath *list.List, seen map[string]bool, cb func(path *list.List, cur string)) {
+func dfs(g *Graph, curPath *list.List, seen map[string]int, smallMax int, cb func(path *list.List, cur string)) {
 	cur := curPath.Back().Value.(string)
 	cb(curPath, cur)
 
@@ -120,20 +120,41 @@ func dfs(g *Graph, curPath *list.List, seen map[string]bool, cb func(path *list.
 
 	for _, to := range tos {
 		isSmall := isSmallNode(to)
+		limitSmallMax := false
 
 		if isSmall {
-			if found := seen[to]; found {
-				continue // can't revisit small nodes
+			numVisits := seen[to]
+
+			canVisitMultipleTimes := isSmall &&
+				to != "start" && to != "end"
+
+			maxVisits := 1
+			if smallMax > 1 && canVisitMultipleTimes {
+				maxVisits = 2
 			}
-			seen[to] = true
+
+			if numVisits >= maxVisits {
+				continue // can't revisit
+			}
+
+			numVisits++
+			seen[to] = numVisits
+			if numVisits == 2 {
+				limitSmallMax = true
+			}
+		}
+
+		dfsSmallMax := smallMax
+		if limitSmallMax {
+			dfsSmallMax = 1
 		}
 
 		curPath.PushBack(to)
-		dfs(g, curPath, seen, cb)
+		dfs(g, curPath, seen, dfsSmallMax, cb)
 		curPath.Remove(curPath.Back())
 
 		if isSmall {
-			seen[to] = false
+			seen[to]--
 		}
 	}
 }
@@ -146,15 +167,15 @@ func pathToString(l *list.List) string {
 	return strings.Join(out, ",")
 }
 
-func allPaths(g *Graph) []string {
+func allPaths(g *Graph, smallMax int) []string {
 	curPath := list.New()
 	curPath.PushBack("start")
 
-	seen := map[string]bool{"start": true}
+	seen := map[string]int{"start": 1}
 
 	paths := []string{}
 
-	dfs(g, curPath, seen, func(path *list.List, cur string) {
+	dfs(g, curPath, seen, smallMax, func(path *list.List, cur string) {
 		if cur == "end" {
 			paths = append(paths, pathToString(path))
 		}
@@ -164,8 +185,13 @@ func allPaths(g *Graph) []string {
 }
 
 func solveA(g *Graph) {
-	paths := allPaths(g)
+	paths := allPaths(g, 1)
 	fmt.Println("A", len(paths))
+}
+
+func solveB(g *Graph) {
+	paths := allPaths(g, 2)
+	fmt.Println("B", len(paths))
 }
 
 func main() {
@@ -187,4 +213,5 @@ func main() {
 	}
 
 	solveA(g)
+	solveB(g)
 }

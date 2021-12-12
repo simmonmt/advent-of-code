@@ -32,9 +32,9 @@ func pathsToMap(paths []string) map[string]bool {
 
 func TestAllPaths(t *testing.T) {
 	type TestCase struct {
-		input    []string
-		paths    []string
-		numPaths int
+		input                    []string
+		pathsOne, pathsTwo       []string
+		numPathsOne, numPathsTwo int
 	}
 
 	testCases := []TestCase{
@@ -48,7 +48,7 @@ func TestAllPaths(t *testing.T) {
 				"A-end",
 				"b-end",
 			},
-			paths: []string{
+			pathsOne: []string{
 				"start,A,b,A,c,A,end",
 				"start,A,b,A,end",
 				"start,A,b,end",
@@ -58,6 +58,44 @@ func TestAllPaths(t *testing.T) {
 				"start,A,end",
 				"start,b,A,c,A,end",
 				"start,b,A,end",
+				"start,b,end",
+			},
+			pathsTwo: []string{
+				"start,A,b,A,b,A,c,A,end",
+				"start,A,b,A,b,A,end",
+				"start,A,b,A,b,end",
+				"start,A,b,A,c,A,b,A,end",
+				"start,A,b,A,c,A,b,end",
+				"start,A,b,A,c,A,c,A,end",
+				"start,A,b,A,c,A,end",
+				"start,A,b,A,end",
+				"start,A,b,d,b,A,c,A,end",
+				"start,A,b,d,b,A,end",
+				"start,A,b,d,b,end",
+				"start,A,b,end",
+				"start,A,c,A,b,A,b,A,end",
+				"start,A,c,A,b,A,b,end",
+				"start,A,c,A,b,A,c,A,end",
+				"start,A,c,A,b,A,end",
+				"start,A,c,A,b,d,b,A,end",
+				"start,A,c,A,b,d,b,end",
+				"start,A,c,A,b,end",
+				"start,A,c,A,c,A,b,A,end",
+				"start,A,c,A,c,A,b,end",
+				"start,A,c,A,c,A,end",
+				"start,A,c,A,end",
+				"start,A,end",
+				"start,b,A,b,A,c,A,end",
+				"start,b,A,b,A,end",
+				"start,b,A,b,end",
+				"start,b,A,c,A,b,A,end",
+				"start,b,A,c,A,b,end",
+				"start,b,A,c,A,c,A,end",
+				"start,b,A,c,A,end",
+				"start,b,A,end",
+				"start,b,d,b,A,c,A,end",
+				"start,b,d,b,A,end",
+				"start,b,d,b,end",
 				"start,b,end",
 			},
 		},
@@ -74,7 +112,7 @@ func TestAllPaths(t *testing.T) {
 				"kj-HN",
 				"kj-dc",
 			},
-			paths: []string{
+			pathsOne: []string{
 				"start,HN,dc,HN,end",
 				"start,HN,dc,HN,kj,HN,end",
 				"start,HN,dc,end",
@@ -95,6 +133,7 @@ func TestAllPaths(t *testing.T) {
 				"start,kj,dc,HN,end",
 				"start,kj,dc,end",
 			},
+			numPathsTwo: 103,
 		},
 		TestCase{
 			input: []string{
@@ -117,46 +156,53 @@ func TestAllPaths(t *testing.T) {
 				"pj-fs",
 				"start-RW",
 			},
-			numPaths: 226,
+			numPathsOne: 226,
+			numPathsTwo: 3509,
 		},
 	}
 
 	for i, tc := range testCases {
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			g, err := parseGraph(tc.input)
-			if err != nil {
-				t.Fatalf("failed to build graph: %v", err)
-			}
+		g, err := parseGraph(tc.input)
+		if err != nil {
+			t.Fatalf("failed to build graph: %v", err)
+		}
 
-			paths := allPaths(g)
-
-			if tc.paths != nil {
-				pathsMap := pathsToMap(paths)
-				tcPathsMap := pathsToMap(tc.paths)
-
-				for p := range pathsMap {
-					if _, found := tcPathsMap[p]; !found {
-						t.Errorf("path in output, not in tc: %v", p)
-					}
-				}
-
-				for p := range tcPathsMap {
-					if _, found := pathsMap[p]; !found {
-						t.Errorf("path in tc, not in output: %v", p)
-					}
-				}
-			}
-
-			wantNumPaths := tc.numPaths
-			if wantNumPaths == 0 {
-				wantNumPaths = len(tc.paths)
-			}
-
-			if len(paths) != wantNumPaths {
-				t.Errorf("wanted %d paths, got %d",
-					wantNumPaths, len(paths))
-			}
+		t.Run(strconv.Itoa(i)+"_1", func(t *testing.T) {
+			runAllPathsTest(t, g, 1, tc.pathsOne, tc.numPathsOne)
 		})
+
+		t.Run(strconv.Itoa(i)+"_2", func(t *testing.T) {
+			runAllPathsTest(t, g, 2, tc.pathsTwo, tc.numPathsTwo)
+		})
+	}
+}
+
+func runAllPathsTest(t *testing.T, g *Graph, smallMax int, tcPaths []string, tcNumPaths int) {
+	paths := allPaths(g, smallMax)
+
+	if tcPaths != nil {
+		pathsMap := pathsToMap(paths)
+		tcPathsMap := pathsToMap(tcPaths)
+
+		for p := range pathsMap {
+			if _, found := tcPathsMap[p]; !found {
+				t.Errorf("path in output, not in tc: %v", p)
+			}
+		}
+
+		for p := range tcPathsMap {
+			if _, found := pathsMap[p]; !found {
+				t.Errorf("path in tc, not in output: %v", p)
+			}
+		}
+	}
+
+	if tcNumPaths == 0 {
+		tcNumPaths = len(tcPaths)
+	}
+
+	if len(paths) != tcNumPaths {
+		t.Errorf("wanted %d paths, got %d", tcNumPaths, len(paths))
 	}
 }
 
