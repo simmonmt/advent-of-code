@@ -24,6 +24,8 @@ go_test(
     srcs = ["main_test.go"],
     embed = [":src_lib"],
     deps = [
+        "//common/grid",
         "//common/logger",
+        "//common/pos",
     ],
 )
