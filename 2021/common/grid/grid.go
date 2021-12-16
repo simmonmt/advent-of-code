@@ -35,6 +35,27 @@ func New(w, h int) *Grid {
 	}
 }
 
+func NewFromLines(lines []string, cellMapper func(r rune) (interface{}, error)) (*Grid, error) {
+	g := New(len(lines[0]), len(lines))
+	for y, line := range lines {
+		if len(line) != g.Width() {
+			return nil, fmt.Errorf("uneven line")
+		}
+
+		for x, r := range line {
+			p := pos.P2{X: x, Y: y}
+			v, err := cellMapper(r)
+			if err != nil {
+				return nil, fmt.Errorf("%v: bad parse %v",
+					p, err)
+			}
+
+			g.Set(p, v)
+		}
+	}
+	return g, nil
+}
+
 func (g *Grid) Width() int {
 	return g.w
 }
