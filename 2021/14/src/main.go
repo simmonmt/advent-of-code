@@ -91,61 +91,99 @@ func expandSeq(seq *list.List, rewriteMap map[string]rune) {
 	}
 }
 
-func solve(seq string, stepNum, numSteps int, rewriteMap map[string]rune) map[string]int {
-	logger.LogF("entering step %v", stepNum)
+func solvePairs(first string, pairs map[string]bool, stepNum, numSteps int, rewriteMap map[string]rune) map[string]map[string]int {
+	logger.LogF("%v: (max %v) pairs %v", stepNum, numSteps, pairs)
 
-	if stepNum == numSteps {
-		out := map[string]int{}
-		for _, r := range seq {
-			out[string(r)]++
+	if stepNum >= numSteps {
+		out := map[string]map[string]int{}
+		for p := range pairs {
+			counts := map[string]int{}
+			counts[string(p[0])]++
+			counts[string(p[1])]++
+			out[p] = counts
 		}
+		logger.LogF("%v: returning %v", stepNum, out)
 		return out
 	}
 
-	seen := map[string]map[string]int{}
-
-	for i := 0; i < len(seq)-1; i++ {
-		a, b := string(seq[i]), string(seq[i+1])
-		pair := a + b
-
-		if _, found := seen[pair]; found {
-			continue
+	expanded := map[string]string{}
+	for p := range pairs {
+		if mid, found := rewriteMap[p]; found {
+			expanded[p] = string(p[0]) + string(mid) + string(p[1])
+		} else {
+			panic("no rewrite")
 		}
-		c, found := rewriteMap[pair]
-		if !found {
-			continue
-		}
-
-		newSeq := a + string(c) + b
-		seen[pair] = solve(newSeq, stepNum+1, numSteps, rewriteMap)
 	}
+
+	subPairs := map[string]bool{}
+	for _, t := range expanded {
+		subPairs[string(t[0])+string(t[1])] = true
+		subPairs[string(t[1])+string(t[2])] = true
+	}
+
+	subPairCounts := solvePairs(first, subPairs, stepNum+1, numSteps,
+		rewriteMap)
+
+	counts := map[string]map[string]int{}
+	for p := range pairs {
+		exp := expanded[p]
+		left, right := exp[0:2], exp[1:3]
+
+		pairCounts := map[string]int{}
+		for c, n := range subPairCounts[left] {
+			pairCounts[c] += n
+		}
+		for c, n := range subPairCounts[right] {
+			pairCounts[c] += n
+		}
+		pairCounts[string(exp[1])]-- // it was double-counted
+
+		logger.LogF("%v: pair %v left %v=%v right %v=%v => %v",
+			stepNum, p, left, subPairCounts[left],
+			right, subPairCounts[right], pairCounts)
+
+		counts[p] = pairCounts
+	}
+
+	logger.LogF("%d: returning %v", stepNum, counts)
+	return counts
+
+}
+
+func solveSeq(seq string, numSteps int, rewriteMap map[string]rune) map[string]int {
+	pairs := map[string]bool{}
+	for i := 0; i < len(seq)-1; i++ {
+		pairs[seq[i:i+2]] = true
+	}
+
+	countsByPair := solvePairs(string(seq[0]), pairs, 0, numSteps, rewriteMap)
+
+	logger.LogF("totalizing %v", seq)
 
 	totals := map[string]int{}
 	for i := 0; i < len(seq)-1; i++ {
-		a, b := string(seq[i]), string(seq[i+1])
-		pair := a + b
+		pair := seq[i : i+2]
+		counts := countsByPair[pair]
 
-		pairCounts, found := seen[pair]
-		if !found {
-			totals[a]++
-			totals[b]++
-			continue
+		for c, n := range counts {
+			totals[c] += n
 		}
 
-		for s, n := range pairCounts {
-			totals[s] += n
-		}
+		totals[seq[i:i+1]]-- // it will be double-counted
 
-		if i != 0 {
-			totals[a]--
-		}
+		logger.LogF("total: pair %v counts %v => %v",
+			pair, counts, totals)
 	}
+
+	totals[seq[0:1]]++ // not double-counted
+
+	logger.LogF("total: totals %v", totals)
 
 	return totals
 }
 
-func solvePart(seqStr string, numSteps int, rewriteMap map[string]rune) {
-	counts := solve(seqStr, 0, numSteps, rewriteMap)
+func solve(seq string, numSteps int, rewriteMap map[string]rune) {
+	counts := solveSeq(seq, numSteps, rewriteMap)
 
 	bySize := []string{}
 	for s := range counts {
@@ -158,7 +196,7 @@ func solvePart(seqStr string, numSteps int, rewriteMap map[string]rune) {
 	mostCommon := counts[bySize[len(bySize)-1]]
 	leastCommon := counts[bySize[0]]
 
-	fmt.Println("A", mostCommon-leastCommon)
+	fmt.Println("Result", mostCommon-leastCommon)
 }
 
 func main() {
@@ -174,5 +212,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	solvePart(seq, *numSteps, rewriteMap)
+	solve(seq, *numSteps, rewriteMap)
 }
