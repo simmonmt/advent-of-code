@@ -15,6 +15,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"reflect"
 	"testing"
@@ -164,7 +165,7 @@ func TestDecode(t *testing.T) {
 		t.Run(tc.in, func(t *testing.T) {
 			packet, err := decode(tc.in)
 			if err != nil {
-				t.Errorf(`decode("%v") = _, %v, want _, nil`,
+				t.Fatalf(`decode("%v") = _, %v, want _, nil`,
 					tc.in, err)
 			}
 
@@ -173,6 +174,41 @@ func TestDecode(t *testing.T) {
 			if got := versionSum(packet); got != tc.versionSum {
 				t.Errorf(`versionSum(_) = %v, want %v, nil`,
 					got, tc.versionSum)
+			}
+		})
+	}
+}
+
+func TestEvaluate(t *testing.T) {
+	type TestCase struct {
+		in   string
+		want int
+	}
+
+	testCases := []TestCase{
+		TestCase{"C200B40A82", 3},
+		TestCase{"04005AC33890", 54},
+		TestCase{"880086C3E88112", 7},
+		TestCase{"CE00C43D881120", 9},
+		TestCase{"D8005AC2A8F0", 1},
+		TestCase{"F600BC2D8F", 0},
+		TestCase{"9C005AC2F8F0", 0},
+		TestCase{"9C0141080250320F1802104A08", 1},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.in, func(t *testing.T) {
+			packet, err := decode(tc.in)
+			if err != nil {
+				t.Fatalf(`decode("%v") = _, %v, want _, nil`,
+					tc.in, err)
+			}
+
+			fmt.Printf("packet for %v:\n", tc.in)
+			packet.DumpTo(os.Stdout)
+
+			if got := evaluate(packet); got != tc.want {
+				t.Errorf(`evaluate(_) = %v, want %v`, got, tc.want)
 			}
 		})
 	}

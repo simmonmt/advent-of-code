@@ -272,13 +272,84 @@ func versionSum(packet *Packet) int {
 	return sum
 }
 
-func solveA(line string) {
-	p, err := decode(line)
-	if err != nil {
-		log.Fatalf("bad decode: %v", err)
-	}
-
+func solveA(p *Packet) {
 	fmt.Println("A", versionSum(p))
+}
+
+func evaluate(packet *Packet) int {
+	switch packet.ID {
+	case 0: // sum
+		sum := 0
+		for _, sub := range packet.Subs {
+			sum += evaluate(sub)
+		}
+		return sum
+
+	case 1: // product
+		prod := 1
+		for _, sub := range packet.Subs {
+			prod *= evaluate(sub)
+		}
+		return prod
+
+	case 2: // minimum
+		min := -1
+		for _, sub := range packet.Subs {
+			if v := evaluate(sub); min == -1 || v < min {
+				min = v
+			}
+		}
+		return min
+
+	case 3: // maximum
+		max := -1
+		for _, sub := range packet.Subs {
+			if v := evaluate(sub); v > max {
+				max = v
+			}
+		}
+		return max
+
+	case 4: // literal
+		return packet.Literal
+
+	case 5: // greater than
+		if len(packet.Subs) != 2 {
+			panic("bad gt")
+		}
+
+		if evaluate(packet.Subs[0]) > evaluate(packet.Subs[1]) {
+			return 1
+		}
+		return 0
+
+	case 6: // less than
+		if len(packet.Subs) != 2 {
+			panic("bad lt")
+		}
+
+		if evaluate(packet.Subs[0]) < evaluate(packet.Subs[1]) {
+			return 1
+		}
+		return 0
+
+	case 7: // equal
+		if len(packet.Subs) != 2 {
+			panic("bad eq")
+		}
+
+		if evaluate(packet.Subs[0]) == evaluate(packet.Subs[1]) {
+			return 1
+		}
+		return 0
+
+	default:
+		panic(fmt.Sprintf("bad id %v", packet.ID))
+	}
+}
+
+func solveB(p *Packet) {
+	fmt.Println("B", evaluate(p))
 }
 
 func main() {
@@ -294,5 +365,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	solveA(line)
+	p, err := decode(line)
+	if err != nil {
+		log.Fatalf("bad decode: %v", err)
+	}
+
+	solveA(p)
+	solveB(p)
 }
