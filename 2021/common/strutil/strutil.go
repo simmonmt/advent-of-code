@@ -51,3 +51,61 @@ func StringDiff(a, b string) (bool, string) {
 
 	return false, ""
 }
+
+type StrBuf struct {
+	base []rune
+	off  int
+}
+
+func NewStrBuf(s string) *StrBuf {
+	rs := []rune{}
+	for _, r := range s {
+		rs = append(rs, r)
+	}
+
+	return &StrBuf{
+		base: rs,
+		off:  0,
+	}
+}
+
+func (v *StrBuf) Consume(l int) (string, bool) {
+	if l > len(v.base)-v.off {
+		return "", false
+	}
+
+	out := string(v.base[v.off : v.off+l])
+	v.off += l
+	return out, true
+}
+
+func (v *StrBuf) ConsumeIf(r rune) bool {
+	if v.off >= len(v.base) {
+		return false
+	}
+	if v.base[v.off] != r {
+		return false
+	}
+	v.off++
+	return true
+}
+
+func (v *StrBuf) Peek() (rune, bool) {
+	if v.off >= len(v.base) {
+		return ' ', false
+	}
+
+	return v.base[v.off], true
+}
+
+func (v *StrBuf) Left() int {
+	return len(v.base) - v.off
+}
+
+func (v *StrBuf) Off() int {
+	return v.off
+}
+
+func (v *StrBuf) Rest() string {
+	return string(v.base[v.off:])
+}
