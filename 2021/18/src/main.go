@@ -145,22 +145,9 @@ func parseSNumber(in string) (*SNumber, error) {
 	return doParseSNumber(buf)
 }
 
-func readInput(path string) ([]*SNumber, error) {
+func readInput(path string) ([]string, error) {
 	lines, err := filereader.Lines(*input)
-	if err != nil {
-		return nil, err
-	}
-
-	out := []*SNumber{}
-	for i, line := range lines {
-		sn, err := parseSNumber(line)
-		if err != nil {
-			return nil, fmt.Errorf("%d: parse failure: %v", i, err)
-		}
-		out = append(out, sn)
-	}
-
-	return out, err
+	return lines, err
 }
 
 func explodeFinder(sn *SNumber, depth int) *SNumber {
@@ -324,8 +311,39 @@ func magnitude(sn *SNumber) int {
 	return sn.Lit
 }
 
-func solveA(sNums []*SNumber) {
-	fmt.Println("A", magnitude(addSNumbers(sNums)))
+func solveA(lines []string) {
+	sns := []*SNumber{}
+	for i, line := range lines {
+		sn, err := parseSNumber(line)
+		if err != nil {
+			log.Fatalf("%d: parse failure: %v", i, err)
+		}
+		sns = append(sns, sn)
+	}
+
+	fmt.Println("A", magnitude(addSNumbers(sns)))
+}
+
+func solveB(lines []string) {
+	maxMag := 0
+
+	for i, l1 := range lines {
+		for j, l2 := range lines {
+			if i == j {
+				continue
+			}
+
+			sn1, _ := parseSNumber(l1)
+			sn2, _ := parseSNumber(l2)
+
+			mag := magnitude(addSNumber(sn1, sn2))
+			if mag > maxMag {
+				maxMag = mag
+			}
+		}
+	}
+
+	fmt.Println("B", maxMag)
 }
 
 func main() {
@@ -336,10 +354,11 @@ func main() {
 		log.Fatalf("--input is required")
 	}
 
-	sNums, err := readInput(*input)
+	lines, err := readInput(*input)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	solveA(sNums)
+	solveA(lines)
+	solveB(lines)
 }
