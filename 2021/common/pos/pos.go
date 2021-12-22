@@ -111,16 +111,26 @@ type P3 struct {
 	X, Y, Z int
 }
 
-func (p *P3) Equals(o P3) bool {
-	return p.X == o.X && p.Y == o.Y && p.Z == o.Z
-}
-
 func P3FromString(str string) (P3, error) {
 	vs, err := fromString(str, 3)
 	if err != nil {
 		return P3{}, err
 	}
 	return P3{vs[0], vs[1], vs[2]}, nil
+}
+
+func (p *P3) Equals(o P3) bool {
+	return p.X == o.X && p.Y == o.Y && p.Z == o.Z
+}
+
+func (p *P3) Add(o P3) {
+	p.X += o.X
+	p.Y += o.Y
+	p.Z += o.Z
+}
+
+func (p P3) ManhattanDistance(o P3) int {
+	return intmath.Abs(o.X-p.X) + intmath.Abs(o.Y-p.Y) + intmath.Abs(o.Z-p.Z)
 }
 
 func (p P3) String() string {
