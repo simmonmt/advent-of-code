@@ -26,8 +26,9 @@ import (
 )
 
 var (
-	verbose = flag.Bool("verbose", false, "verbose")
-	input   = flag.String("input", "", "input file")
+	verbose  = flag.Bool("verbose", false, "verbose")
+	input    = flag.String("input", "", "input file")
+	numSteps = flag.Int("num_steps", 2, "numbef of steps")
 )
 
 type Board struct {
@@ -93,6 +94,60 @@ func (b *Board) Dump() {
 			}
 		}
 		fmt.Println()
+	}
+}
+
+func (b *Board) allEquals(yRange, xRange []int, want bool) bool {
+	if len(xRange) == 1 {
+		xRange = []int{xRange[0], xRange[0]}
+	}
+	if len(yRange) == 1 {
+		yRange = []int{yRange[0], yRange[0]}
+	}
+
+	for y := yRange[0]; y <= yRange[1]; y++ {
+		for x := xRange[0]; x <= xRange[1]; x++ {
+			p := pos.P2{x, y}
+			v, found := b.Get(p)
+			if !found {
+				panic("unexpected unset")
+			}
+			if v != want {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (b *Board) Trim(unsetVal bool) {
+	for {
+		changed := false
+		if b.allEquals([]int{b.minY}, []int{b.minX, b.maxX}, unsetVal) {
+			logger.LogF("trim min Y")
+			b.minY++
+			changed = true
+		}
+		if b.allEquals([]int{b.maxY}, []int{b.minX, b.maxX}, unsetVal) {
+			logger.LogF("trim max Y")
+			b.maxY--
+			changed = true
+		}
+
+		if b.allEquals([]int{b.minY, b.maxY}, []int{b.minX}, unsetVal) {
+			logger.LogF("trim min X")
+			b.minX++
+			changed = true
+		}
+		if b.allEquals([]int{b.minY, b.maxY}, []int{b.maxX}, unsetVal) {
+			logger.LogF("trim max X")
+			b.maxX--
+			changed = true
+		}
+
+		if !changed {
+			break
+		}
 	}
 }
 
@@ -166,16 +221,18 @@ func runStep(stepNum int, enhancement []bool, board *Board) *Board {
 		nb.Set(p, enhancement[posNum])
 	})
 
+	nb.Trim(false)
+
 	return nb
 }
 
-func solveA(enhancement []bool, board *Board) {
+func solve(numSteps int, enhancement []bool, board *Board) {
 	if logger.Enabled() {
 		fmt.Println("initial:")
 		board.Dump()
 	}
 
-	for i := 1; i <= 2; i++ {
+	for i := 1; i <= numSteps; i++ {
 		board = runStep(i, enhancement, board)
 
 		if logger.Enabled() {
@@ -184,7 +241,7 @@ func solveA(enhancement []bool, board *Board) {
 		}
 	}
 
-	fmt.Println("A", board.NumSet())
+	fmt.Println(board.NumSet())
 }
 
 func main() {
@@ -200,5 +257,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	solveA(enhancement, board)
+	solve(*numSteps, enhancement, board)
 }
