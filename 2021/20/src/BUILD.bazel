@@ -25,5 +25,6 @@ go_test(
     embed = [":src_lib"],
     deps = [
         "//common/logger",
+        "//common/pos",
     ],
 )
