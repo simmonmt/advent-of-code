@@ -19,18 +19,24 @@ import (
 	"strconv"
 )
 
-func IntMin(a, b int) int {
-	if a < b {
-		return a
+func IntMin(a ...int) int {
+	min := a[0]
+	for i := 1; i < len(a); i++ {
+		if a[i] < min {
+			min = a[i]
+		}
 	}
-	return b
+	return min
 }
 
-func IntMax(a, b int) int {
-	if a > b {
-		return a
+func IntMax(a ...int) int {
+	max := a[0]
+	for i := 1; i < len(a); i++ {
+		if a[i] > max {
+			max = a[i]
+		}
 	}
-	return b
+	return max
 }
 
 func Abs(a int) int {
