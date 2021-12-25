@@ -23,8 +23,8 @@ import (
 	"strings"
 
 	"github.com/simmonmt/aoc/2021/common/filereader"
+	"github.com/simmonmt/aoc/2021/common/intmath"
 	"github.com/simmonmt/aoc/2021/common/logger"
-	"github.com/simmonmt/aoc/2021/common/pos"
 )
 
 var (
@@ -33,6 +33,70 @@ var (
 
 	axisPattern = regexp.MustCompile(`^([xyz])=([-\d]+)\.\.([-\d]+)$`)
 )
+
+type Field struct {
+	Cubes  []*Cube
+	Bounds *Cube
+}
+
+func NewField(bounds *Cube) *Field {
+	return &Field{
+		Cubes:  []*Cube{},
+		Bounds: bounds,
+	}
+}
+
+func (f *Field) Dump() {
+	fmt.Println("bounds:", f.Bounds)
+	for _, c := range f.Cubes {
+		fmt.Println("-", c)
+	}
+	fmt.Println("#cubes", len(f.Cubes), "size", f.Size())
+}
+
+// Add the `add` cube to the field, removing any overlaps.
+func (f *Field) Add(add *Cube) {
+	res := []*Cube{}
+
+	for _, c := range f.Cubes {
+		if add.Contains(c) {
+			continue // add will replace c, so drop c
+		} else if add.Overlaps(c) {
+			// add will partially replace c. copy over the part of c
+			// that isn't overlapped by add.
+			left := c.Sub(*add)
+			res = append(res, left...)
+		} else {
+			res = append(res, c)
+		}
+	}
+
+	res = append(res, add)
+	f.Cubes = res
+}
+
+func (f *Field) Sub(sub *Cube) {
+	res := []*Cube{}
+
+	for _, c := range f.Cubes {
+		if sub.Overlaps(c) {
+			left := c.Sub(*sub)
+			res = append(res, left...)
+		} else {
+			res = append(res, c)
+		}
+	}
+
+	f.Cubes = res
+}
+
+func (f *Field) Size() int64 {
+	sum := int64(0)
+	for _, c := range f.Cubes {
+		sum += c.Size()
+	}
+	return sum
+}
 
 type Cube struct {
 	xLo, xHi int
@@ -45,17 +109,65 @@ func (c *Cube) String() string {
 		c.xLo, c.xHi, c.yLo, c.yHi, c.zLo, c.zHi)
 }
 
-func (c *Cube) Contains(p pos.P3) bool {
-	if p.X < c.xLo || p.X > c.xHi {
+func (c *Cube) Contains(c2 *Cube) bool {
+	return c.xLo <= c2.xLo && c.xHi >= c2.xHi &&
+		c.yLo <= c2.yLo && c.yHi >= c2.yHi &&
+		c.zLo <= c2.zLo && c.zHi >= c2.zHi
+}
+
+func (c *Cube) Overlaps(c2 *Cube) bool {
+	axisOverlaps := func(cLo, cHi, c2Lo, c2Hi int) bool {
+		return c2Lo <= cHi && c2Hi >= cLo
+	}
+
+	if !axisOverlaps(c.xLo, c.xHi, c2.xLo, c2.xHi) {
 		return false
 	}
-	if p.Y < c.yLo || p.Y > c.yHi {
+	if !axisOverlaps(c.yLo, c.yHi, c2.yLo, c2.yHi) {
 		return false
 	}
-	if p.Z < c.zLo || p.Z > c.zHi {
+	if !axisOverlaps(c.zLo, c.zHi, c2.zLo, c2.zHi) {
 		return false
 	}
 	return true
+}
+
+func (c *Cube) Sub(sub Cube) []*Cube {
+	sub.zLo = intmath.IntMax(sub.zLo, c.zLo)
+	sub.zHi = intmath.IntMin(sub.zHi, c.zHi)
+	sub.yLo = intmath.IntMax(sub.yLo, c.yLo)
+	sub.yHi = intmath.IntMin(sub.yHi, c.yHi)
+	sub.xLo = intmath.IntMax(sub.xLo, c.xLo)
+	sub.xHi = intmath.IntMin(sub.xHi, c.xHi)
+
+	out := []*Cube{}
+
+	if sub.zHi < c.zHi { // top
+		out = append(out, &Cube{c.xLo, c.xHi, c.yLo, c.yHi, sub.zHi + 1, c.zHi})
+	}
+	if c.zLo < sub.zLo { // bottom
+		out = append(out, &Cube{c.xLo, c.xHi, c.yLo, c.yHi, c.zLo, sub.zLo - 1})
+	}
+
+	if sub.xHi < c.xHi { // right
+		out = append(out, &Cube{sub.xHi + 1, c.xHi, c.yLo, c.yHi, sub.zLo, sub.zHi})
+	}
+	if c.xLo < sub.xLo { // left
+		out = append(out, &Cube{c.xLo, sub.xLo - 1, c.yLo, c.yHi, sub.zLo, sub.zHi})
+	}
+
+	if sub.yHi < c.yHi { // back
+		out = append(out, &Cube{sub.xLo, sub.xHi, sub.yHi + 1, c.yHi, sub.zLo, sub.zHi})
+	}
+	if c.yLo < sub.yLo { // front
+		out = append(out, &Cube{sub.xLo, sub.xHi, c.yLo, sub.yLo - 1, sub.zLo, sub.zHi})
+	}
+
+	return out
+}
+
+func (c *Cube) Size() int64 {
+	return int64(c.xHi-c.xLo+1) * int64(c.yHi-c.yLo+1) * int64(c.zHi-c.zLo+1)
 }
 
 type Command struct {
@@ -125,36 +237,57 @@ func readInput(path string) ([]*Command, error) {
 	return cmds, err
 }
 
-func runCommands(p pos.P3, cmds []*Command) bool {
-	state := false
+func solve(cmds []*Command, field *Field) int64 {
+	for _, cmd := range cmds {
+		logger.LogF("cmd %v", cmd)
+
+		if cmd.On {
+			field.Add(&cmd.Cube)
+		} else {
+			field.Sub(&cmd.Cube)
+		}
+
+		if logger.Enabled() {
+			field.Dump()
+		}
+	}
+
+	return field.Size()
+}
+
+func solveA(cmds []*Command) {
+	filtered := []*Command{}
 	for _, cmd := range cmds {
 		if cmd.Cube.xLo < -50 || cmd.Cube.xHi > 50 {
 			continue
 		}
-
-		if cmd.Cube.Contains(p) {
-			state = cmd.On
-		}
+		filtered = append(filtered, cmd)
 	}
-	return state
-}
+	logger.LogF("input #cmds %v filtered %v", len(cmds), len(filtered))
+	cmds = filtered
 
-func solveA(cmds []*Command) {
-	numLit := 0
-
-	for z := -50; z <= 50; z++ {
-		for y := -50; y <= 50; y++ {
-			for x := -50; x <= 50; x++ {
-				p := pos.P3{x, y, z}
-				state := runCommands(p, cmds)
-				if state {
-					numLit++
-				}
-			}
-		}
-	}
+	field := NewField(&Cube{-50, 50, -50, 50, -50, 50})
+	numLit := solve(cmds, field)
 
 	fmt.Println("A", numLit)
+}
+
+func solveB(cmds []*Command) {
+	bounds := cmds[0].Cube
+	for i := 1; i < len(cmds); i++ {
+		cmd := cmds[i]
+		bounds.xLo = intmath.IntMin(bounds.xLo, cmd.Cube.xLo)
+		bounds.xHi = intmath.IntMax(bounds.xHi, cmd.Cube.xHi)
+		bounds.yLo = intmath.IntMin(bounds.yLo, cmd.Cube.yLo)
+		bounds.yHi = intmath.IntMax(bounds.yHi, cmd.Cube.yHi)
+		bounds.zLo = intmath.IntMin(bounds.zLo, cmd.Cube.zLo)
+		bounds.zHi = intmath.IntMax(bounds.zHi, cmd.Cube.zHi)
+	}
+
+	field := NewField(&bounds)
+	numLit := solve(cmds, field)
+
+	fmt.Println("B", numLit)
 }
 
 func main() {
@@ -171,4 +304,5 @@ func main() {
 	}
 
 	solveA(cmds)
+	solveB(cmds)
 }
