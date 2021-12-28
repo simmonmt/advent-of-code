@@ -29,7 +29,11 @@ import (
 
 type ClientInterface interface {
 	AllNeighbors(start string) []string
-	EstimateDistance(start, end string) uint
+
+	// EstimateDistance returns the minimum cost between `cur` and
+	// `goal`. The cost may be less than the actual minimum cost,
+	// but must not be more than it.
+	EstimateDistance(cur, goal string) uint
 
 	// NeighborDistance returns the distance between two known direct
 	// neighbors (i.e. a pair derived using AllNeighbors).
@@ -164,7 +168,7 @@ func AStar(start, goal string, client ClientInterface) []string {
 		currentGScore := gScore.GetWithDefault(current, math.MaxUint32)
 
 		neighbors := client.AllNeighbors(current)
-		logger.LogF("neighbors of %v: %v", current, neighbors)
+		logger.LogF("neighbors (%d) of %v: %v", len(neighbors), current, neighbors)
 		for _, neighbor := range neighbors {
 			if _, found := closedSet[neighbor]; found {
 				continue
