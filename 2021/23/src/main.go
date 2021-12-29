@@ -22,6 +22,8 @@ import (
 	"io"
 	"log"
 	"os"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -79,68 +81,98 @@ func (c CellType) String() string {
 type CharType int
 
 const (
-	CHAR_A1 CharType = iota
-	CHAR_A2
-	CHAR_B1
-	CHAR_B2
-	CHAR_C1
-	CHAR_C2
-	CHAR_D1
-	CHAR_D2
+	CHAR_A CharType = iota
+	CHAR_B
+	CHAR_C
+	CHAR_D
 	CHAR_SENTINEL
 )
 
 func (c CharType) String() string {
-	return ([]string{"A", "B", "C", "D"}[int(c)/2]) + ([]string{"1", "2"}[int(c%2)])
+	if c < CHAR_SENTINEL {
+		return string('A' + c)
+	}
+	return "?"
 }
 
 func (c CharType) RoomType() CellType {
-	return CellType(int(CT_ROOMA) + int(c)/2)
+	return CellType(int(CT_ROOMA) + int(c))
 }
 
 func (c CharType) MoveCost() int {
-	return []int{1, 10, 100, 1000}[c/2]
+	return []int{1, 10, 100, 1000}[c]
 }
 
 type GameState struct {
-	locs      [8]pos.P2
-	locsByPos map[pos.P2]CharType
+	roomHeight int
+	locs       [4][]pos.P2
+	locsByPos  map[pos.P2]CharType
 }
 
-func NewGameState(locs [8]pos.P2) *GameState {
+func NewGameState(roomHeight int, locs [4][]pos.P2) *GameState {
 	locsByPos := map[pos.P2]CharType{}
-	for i, p := range locs {
-		locsByPos[p] = CharType(i)
+	for i, ps := range locs {
+		for _, p := range ps {
+			locsByPos[p] = CharType(i)
+		}
 	}
 
-	return &GameState{
-		locs:      locs,
-		locsByPos: locsByPos,
+	gs := &GameState{
+		roomHeight: roomHeight,
+		locs:       locs,
+		locsByPos:  locsByPos,
 	}
+	gs.sortLocs()
+	return gs
 }
 
 func DeserializeGameState(ser string) (*GameState, error) {
 	strs := strings.Split(ser, "|")
-	if l := len(strs); l != 8 {
-		return nil, fmt.Errorf("bad splits (%v) in %v", l, ser)
+	if len(strs)%4 != 1 {
+		return nil, fmt.Errorf("bad splits (%v) in %v",
+			len(strs), ser)
 	}
 
-	locs := [8]pos.P2{}
+	roomHeight, err := strconv.Atoi(strs[0])
+	if err != nil {
+		return nil, fmt.Errorf("bad roomsize: %v", err)
+	}
+
+	strs = strs[1:]
+
+	locs := [4][]pos.P2{}
 	for i, s := range strs {
+		charNum := i / roomHeight
+		if locs[charNum] == nil {
+			locs[charNum] = []pos.P2{}
+		}
+
 		p, err := pos.P2FromString(s)
 		if err != nil {
 			return nil, fmt.Errorf("bad pos in %v", ser)
 		}
-		locs[i] = p
+		locs[charNum] = append(locs[charNum], p)
 	}
 
-	return NewGameState(locs), nil
+	return NewGameState(roomHeight, locs), nil
+}
+
+func (gs *GameState) sortLocs() {
+	for i := 0; i < len(gs.locs); i++ {
+		sort.Slice(gs.locs[i], func(j, k int) bool {
+			return gs.locs[i][j].LessThan(gs.locs[i][k])
+		})
+	}
 }
 
 func (gs *GameState) Serialize() string {
-	out := make([]string, 8)
-	for i, l := range gs.locs {
-		out[i] = l.String()
+	roomHeight := len(gs.locs[0])
+	out := make([]string, 4*roomHeight+1)
+	out[0] = strconv.Itoa(roomHeight)
+	for i := 0; i < 4; i++ {
+		for j, p := range gs.locs[i] {
+			out[i*roomHeight+j+1] = p.String()
+		}
 	}
 	return strings.Join(out, "|")
 }
@@ -148,20 +180,38 @@ func (gs *GameState) Serialize() string {
 func (gs *GameState) IsOccupied(p pos.P2) (bool, CharType) {
 	i, found := gs.locsByPos[p]
 	if !found {
-		return false, CHAR_A1
+		return false, CHAR_A
 	}
 
 	return true, CharType(i)
 }
 
-func (gs *GameState) Move(char CharType, to pos.P2) *GameState {
-	toLocs := gs.locs
-	toLocs[char] = to
-	return NewGameState(toLocs)
+func (gs *GameState) Move(char CharType, from, to pos.P2) *GameState {
+	toLocs := [4][]pos.P2{}
+	for i := 0; i < 4; i++ {
+		toLocs[i] = make([]pos.P2, len(gs.locs[i]))
+		if i == int(char) {
+			found := true
+			for j, p := range gs.locs[i] {
+				if p.Equals(from) {
+					found = true
+					p = to
+				}
+				toLocs[i][j] = p
+			}
+			if !found {
+				panic("from not found")
+			}
+		} else {
+			copy(toLocs[i], gs.locs[i])
+		}
+	}
+
+	return NewGameState(gs.roomHeight, toLocs)
 }
 
-func (gs *GameState) CharLoc(char CharType) pos.P2 {
-	return gs.locs[char]
+func (gs *GameState) AllChars() map[pos.P2]CharType {
+	return gs.locsByPos
 }
 
 type Board struct {
@@ -169,8 +219,8 @@ type Board struct {
 	roomCells map[CellType][]pos.P2
 }
 
-func NewBoard() *Board {
-	g := grid.New(11, 3)
+func NewBoard(roomHeight int) *Board {
+	g := grid.New(11, 1+roomHeight)
 	roomCells := map[CellType][]pos.P2{}
 
 	for x := 0; x < 11; x++ {
@@ -181,7 +231,7 @@ func NewBoard() *Board {
 
 		roomType := CellType(int(CT_ROOMA) + i)
 
-		for y := 1; y <= 2; y++ {
+		for y := 1; y <= roomHeight; y++ {
 			p := pos.P2{x, y}
 			g.Set(p, roomType)
 			roomCells[roomType] = append(roomCells[roomType], p)
@@ -236,33 +286,33 @@ func (b *Board) AllNeighbors(p pos.P2) []pos.P2 {
 }
 
 func (b *Board) DumpTo(o io.Writer, gs *GameState) {
-	fmt.Fprintln(o, "########################")
+	fmt.Fprintln(o, "#############")
 	fmt.Fprint(o, "#")
 	for x := 0; x < 11; x++ {
 		p := pos.P2{x, 0}
-		fmt.Fprintf(o, "%-2s", b.cellToString(p, gs))
+		fmt.Fprintf(o, "%s", b.cellToString(p, gs))
 	}
 	fmt.Fprintln(o, "#")
 
-	for y := 1; y <= 2; y++ {
+	for y := 1; y <= gs.roomHeight; y++ {
 		if y == 1 {
-			fmt.Fprint(o, "#####")
+			fmt.Fprint(o, "###")
 		} else {
-			fmt.Fprint(o, "   ##")
+			fmt.Fprint(o, "  #")
 		}
 
 		for x := 2; x <= 8; x += 2 {
 			p := pos.P2{x, y}
-			fmt.Fprintf(o, "%-2s", b.cellToString(p, gs))
-			fmt.Fprint(o, "##")
+			fmt.Fprintf(o, "%s", b.cellToString(p, gs))
+			fmt.Fprint(o, "#")
 		}
 		if y == 1 {
-			fmt.Fprint(o, "###")
+			fmt.Fprint(o, "##")
 		}
 		fmt.Fprintln(o)
 	}
 
-	fmt.Fprintln(o, "   ##################")
+	fmt.Fprintln(o, "  #########")
 }
 
 func (b *Board) DumpToString(gs *GameState) string {
@@ -283,16 +333,25 @@ func readInput(path string) ([]string, error) {
 	return lines, nil
 }
 
+func parseExpandedInput(lines []string) (*Board, *GameState) {
+	expanded := []string{}
+	expanded = append(expanded, lines[0:3]...)
+	expanded = append(expanded, "  #D#C#B#A#  ", "  #D#B#A#C#  ")
+	expanded = append(expanded, lines[3:]...)
+
+	return parseInput(expanded)
+}
+
 func parseInput(lines []string) (*Board, *GameState) {
-	found := [4]int{}
-	locs := [8]pos.P2{}
+	locs := [4][]pos.P2{}
+	for i := range locs {
+		locs[i] = []pos.P2{}
+	}
 
 	saveChar := func(p pos.P2, ch byte) {
 		c := int(ch - 'A')
 		if c >= 0 && c <= 3 {
-			locIdx := c*2 + found[c]
-			found[c]++
-			locs[locIdx] = p
+			locs[c] = append(locs[c], p)
 		}
 	}
 
@@ -301,7 +360,8 @@ func parseInput(lines []string) (*Board, *GameState) {
 		saveChar(p, lines[1][lx])
 	}
 
-	for lineNo := 2; lineNo <= 3; lineNo++ {
+	roomHeight := len(lines) - 3
+	for lineNo := 2; lineNo < len(lines)-1; lineNo++ {
 		y := lineNo - 1
 
 		for _, lx := range []int{3, 5, 7, 9} {
@@ -310,7 +370,7 @@ func parseInput(lines []string) (*Board, *GameState) {
 		}
 	}
 
-	return NewBoard(), NewGameState(locs)
+	return NewBoard(roomHeight), NewGameState(roomHeight, locs)
 }
 
 type astarClient struct {
@@ -359,26 +419,34 @@ func (c *astarClient) doDfs(gs *GameState, p pos.P2, visited map[pos.P2]bool, pa
 }
 
 func (c *astarClient) makeMove(gs *GameState, path *list.List, char CharType) *GameState {
+	from := path.Front().Value.(pos.P2)
 	to := path.Back().Value.(pos.P2)
-	return gs.Move(char, to)
+	return gs.Move(char, from, to)
+}
+
+func (c *astarClient) atBottomOfRoom(gs *GameState, loc pos.P2, roomType CellType) bool {
+	roomCells := c.b.RoomCells(roomType)
+	for i := len(roomCells) - 1; i >= 0; i-- {
+		rp := roomCells[i]
+		if rp.Equals(loc) {
+			return true
+		} else if occupied, who := gs.IsOccupied(rp); !occupied {
+			return false
+		} else if who.RoomType() != roomType {
+			return false
+		}
+	}
+
+	panic("didn't find loc")
 }
 
 func (c *astarClient) allMovesForChar(gs *GameState, charLoc pos.P2, char CharType) []string {
 	//logger.LogF("all moves for %v at %v", char, charLoc)
 
+	// No further moves if it's as far down in its room as it can get.
 	cellType := c.b.Get(charLoc)
-	if roomType := char.RoomType(); roomType == cellType {
-		cells := c.b.RoomCells(roomType)
-		if cells[1].Equals(charLoc) {
-			logger.LogF("skipping already-home-bottom %v", char)
-			return []string{}
-		}
-
-		// it's in cells[0]
-		if found, other := gs.IsOccupied(cells[1]); found && other.RoomType() == roomType {
-			logger.LogF("skipping already-home full %v", char)
-			return []string{}
-		}
+	if cellType == char.RoomType() && c.atBottomOfRoom(gs, charLoc, char.RoomType()) {
+		return []string{}
 	}
 
 	startsFromRoom := c.b.Get(charLoc).IsRoom()
@@ -460,8 +528,7 @@ func (c *astarClient) AllNeighbors(start string) []string {
 	}
 
 	outs := []string{}
-	for char := CHAR_A1; char < CHAR_SENTINEL; char++ {
-		charLoc := gs.CharLoc(char)
+	for charLoc, char := range gs.AllChars() {
 		neighbors := c.allMovesForChar(gs, charLoc, char)
 		// if logger.Enabled() {
 		// 	if char == CHAR_B2 {
@@ -484,9 +551,8 @@ func (c *astarClient) EstimateDistance(cur, goal string) uint {
 	}
 
 	cost := 0
-	for char := CHAR_A1; char < CHAR_SENTINEL; char++ {
+	for charLoc, char := range curState.AllChars() {
 		roomCells := c.b.RoomCells(char.RoomType())
-		charLoc := curState.CharLoc(char)
 
 		inRoom := false
 		for _, c := range roomCells {
@@ -510,33 +576,40 @@ func (c *astarClient) EstimateDistance(cur, goal string) uint {
 // 	// NeighborDistance returns the distance between two known direct
 // 	// neighbors (i.e. a pair derived using AllNeighbors).
 // 	NeighborDistance(n1, n2 string) uint
-func (c *astarClient) NeighborDistance(n1, n2 string) uint {
-	n1State, err := DeserializeGameState(n1)
+func (c *astarClient) NeighborDistance(from, to string) uint {
+	fromState, err := DeserializeGameState(from)
 	if err != nil {
-		panic("bad n1 state")
+		panic("bad from state")
 	}
-	n2State, err := DeserializeGameState(n2)
+	toState, err := DeserializeGameState(to)
 	if err != nil {
-		panic("bad n2 state")
+		panic("bad to state")
 	}
 
-	changed := CHAR_A1
-	for char := CHAR_A1; char < CHAR_SENTINEL; char++ {
-		n1Loc := n1State.CharLoc(char)
-		n2Loc := n2State.CharLoc(char)
+	// We only move one piece at a time, so we can find the moved piece by
+	// looking for the difference between the AllChars maps.
+	var fromPos, toPos pos.P2
+	var fromChar CharType
+	fromCharsByLoc := fromState.AllChars()
+	toCharsByLoc := toState.AllChars()
 
-		if !n1Loc.Equals(n2Loc) {
-			changed = char
+	for loc, char := range fromCharsByLoc {
+		if _, found := toCharsByLoc[loc]; !found {
+			fromPos = loc
+			fromChar = char
+			break
+		}
+	}
+	for loc := range toCharsByLoc {
+		if _, found := fromCharsByLoc[loc]; !found {
+			toPos = loc
 			break
 		}
 	}
 
-	n1Loc := n1State.CharLoc(changed)
-	n2Loc := n2State.CharLoc(changed)
-
 	foundPathLen := -1
-	c.dfs(n1State, n1Loc, func(path *list.List, cur pos.P2, cellType CellType) bool {
-		if cur.Equals(n2Loc) {
+	c.dfs(fromState, fromPos, func(path *list.List, cur pos.P2, cellType CellType) bool {
+		if cur.Equals(toPos) {
 			if foundPathLen != -1 {
 				panic("repath")
 			}
@@ -559,22 +632,21 @@ func (c *astarClient) NeighborDistance(n1, n2 string) uint {
 		panic("didn't find a path")
 	}
 
-	return uint(changed.MoveCost() * (foundPathLen - 1))
+	return uint(fromChar.MoveCost() * (foundPathLen - 1))
 }
 
 func (c *astarClient) GoalReached(cand, goal string) bool {
-	state, err := DeserializeGameState(cand)
+	gs, err := DeserializeGameState(cand)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	for char := CHAR_A1; char < CHAR_SENTINEL; char++ {
+	for loc, char := range gs.AllChars() {
 		roomCells := c.b.RoomCells(char.RoomType())
-		charLoc := state.CharLoc(char)
 
 		inRoom := false
 		for _, c := range roomCells {
-			if c == charLoc {
+			if c == loc {
 				inRoom = true
 				break
 			}
@@ -587,16 +659,14 @@ func (c *astarClient) GoalReached(cand, goal string) bool {
 	return true
 }
 
-func solveA(lines []string) {
-	board, gameState := parseInput(lines)
-
+func solve(board *Board, gameState *GameState) uint {
 	board.Dump(gameState)
 
 	client := &astarClient{b: board}
 	path := astar.AStar(gameState.Serialize(), "", client)
 	if path == nil {
 		fmt.Println("no path found")
-		return
+		return 0
 	}
 
 	cost := uint(0)
@@ -605,7 +675,21 @@ func solveA(lines []string) {
 	}
 
 	logger.LogF("result", strings.Join(path, "\n"))
+	return cost
+}
+
+func solveA(lines []string) {
+	board, gameState := parseInput(lines)
+	cost := solve(board, gameState)
+
 	fmt.Println("A", cost)
+}
+
+func solveB(lines []string) {
+	board, gameState := parseExpandedInput(lines)
+	cost := solve(board, gameState)
+
+	fmt.Println("B", cost)
 }
 
 func timeSolve(fn func()) {
@@ -630,4 +714,5 @@ func main() {
 	}
 
 	timeSolve(func() { solveA(lines) })
+	timeSolve(func() { solveB(lines) })
 }
