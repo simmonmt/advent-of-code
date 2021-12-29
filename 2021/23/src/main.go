@@ -214,6 +214,10 @@ func (gs *GameState) AllChars() map[pos.P2]CharType {
 	return gs.locsByPos
 }
 
+func (gs *GameState) RoomHeight() int {
+	return gs.roomHeight
+}
+
 type Board struct {
 	g         *grid.Grid
 	roomCells map[CellType][]pos.P2
@@ -636,34 +640,30 @@ func (c *astarClient) NeighborDistance(from, to string) uint {
 }
 
 func (c *astarClient) GoalReached(cand, goal string) bool {
-	gs, err := DeserializeGameState(cand)
-	if err != nil {
-		panic(err.Error())
+	return cand == goal
+}
+
+func makeGoalState(board *Board, initial *GameState) *GameState {
+	locs := [4][]pos.P2{}
+
+	for _, char := range initial.AllChars() {
+		if locs[char] != nil {
+			continue
+		}
+
+		locs[char] = board.RoomCells(char.RoomType())[:]
 	}
 
-	for loc, char := range gs.AllChars() {
-		roomCells := c.b.RoomCells(char.RoomType())
-
-		inRoom := false
-		for _, c := range roomCells {
-			if c == loc {
-				inRoom = true
-				break
-			}
-		}
-		if !inRoom {
-			return false
-		}
-	}
-
-	return true
+	return NewGameState(initial.RoomHeight(), locs)
 }
 
 func solve(board *Board, gameState *GameState) uint {
 	board.Dump(gameState)
 
+	goal := makeGoalState(board, gameState)
+
 	client := &astarClient{b: board}
-	path := astar.AStar(gameState.Serialize(), "", client)
+	path := astar.AStar(gameState.Serialize(), goal.Serialize(), client)
 	if path == nil {
 		fmt.Println("no path found")
 		return 0
