@@ -1,0 +1,142 @@
+	// 10 removes 11    (13 12)     if w10=w11+5         w10=w11+5
+	// 8 removes 9      (13 12)     if w8=(w9+10)-13      w8=w9-3
+	// 6 removes 7      (13 12)     if w6=(w7+16)-9       w6=w7+7
+	// 3 removes 4      (13 12 5)   if w3=(w4+13)-14      w3=w4-1
+	// 2 removes 5      (13 12)     if w2=(w5+6)-3        w2=w5+3
+	// 1 removes 12     (13)        if w1=(w12+8)-2       w1=w12+6
+	// 0 removes 13     --          if w0=(w13+14)-14     w0=w13
+
+        // LOWEST:
+	
+	// w13=1
+	// w12=1
+	// w11=1
+	// w10=6
+	
+	// w9=4
+	// w8=1
+	// w7=1
+	// w6=8
+	
+	// w5=1
+	// w4=2
+	// w3=1
+	// w2=4
+	
+	// w1=7
+	// w0=1
+
+
+	// HIGHEST:
+
+	// w13=9
+	// w12=3
+	// w11=4
+	// w10=9
+	
+	// w9=9
+	// w8=6
+	// w7=2
+	// w6=9
+	
+	// w5=6
+	// w4=9
+	// w3=8
+	// w2=9
+	
+	// w1=9
+	// w0=9
+
+	// 13 12 11 10? 9 8? 7 6? 5 4 3? 2? 1? 0?
+
+	// 7 adds: 13 12 11 9 7 5 4
+	// 7 removes?
+
+	w := input() // w13
+	// add (w13+14)
+
+	w = input() // w12
+	// add (w12+8)
+
+	w = input() // w11
+	// add (w11+5)
+
+	w = input() // w10
+
+	x = (z % 26) - 0
+	z /= 26
+	x = int(x != w)
+	z *= 25*x + 1
+	z += (w + 4) * x
+
+	// replace or remove w11
+
+	w = input() // w9
+	// add (w9+10)
+
+	w = input() // w8
+
+	x = (z % 26) - 13
+	z /= 26
+	x = int(x != w)
+	z *= 25*x + 1
+	z += (w + 13) * x
+
+	// replace or remove 9
+
+	w = input() // w7
+	// add (w7+16)
+
+	w = input() // w6
+
+	x = (z % 26) - 9
+	z /= 26
+	x = int(x != w)
+	z *= 25*x + 1
+	z += (w + 5) * x
+
+	// replace or remove w7
+
+	w = input() // w5
+	// add (w5+6)
+
+	w = input() // w4
+	// add (w4+13)
+
+	w = input() // w3
+
+	x = (z % 26) - 14
+	z /= 26
+	x = int(x != w)
+	z *= 25*x + 1
+	z += (w + 6) * x
+
+	// replace or remove w4
+
+	w = input() // w2
+
+	x = (z % 26) - 3
+	z /= 26
+	x = int(x != w)
+	z *= 25*x + 1
+	z += (w + 7) * x
+
+	// replace or remove
+
+	w = input() // w1
+
+	x = (z % 26) - 2
+	z /= 26
+	x = int(x != w)
+	z *= 25*x + 1
+	z += (w + 13) * x
+
+	// replace or remove
+
+	w = input() // w0
+
+	x = (z % 26) - 14
+	z /= 26
+	x = int(x != w)
+	z *= 25*x + 1
+	z += (w + 3) * x
