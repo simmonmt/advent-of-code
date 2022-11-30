@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+package(default_visibility = ["//visibility:public"])
+
+go_library(
+    name = "intmath",
+    srcs = ["intmath.go"],
+    importpath = "github.com/simmonmt/aoc/2022/common/intmath",
+)
+
+go_test(
+    name = "intmath_test",
+    srcs = ["intmath_test.go"],
+    embed = [":intmath"],
+    deps = ["//common/testutils"],
+)

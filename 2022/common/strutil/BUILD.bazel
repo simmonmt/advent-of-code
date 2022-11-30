@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "strutil",
+    srcs = ["strutil.go"],
+    importpath = "github.com/simmonmt/aoc/2022/common/strutil",
+    visibility = ["//visibility:public"],
+    deps = ["//common/intmath"],
+)
+
+go_test(
+    name = "strutil_test",
+    srcs = ["strutil_test.go"],
+    embed = [":strutil"],
+)

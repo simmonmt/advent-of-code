@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "nogo")
+load("@bazel_gazelle//:def.bzl", "gazelle")
+
+# gazelle:prefix github.com/simmonmt/aoc/2022
+gazelle(
+    name = "gazelle",
+    command = "fix",
+    external = "vendored",
+    extra_args = [
+        "--mode=diff",
+    ],
+)
+
+gazelle(
+    name = "gazelle_fix",
+    command = "fix",
+    external = "vendored",
+)
+
+gazelle(name = "gazelle_cmd")
+
+nogo(
+    name = "nogo",
+    vet = True,
+    visibility = ["//visibility:public"],
+)
