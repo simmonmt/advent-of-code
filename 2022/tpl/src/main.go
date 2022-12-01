@@ -29,12 +29,12 @@ var (
 )
 
 func readInput(path string) ([]string, error) {
-	lines, err := filereader.Lines(*input)
+	lines, err := filereader.Lines(path)
 	if err != nil {
 		return nil, err
 	}
 
-	return lines, err
+	return lines, nil
 }
 
 func main() {
