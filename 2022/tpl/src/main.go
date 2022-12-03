@@ -37,6 +37,14 @@ func readInput(path string) ([]string, error) {
 	return lines, nil
 }
 
+func solveA(lines []string) int {
+	return -1
+}
+
+func solveB(lines []string) int {
+	return -1
+}
+
 func main() {
 	flag.Parse()
 	logger.Init(*verbose)
@@ -50,5 +58,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(lines)
+	fmt.Println("A", solveA(lines))
+	fmt.Println("B", solveB(lines))
 }
