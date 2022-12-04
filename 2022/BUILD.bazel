@@ -5,7 +5,6 @@ load("@bazel_gazelle//:def.bzl", "gazelle")
 gazelle(
     name = "gazelle",
     command = "fix",
-    external = "vendored",
     extra_args = [
         "--mode=diff",
     ],
@@ -14,7 +13,6 @@ gazelle(
 gazelle(
     name = "gazelle_fix",
     command = "fix",
-    external = "vendored",
 )
 
 gazelle(name = "gazelle_cmd")
