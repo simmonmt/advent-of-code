@@ -18,9 +18,9 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"strconv"
 	"strings"
 
+	"github.com/simmonmt/aoc/2022/common/area"
 	"github.com/simmonmt/aoc/2022/common/filereader"
 	"github.com/simmonmt/aoc/2022/common/logger"
 )
@@ -30,85 +30,38 @@ var (
 	input   = flag.String("input", "", "input file")
 )
 
-type Range struct {
-	From, To int
-}
-
-func (r *Range) Contains(o Range) bool {
-	return r.From <= o.From && r.To >= o.To
-}
-
-func (r *Range) Overlaps(o Range) bool {
-	if r.From <= o.From {
-		return r.To >= o.From
-	} else {
-		return r.From <= o.To
-	}
-}
-
-func parseRange(s string) (Range, error) {
-	left, right, ok := strings.Cut(s, "-")
-	if !ok {
-		return Range{}, fmt.Errorf("bad range cut")
-	}
-
-	parseNum := func(s string) (int, error) {
-		num, err := strconv.ParseInt(s, 0, 32)
-		if err != nil {
-			return 0, err
-		}
-		if num <= 0 {
-			return 0, fmt.Errorf("num out of range")
-		}
-		return int(num), nil
-	}
-
-	var r Range
-	var err error
-	r.From, err = parseNum(left)
-	if err != nil {
-		return Range{}, err
-	}
-	r.To, err = parseNum(right)
-	if err != nil {
-		return Range{}, err
-	}
-
-	return r, nil
-}
-
-func readInput(path string) ([][2]Range, error) {
+func readInput(path string) ([][2]area.Area1D, error) {
 	lines, err := filereader.Lines(path)
 	if err != nil {
 		return nil, err
 	}
 
-	ranges := [][2]Range{}
+	input := [][2]area.Area1D{}
 	for _, line := range lines {
 		partOne, partTwo, ok := strings.Cut(line, ",")
 		if !ok {
 			return nil, fmt.Errorf("bad cut on line: %v", line)
 		}
 
-		one, err := parseRange(partOne)
+		one, err := area.ParseArea1D(partOne)
 		if err != nil {
-			return nil, fmt.Errorf("bad range 1 on line: %v: %v", line, err)
+			return nil, fmt.Errorf("bad interval 1 on line: %v: %v", line, err)
 		}
-		two, err := parseRange(partTwo)
+		two, err := area.ParseArea1D(partTwo)
 		if err != nil {
-			return nil, fmt.Errorf("bad range 1 on line: %v: %v", line, err)
+			return nil, fmt.Errorf("bad interval 2 on line: %v: %v", line, err)
 		}
 
-		ranges = append(ranges, [2]Range{one, two})
+		input = append(input, [2]area.Area1D{one, two})
 	}
 
-	return ranges, nil
+	return input, nil
 }
 
-func solveA(ranges [][2]Range) int {
+func solveA(input [][2]area.Area1D) int {
 	num := 0
-	for _, r := range ranges {
-		if r[0].Contains(r[1]) || r[1].Contains(r[0]) {
+	for _, ranges := range input {
+		if ranges[0].Contains(ranges[1]) || ranges[1].Contains(ranges[0]) {
 			num++
 		}
 	}
@@ -116,11 +69,11 @@ func solveA(ranges [][2]Range) int {
 	return num
 }
 
-func solveB(ranges [][2]Range) int {
+func solveB(input [][2]area.Area1D) int {
 	num := 0
-	for _, r := range ranges {
-		if r[0].Overlaps(r[1]) || r[1].Overlaps(r[0]) {
-			logger.LogF("overlap: %v %v", r[0], r[1])
+	for _, ranges := range input {
+		if ranges[0].Overlaps(ranges[1]) || ranges[1].Overlaps(ranges[0]) {
+			logger.LogF("overlap: %v %v", ranges[0], ranges[1])
 			num++
 		}
 	}
