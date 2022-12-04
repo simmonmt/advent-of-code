@@ -78,7 +78,7 @@ func TestGridWalk(t *testing.T) {
 	gotPos := []pos.P2{}
 	gotVals := []string{}
 
-	g.Walk(func(p pos.P2, v interface{}) {
+	g.Walk(func(p pos.P2, v any) {
 		gotPos = append(gotPos, p)
 		gotVals = append(gotVals, v.(string))
 	})

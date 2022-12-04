@@ -24,18 +24,18 @@ import (
 
 type Grid struct {
 	w, h int
-	a    []interface{}
+	a    []any
 }
 
 func New(w, h int) *Grid {
 	return &Grid{
 		w: w,
 		h: h,
-		a: make([]interface{}, w*h),
+		a: make([]any, w*h),
 	}
 }
 
-func NewFromLines(lines []string, cellMapper func(r rune) (interface{}, error)) (*Grid, error) {
+func NewFromLines(lines []string, cellMapper func(r rune) (any, error)) (*Grid, error) {
 	g := New(len(lines[0]), len(lines))
 	for y, line := range lines {
 		if len(line) != g.Width() {
@@ -64,17 +64,17 @@ func (g *Grid) Height() int {
 	return g.h
 }
 
-func (g *Grid) Set(p pos.P2, v interface{}) {
+func (g *Grid) Set(p pos.P2, v any) {
 	off := p.Y*g.w + p.X
 	g.a[off] = v
 }
 
-func (g *Grid) Get(p pos.P2) interface{} {
+func (g *Grid) Get(p pos.P2) any {
 	off := p.Y*g.w + p.X
 	return g.a[off]
 }
 
-func (g *Grid) Walk(walker func(p pos.P2, v interface{})) {
+func (g *Grid) Walk(walker func(p pos.P2, v any)) {
 	for y := 0; y < g.h; y++ {
 		for x := 0; x < g.w; x++ {
 			p := pos.P2{X: x, Y: y}
@@ -117,7 +117,7 @@ func (g *IntGrid) GetInt(p pos.P2) int {
 }
 
 func (g *IntGrid) WalkInt(walker func(p pos.P2, v int)) {
-	g.Walk(func(p pos.P2, v interface{}) {
+	g.Walk(func(p pos.P2, v any) {
 		n, _ := v.(int)
 		walker(p, n)
 	})

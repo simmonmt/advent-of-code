@@ -15,21 +15,21 @@
 package collections
 
 type Stack struct {
-	elems []interface{}
+	elems []any
 	last  int
 }
 
 func NewStack() *Stack {
 	return &Stack{
-		elems: []interface{}{},
+		elems: []any{},
 		last:  -1,
 	}
 }
 
-func (s *Stack) Push(elem interface{}) {
+func (s *Stack) Push(elem any) {
 	s.last++
 	if s.last == len(s.elems) {
-		newElems := make([]interface{}, len(s.elems)+50)
+		newElems := make([]any, len(s.elems)+50)
 		copy(newElems, s.elems)
 		s.elems = newElems
 	}
@@ -37,7 +37,7 @@ func (s *Stack) Push(elem interface{}) {
 	s.elems[s.last] = elem
 }
 
-func (s *Stack) Pop() interface{} {
+func (s *Stack) Pop() any {
 	if s.last < 0 {
 		panic("pop empty stack")
 	}
@@ -47,7 +47,7 @@ func (s *Stack) Pop() interface{} {
 	return ret
 }
 
-func (s *Stack) Peek() interface{} {
+func (s *Stack) Peek() any {
 	if s.last < 0 {
 		panic("peek empty stack")
 	}
@@ -59,6 +59,6 @@ func (s *Stack) Empty() bool {
 	return s.last < 0
 }
 
-func (s *Stack) All() []interface{} {
+func (s *Stack) All() []any {
 	return s.elems[0:(s.last + 1)]
 }

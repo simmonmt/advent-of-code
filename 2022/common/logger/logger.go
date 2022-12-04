@@ -28,13 +28,13 @@ func Enabled() bool {
 	return loggingEnabled
 }
 
-func LogLn(a ...interface{}) {
+func LogLn(a ...any) {
 	if loggingEnabled {
 		fmt.Println(a...)
 	}
 }
 
-func LogF(msg string, a ...interface{}) {
+func LogF(msg string, a ...any) {
 	if loggingEnabled {
 		fmt.Printf(msg+"\n", a...)
 	}
