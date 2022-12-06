@@ -37,12 +37,10 @@ func readInput(path string) ([]string, error) {
 	return lines, nil
 }
 
-func startMarker(line string) bool {
-	//	fmt.Println(line)
-	for i := 0; i < 3; i++ {
-		for j := i + 1; j < 4; j++ {
-			//	fmt.Println(i,line[i],j,line[j])
-			if line[i] == line[j] {
+func isMarker(s string) bool {
+	for i := 0; i < len(s)-1; i++ {
+		for j := i + 1; j < len(s); j++ {
+			if s[i] == s[j] {
 				return false
 			}
 		}
@@ -50,23 +48,24 @@ func startMarker(line string) bool {
 	return true
 }
 
-func solveA(lines []string) int {
-	line := lines[0]
-
-	for i := range line {
-		if i < 3 {
+func findMarker(s string, sz int) int {
+	for i := range s {
+		if i < sz-1 {
 			continue
 		}
-		if startMarker(line[i-3 : i+1]) {
+		if isMarker(s[i-(sz-1) : i+1]) {
 			return i + 1
 		}
 	}
-
 	return -1
 }
 
+func solveA(lines []string) int {
+	return findMarker(lines[0], 4)
+}
+
 func solveB(lines []string) int {
-	return -1
+	return findMarker(lines[0], 14)
 }
 
 func main() {
