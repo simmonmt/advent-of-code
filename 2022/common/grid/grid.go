@@ -56,6 +56,10 @@ func NewFromLines(lines []string, cellMapper func(r rune) (any, error)) (*Grid, 
 	return g, nil
 }
 
+func (g *Grid) IsValid(p pos.P2) bool {
+	return p.X >= 0 && p.X < g.w && p.Y >= 0 && p.Y < g.h
+}
+
 func (g *Grid) Width() int {
 	return g.w
 }

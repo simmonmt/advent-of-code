@@ -53,6 +53,13 @@ func TestGrid(t *testing.T) {
 	if got := g.Get(op); !reflect.DeepEqual(got, value2) {
 		t.Errorf("g.Get(%v) = %v, want %v", op, got, value2)
 	}
+
+	if got := g.IsValid(pos.P2{1, 2}); !got {
+		t.Errorf("g.IsValid({1,2}) = %v, want true", got)
+	}
+	if got := g.IsValid(pos.P2{99, 99}); got {
+		t.Errorf("g.IsValid({99,99}) = %v, want false", got)
+	}
 }
 
 func TestGridWalk(t *testing.T) {
