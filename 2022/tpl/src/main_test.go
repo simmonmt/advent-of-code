@@ -16,7 +16,6 @@ package main
 
 import (
 	_ "embed"
-	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -31,15 +30,13 @@ var (
 )
 
 func TestSolveA(t *testing.T) {
-	fmt.Println(sampleLines)
-
-	if got, want := solveA(sampleLines), -1; got != -1 {
+	if got, want := solveA(sampleLines), -1; got != want {
 		t.Errorf("solveA(sample) = %v, want %v", got, want)
 	}
 }
 
 func TestSolveB(t *testing.T) {
-	if got, want := solveB(sampleLines), -1; got != -1 {
+	if got, want := solveB(sampleLines), -1; got != want {
 		t.Errorf("solveB(sample) = %v, want %v", got, want)
 	}
 }
