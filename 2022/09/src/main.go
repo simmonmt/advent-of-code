@@ -80,12 +80,10 @@ func moveTail(head pos.P2, tail pos.P2) pos.P2 {
 		return tail
 	}
 
-	if diff.X == 0 {
+	if diff.X == 0 || diff.Y != 0 {
 		tail.Y += diff.Y / mtsmath.Abs(diff.Y)
-	} else if diff.Y == 0 {
-		tail.X += diff.X / mtsmath.Abs(diff.X)
-	} else {
-		tail.Y += diff.Y / mtsmath.Abs(diff.Y)
+	}
+	if diff.Y == 0 || diff.X != 0 {
 		tail.X += diff.X / mtsmath.Abs(diff.X)
 	}
 	return tail
@@ -115,7 +113,11 @@ func solveB(moves []Move) int {
 		for i := 1; i <= move.Num; i++ {
 			elems[0] = move.Dir.From(elems[0])
 			for j := 1; j < 10; j++ {
-				elems[j] = moveTail(elems[j-1], elems[j])
+				nelem := moveTail(elems[j-1], elems[j])
+				if nelem.Equals(elems[j]) {
+					break
+				}
+				elems[j] = nelem
 			}
 			seen[elems[9]] = true
 		}
