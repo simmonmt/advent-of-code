@@ -131,8 +131,52 @@ func solveA(insts []Inst) int {
 	return score
 }
 
-func solveB(insts []Inst) int {
-	return -1
+func overSprite(spritePos int, x int) bool {
+	diff := spritePos + 1 - x
+	return diff >= 0 && diff <= 2
+}
+
+func solveB(insts []Inst) []string {
+	vm := NewVM(insts)
+
+	out := []string{}
+	outRow := ""
+	for cycle := 1; cycle < 241; cycle++ {
+		spritePos, done := vm.Next()
+		if done {
+			panic("done too soon")
+		}
+
+		y := (cycle - 1) / 40
+		x := cycle - y*40 - 1
+
+		if overSprite(spritePos, x) {
+			outRow += "#"
+		} else {
+			outRow += "."
+		}
+
+		if logger.Enabled() && x < 15 && y == 0 {
+			out := ""
+			for sx := 0; sx < 40; sx++ {
+				if overSprite(spritePos, sx) {
+					out += "#"
+				} else {
+					out += "."
+				}
+			}
+			logger.LogF("%3d: Sprite position: %v", cycle, out)
+			logger.LogF("%3d: Current CRT row: %v", cycle, outRow)
+		}
+
+		if x == 39 {
+			out = append(out, outRow)
+			outRow = ""
+		}
+	}
+
+	return out
+
 }
 
 func main() {
@@ -154,5 +198,8 @@ func main() {
 	}
 
 	fmt.Println("A", solveA(insts))
-	fmt.Println("B", solveB(insts))
+	fmt.Println("B:")
+	for _, line := range solveB(insts) {
+		fmt.Println(line)
+	}
 }

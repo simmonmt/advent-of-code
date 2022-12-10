@@ -16,6 +16,7 @@ package main
 
 import (
 	_ "embed"
+	"fmt"
 	"log"
 	"os"
 	"reflect"
@@ -48,6 +49,35 @@ func TestParseInstructions(t *testing.T) {
 	}
 }
 
+func TestOverSprite(t *testing.T) {
+	type TestCase struct {
+		sp, x int
+		want  bool
+	}
+
+	testCases := []TestCase{
+		TestCase{1, 0, true},
+		TestCase{1, 1, true},
+		TestCase{1, 2, true},
+		TestCase{1, 3, false},
+
+		TestCase{5, 3, false},
+		TestCase{5, 4, true},
+		TestCase{5, 5, true},
+		TestCase{5, 6, true},
+		TestCase{5, 7, false},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("%d_%d", tc.sp, tc.x), func(t *testing.T) {
+			if got := overSprite(tc.sp, tc.x); got != tc.want {
+				t.Errorf("overSprite(%d, %d) = %v, want %v",
+					tc.sp, tc.x, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestSolveA(t *testing.T) {
 	if got, want := solveA(parseInstructionsOrDie(sampleLines)), 13140; got != want {
 		t.Errorf("solveA(sample) = %v, want %v", got, want)
@@ -55,8 +85,36 @@ func TestSolveA(t *testing.T) {
 }
 
 func TestSolveB(t *testing.T) {
-	if got, want := solveB(parseInstructionsOrDie(sampleLines)), -1; got != want {
-		t.Errorf("solveB(sample) = %v, want %v", got, want)
+	want := []string{
+		"##..##..##..##..##..##..##..##..##..##..",
+		"###...###...###...###...###...###...###.",
+		"####....####....####....####....####....",
+		"#####.....#####.....#####.....#####.....",
+		"######......######......######......####",
+		"#######.......#######.......#######.....",
+	}
+
+	got := solveB(parseInstructionsOrDie(sampleLines))
+
+	for i := 0; i < len(want); i++ {
+		if i >= len(got) {
+			t.Errorf("missing line %d in got", i)
+			continue
+		}
+
+		if want[i] != got[i] {
+			fmt.Printf("want %d: %v\n", i, want[i])
+			fmt.Printf("got  %d: %v\n", i, got[i])
+
+			t.Errorf("line %d mismatch", i)
+		}
+	}
+
+	if t.Failed() {
+		fmt.Println("got dump")
+		for i, line := range got {
+			fmt.Printf("%d: %v\n", i, line)
+		}
 	}
 }
 
