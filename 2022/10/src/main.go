@@ -63,46 +63,71 @@ func parseInstructions(lines []string) ([]Inst, error) {
 	return insts, nil
 }
 
+type VM struct {
+	insts         []Inst
+	curInst       *Inst
+	curInstCycles int
+	reg           int
+}
+
+func NewVM(insts []Inst) *VM {
+	return &VM{
+		insts:         insts,
+		curInst:       nil,
+		curInstCycles: 0,
+		reg:           1,
+	}
+}
+
+func (vm *VM) Next() (int, bool) {
+	if len(vm.insts) == 0 {
+		return vm.reg, true
+	}
+
+	regToReturn := vm.reg
+
+	// Fetch
+	if vm.curInst == nil {
+		vm.curInst = &vm.insts[0]
+		vm.insts = vm.insts[1:]
+		vm.curInstCycles = 1
+	}
+
+	// Execute
+	switch vm.curInst.Name {
+	case "noop":
+		vm.curInst = nil
+	case "addx":
+		if vm.curInstCycles == 2 {
+			vm.reg += vm.curInst.Arg
+			vm.curInst = nil
+		}
+	default:
+		panic(fmt.Sprintf("bad instruction %v", vm.curInst.Name))
+	}
+
+	vm.curInstCycles++
+	return regToReturn, false
+}
+
 func solveA(insts []Inst) int {
-	var inst *Inst
+	vm := NewVM(insts)
 
 	score := 0
-	accum := 1
-	instCycles := 0
-	cycle := 1
-	instNum := 0
-	for ; len(insts) > 0; cycle++ {
-		// Fetch
-		if inst == nil {
-			inst = &insts[0]
-			insts = insts[1:]
-			instCycles = 1
-			instNum++
+	for cycle := 1; ; cycle++ {
+		reg, done := vm.Next()
+		if done {
+			break
 		}
 
 		if cycle == 20 || (cycle-20)%40 == 0 {
-			logger.LogF("cycle %d accum %d inst %d %v ic %d",
-				cycle, accum, instNum, inst, instCycles)
-			score += cycle * accum
+			score += cycle * reg
 		}
 
-		// Execute
-		switch inst.Name {
-		case "noop":
-			inst = nil
-		case "addx":
-			if instCycles == 2 {
-				accum += inst.Arg
-				inst = nil
-			}
-		default:
-			panic(fmt.Sprintf("bad instruction %v", inst.Name))
+		if cycle > 10000 {
+			panic("too many cycles")
 		}
-
-		instCycles++
 	}
-
-	logger.LogF("took %d cycles", cycle)
 	return score
 }
 
