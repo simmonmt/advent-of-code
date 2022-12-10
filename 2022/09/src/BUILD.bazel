@@ -15,8 +15,8 @@ go_library(
         "//common/dir",
         "//common/filereader",
         "//common/logger",
+        "//common/mtsmath",
         "//common/pos",
-        "@org_golang_x_exp//constraints",
     ],
 )
 

@@ -24,8 +24,8 @@ import (
 	"github.com/simmonmt/aoc/2022/common/dir"
 	"github.com/simmonmt/aoc/2022/common/filereader"
 	"github.com/simmonmt/aoc/2022/common/logger"
+	"github.com/simmonmt/aoc/2022/common/mtsmath"
 	"github.com/simmonmt/aoc/2022/common/pos"
-	"golang.org/x/exp/constraints"
 )
 
 var (
@@ -74,27 +74,19 @@ func readInput(path string) ([]Move, error) {
 	return moves, nil
 }
 
-func Abs[V constraints.Integer](val V) V {
-	if val > 0 {
-		return val
-	} else {
-		return -val
-	}
-}
-
 func moveTail(head pos.P2, tail pos.P2) pos.P2 {
 	diff := pos.P2{head.X - tail.X, head.Y - tail.Y}
-	if Abs(diff.X) < 2 && Abs(diff.Y) < 2 {
+	if mtsmath.Abs(diff.X) < 2 && mtsmath.Abs(diff.Y) < 2 {
 		return tail
 	}
 
 	if diff.X == 0 {
-		tail.Y += diff.Y / Abs(diff.Y)
+		tail.Y += diff.Y / mtsmath.Abs(diff.Y)
 	} else if diff.Y == 0 {
-		tail.X += diff.X / Abs(diff.X)
+		tail.X += diff.X / mtsmath.Abs(diff.X)
 	} else {
-		tail.Y += diff.Y / Abs(diff.Y)
-		tail.X += diff.X / Abs(diff.X)
+		tail.Y += diff.Y / mtsmath.Abs(diff.Y)
+		tail.X += diff.X / mtsmath.Abs(diff.X)
 	}
 	return tail
 }
