@@ -15,16 +15,42 @@
 package main
 
 import (
+	_ "embed"
+	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/simmonmt/aoc/2022/common/logger"
 )
 
-func TestSimple(t *testing.T) {
+var (
+	//go:embed sample.txt
+	rawSample   string
+	sampleLines []string
+)
+
+func TestSolveA(t *testing.T) {
+	fmt.Println(sampleLines)
+
+	if got, want := solveA(sampleLines), -1; got != -1 {
+		t.Errorf("solveA(sample) = %v, want %v", got, want)
+	}
+}
+
+func TestSolveB(t *testing.T) {
+	if got, want := solveB(sampleLines), -1; got != -1 {
+		t.Errorf("solveB(sample) = %v, want %v", got, want)
+	}
 }
 
 func TestMain(m *testing.M) {
 	logger.Init(true)
+
+	sampleLines = strings.Split(rawSample, "\n")
+	if len(sampleLines) > 0 && sampleLines[len(sampleLines)-1] == "" {
+		sampleLines = sampleLines[0 : len(sampleLines)-1]
+	}
+
 	os.Exit(m.Run())
 }
