@@ -65,6 +65,7 @@ type Monkey struct {
 	op                  Operation
 	testDivisor         int
 	trueDest, falseDest int
+	mod                 int
 }
 
 func NewMonkey(id int, items []int, op Operation, testDivisor int, trueDest, falseDest int) *Monkey {
@@ -79,8 +80,29 @@ func NewMonkey(id int, items []int, op Operation, testDivisor int, trueDest, fal
 	}
 }
 
+func (m *Monkey) Clone() *Monkey {
+	return &Monkey{
+		id:             m.id,
+		items:          m.items[:],
+		numInspections: m.numInspections,
+		op:             m.op,
+		testDivisor:    m.testDivisor,
+		trueDest:       m.trueDest,
+		falseDest:      m.falseDest,
+		mod:            m.mod,
+	}
+}
+
 func (m *Monkey) ID() int {
 	return m.id
+}
+
+func (m *Monkey) TestDivisor() int {
+	return m.testDivisor
+}
+
+func (m *Monkey) SetMod(mod int) {
+	m.mod = mod
 }
 
 func (m *Monkey) Items() []int {
@@ -103,7 +125,7 @@ func (m *Monkey) DumpItems() {
 		}
 		fmt.Print(item)
 	}
-	fmt.Println()
+	fmt.Printf(" (%d)\n", m.numInspections)
 }
 
 func (m *Monkey) Step() map[int][]int {
@@ -114,7 +136,17 @@ func (m *Monkey) Step() map[int][]int {
 
 	for _, level := range m.items {
 		m.numInspections++
-		level = m.op.Execute(level) / 3
+		level = m.op.Execute(level)
+
+		// Part A and B configure the monkey step differently. Part A
+		// divides by three after each op execution, while part B does
+		// not. Part B gives you much much bigger numbers and needs to
+		// run with modular numbers.
+		if m.mod == 0 {
+			level /= 3
+		} else {
+			level = level % m.mod
+		}
 
 		var dest int
 		if level%m.testDivisor == 0 {
@@ -242,17 +274,16 @@ func parseMonkeys(lines []string) ([]*Monkey, error) {
 		}
 		monkeys = append(monkeys, monkey)
 	}
-
 	return monkeys, nil
 }
 
-func solveA(monkeys []*Monkey) int {
+func playGame(rounds int, monkeys []*Monkey) int {
 	monkeysById := map[int]*Monkey{}
 	for _, monkey := range monkeys {
 		monkeysById[monkey.ID()] = monkey
 	}
 
-	for round := 1; round < 21; round++ {
+	for round := 1; round <= rounds; round++ {
 		for _, monkey := range monkeys {
 			for id, items := range monkey.Step() {
 				for _, item := range items {
@@ -261,12 +292,12 @@ func solveA(monkeys []*Monkey) int {
 			}
 		}
 
-		if logger.Enabled() {
-			logger.LogF("end of round %d", round)
-			for _, monkey := range monkeys {
-				monkey.DumpItems()
-			}
-		}
+		// if logger.Enabled() {
+		// 	logger.LogF("end of round %d", round)
+		// 	for _, monkey := range monkeys {
+		// 		monkey.DumpItems()
+		// 	}
+		// }
 	}
 
 	inspections := make([]int, len(monkeys))
@@ -278,8 +309,21 @@ func solveA(monkeys []*Monkey) int {
 	return inspections[len(inspections)-2] * inspections[len(inspections)-1]
 }
 
+func solveA(monkeys []*Monkey) int {
+	return playGame(20, monkeys)
+}
+
 func solveB(monkeys []*Monkey) int {
-	return -1
+	mod := 1
+	for _, monkey := range monkeys {
+		mod *= monkey.TestDivisor()
+	}
+
+	for _, monkey := range monkeys {
+		monkey.SetMod(mod)
+	}
+
+	return playGame(10000, monkeys)
 }
 
 func main() {
@@ -300,6 +344,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("A", solveA(monkeys))
-	fmt.Println("B", solveB(monkeys))
+	cloneMonkeys := func(in []*Monkey) []*Monkey {
+		out := make([]*Monkey, len(in))
+		for i, m := range in {
+			out[i] = m.Clone()
+		}
+		return out
+	}
+
+	fmt.Println("A", solveA(cloneMonkeys(monkeys)))
+	fmt.Println("B", solveB(cloneMonkeys(monkeys)))
 }

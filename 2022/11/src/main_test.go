@@ -49,7 +49,7 @@ func parseMonkeyOrDie(t *testing.T, lines []string) *Monkey {
 	return m
 }
 
-func TestParseMonkey(t *testing.T) {
+func TestMonkey(t *testing.T) {
 	want := &Monkey{
 		id:          14,
 		items:       []int{79, 60, 97},
@@ -64,6 +64,11 @@ func TestParseMonkey(t *testing.T) {
 		t.Fatalf("failed to parse monkey: %v", err)
 	}
 
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("want monkey %+v, got %+v", want, got)
+	}
+
+	got = got.Clone()
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("want monkey %+v, got %+v", want, got)
 	}
@@ -113,7 +118,7 @@ func TestSolveB(t *testing.T) {
 		t.Fatalf("bad parse: %v", err)
 	}
 
-	if got, want := solveB(monkeys), -1; got != want {
+	if got, want := solveB(monkeys), 2713310158; got != want {
 		t.Errorf("solveB(sample) = %v, want %v", got, want)
 	}
 }
