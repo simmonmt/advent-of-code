@@ -92,7 +92,9 @@ func TestMonkeyStep(t *testing.T) {
 		falseDest:      3,
 	}
 
-	if out := m.Step(); !reflect.DeepEqual(out, wantOut) {
+	// Use a very large mod value so we can validate the pre-mod
+	// values in wantOut.
+	if out := m.Step(3, 9999); !reflect.DeepEqual(out, wantOut) {
 		t.Errorf("Step => %v, want %v", out, wantOut)
 	}
 
