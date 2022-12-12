@@ -35,7 +35,7 @@ var (
 )
 
 func buildGrid(lines []string) (*grid.Grid, error) {
-	return grid.NewFromLines(lines, func(r rune) (any, error) {
+	return grid.NewFromLines(lines, func(p pos.P2, r rune) (any, error) {
 		if r >= '0' && r <= '9' {
 			return int(r - '0'), nil
 		}

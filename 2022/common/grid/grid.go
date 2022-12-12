@@ -35,7 +35,7 @@ func New(w, h int) *Grid {
 	}
 }
 
-func NewFromLines(lines []string, cellMapper func(r rune) (any, error)) (*Grid, error) {
+func NewFromLines(lines []string, cellMapper func(p pos.P2, r rune) (any, error)) (*Grid, error) {
 	g := New(len(lines[0]), len(lines))
 	for y, line := range lines {
 		if len(line) != g.Width() {
@@ -44,7 +44,7 @@ func NewFromLines(lines []string, cellMapper func(r rune) (any, error)) (*Grid, 
 
 		for x, r := range line {
 			p := pos.P2{X: x, Y: y}
-			v, err := cellMapper(r)
+			v, err := cellMapper(p, r)
 			if err != nil {
 				return nil, fmt.Errorf("%v: bad parse %v",
 					p, err)
