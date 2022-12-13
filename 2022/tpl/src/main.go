@@ -28,20 +28,15 @@ var (
 	input   = flag.String("input", "", "input file")
 )
 
-func readInput(path string) ([]string, error) {
-	lines, err := filereader.Lines(path)
-	if err != nil {
-		return nil, err
-	}
-
+func parseInput(lines []string) ([]string, error) {
 	return lines, nil
 }
 
-func solveA(lines []string) int {
+func solveA(input []string) int {
 	return -1
 }
 
-func solveB(lines []string) int {
+func solveB(input []string) int {
 	return -1
 }
 
@@ -53,11 +48,16 @@ func main() {
 		log.Fatalf("--input is required")
 	}
 
-	lines, err := readInput(*input)
+	lines, err := filereader.Lines(*input)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("A", solveA(lines))
-	fmt.Println("B", solveB(lines))
+	input, err := parseInput(lines)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("A", solveA(input))
+	fmt.Println("B", solveB(input))
 }
