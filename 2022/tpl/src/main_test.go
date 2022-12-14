@@ -17,6 +17,7 @@ package main
 import (
 	_ "embed"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -29,14 +30,36 @@ var (
 	sampleLines []string
 )
 
+func TestParseInput(t *testing.T) {
+	input, err := parseInput(sampleLines)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(input, sampleLines) {
+		t.Errorf("parseInput(sampleLines) = %v, want %v",
+			input, sampleLines)
+	}
+}
+
 func TestSolveA(t *testing.T) {
-	if got, want := solveA(sampleLines), -1; got != want {
+	input, err := parseInput(sampleLines)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got, want := solveA(input), -1; got != want {
 		t.Errorf("solveA(sample) = %v, want %v", got, want)
 	}
 }
 
 func TestSolveB(t *testing.T) {
-	if got, want := solveB(sampleLines), -1; got != want {
+	input, err := parseInput(sampleLines)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got, want := solveB(input), -1; got != want {
 		t.Errorf("solveB(sample) = %v, want %v", got, want)
 	}
 }
