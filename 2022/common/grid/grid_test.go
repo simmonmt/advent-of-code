@@ -197,3 +197,33 @@ func TestIntGrid(t *testing.T) {
 		t.Errorf("dump got\n%v\n, want\n%v\n", got, want)
 	}
 }
+
+func TestSparseGrid(t *testing.T) {
+	g := NewSparseGrid()
+
+	p := pos.P2{1, 2}
+	rp := pos.P2{2, 1}
+	op := pos.P2{3, 4}
+	value1 := "testvalue1"
+	value2 := "testvalue2"
+
+	g.Set(p, value1)
+	g.Set(op, value2)
+
+	if got, found := g.Get(p); !found || !reflect.DeepEqual(got, value1) {
+		t.Errorf("g.Get(%v) = %v, %v, want %v, true", p, got, found, value1)
+	}
+	if got, found := g.Get(rp); found || got != nil {
+		t.Errorf("g.Get(%v) = %v, %v, want nil, false", rp, got, found)
+	}
+	if got, found := g.Get(op); !found || !reflect.DeepEqual(got, value2) {
+		t.Errorf("g.Get(%v) = %v, %v, want %v, true", op, got, found, value2)
+	}
+
+	if got, want := g.Start(), (pos.P2{1, 2}); !got.Equals(want) {
+		t.Errorf("g.Start() = %v, want %v", got, want)
+	}
+	if got, want := g.End(), (pos.P2{3, 4}); !got.Equals(want) {
+		t.Errorf("g.End() = %v, want %v", got, want)
+	}
+}

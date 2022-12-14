@@ -5,7 +5,10 @@ go_library(
     srcs = ["grid.go"],
     importpath = "github.com/simmonmt/aoc/2022/common/grid",
     visibility = ["//visibility:public"],
-    deps = ["//common/pos"],
+    deps = [
+        "//common/mtsmath",
+        "//common/pos",
+    ],
 )
 
 go_test(
