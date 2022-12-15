@@ -40,8 +40,8 @@ func readInput(path string) ([]string, error) {
 	return lines, nil
 }
 
-func parseInput(lines []string) (g *grid.Grid, start, end pos.P2, err error) {
-	g, err = grid.NewFromLines(lines, func(p pos.P2, r rune) (any, error) {
+func parseInput(lines []string) (g *grid.Grid[int], start, end pos.P2, err error) {
+	g, err = grid.NewFromLines(lines, func(p pos.P2, r rune) (int, error) {
 		if r == 'S' {
 			start = p
 			return 1, nil
@@ -51,14 +51,14 @@ func parseInput(lines []string) (g *grid.Grid, start, end pos.P2, err error) {
 		} else if r >= 'a' && r <= 'z' {
 			return int(r - 'a' + 1), nil
 		}
-		return nil, fmt.Errorf("bad value %d", r)
+		return -1, fmt.Errorf("bad value %d", r)
 	})
 
 	return
 }
 
 type astarClient struct {
-	g *grid.Grid
+	g *grid.Grid[int]
 }
 
 func (ac *astarClient) AllNeighbors(start string) []string {
@@ -66,11 +66,11 @@ func (ac *astarClient) AllNeighbors(start string) []string {
 	if err != nil {
 		panic("bad start")
 	}
-	pv := ac.g.Get(p).(int)
+	pHeight := ac.g.Get(p)
 
 	out := []string{}
 	for _, n := range ac.g.AllNeighbors(p, false) {
-		if nv := ac.g.Get(n).(int); nv <= pv+1 {
+		if nHeight := ac.g.Get(n); nHeight <= pHeight+1 {
 			out = append(out, n.String())
 		}
 	}
@@ -99,18 +99,18 @@ func (ac *astarClient) GoalReached(cand, goal string) bool {
 	return cand == goal
 }
 
-func solveA(g *grid.Grid, start, end pos.P2) int {
+func solveA(g *grid.Grid[int], start, end pos.P2) int {
 	ac := &astarClient{g}
 	path := astar.AStar(start.String(), end.String(), ac)
 	return len(path) - 1
 }
 
-func solveB(g *grid.Grid, end pos.P2) int {
+func solveB(g *grid.Grid[int], end pos.P2) int {
 	ac := &astarClient{g}
 
 	starts := []string{}
-	ac.g.Walk(func(p pos.P2, v any) {
-		if v.(int) == 1 {
+	ac.g.Walk(func(p pos.P2, height int) {
+		if height == 1 {
 			starts = append(starts, p.String())
 		}
 	})

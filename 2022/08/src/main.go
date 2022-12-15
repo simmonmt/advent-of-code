@@ -34,16 +34,16 @@ var (
 	input   = flag.String("input", "", "input file")
 )
 
-func buildGrid(lines []string) (*grid.Grid, error) {
-	return grid.NewFromLines(lines, func(p pos.P2, r rune) (any, error) {
+func buildGrid(lines []string) (*grid.Grid[int], error) {
+	return grid.NewFromLines[int](lines, func(p pos.P2, r rune) (int, error) {
 		if r >= '0' && r <= '9' {
 			return int(r - '0'), nil
 		}
-		return nil, fmt.Errorf("bad cell %s", string(r))
+		return -1, fmt.Errorf("bad cell %s", string(r))
 	})
 }
 
-func readInput(path string) (*grid.Grid, error) {
+func readInput(path string) (*grid.Grid[int], error) {
 	lines, err := filereader.Lines(path)
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func readInput(path string) (*grid.Grid, error) {
 	return buildGrid(lines)
 }
 
-func solveA(g *grid.Grid) int {
+func solveA(g *grid.Grid[int]) int {
 	type Side struct {
 		Start, Inc, In pos.P2
 	}
@@ -88,7 +88,7 @@ func solveA(g *grid.Grid) int {
 		for p := side.Start; g.IsValid(p); p.Add(side.Inc) {
 			maxHeight := -1
 			for in := p; g.IsValid(in) && maxHeight != 9; in.Add(side.In) {
-				height := g.Get(in).(int)
+				height := g.Get(in)
 
 				if height > maxHeight {
 					maxHeight = height
@@ -111,19 +111,19 @@ func solveA(g *grid.Grid) int {
 	return len(visibles)
 }
 
-func lookInDir(g *grid.Grid, center pos.P2, d dir.Dir) int {
-	centerHeight := g.Get(center).(int)
+func lookInDir(g *grid.Grid[int], center pos.P2, d dir.Dir) int {
+	centerHeight := g.Get(center)
 	canSee := 0
 	for p := d.From(center); g.IsValid(p); p = d.From(p) {
 		canSee++
-		if height := g.Get(p).(int); height >= centerHeight {
+		if height := g.Get(p); height >= centerHeight {
 			break
 		}
 	}
 	return canSee
 }
 
-func scoreTree(g *grid.Grid, center pos.P2) int {
+func scoreTree(g *grid.Grid[int], center pos.P2) int {
 	total := 1
 	for _, d := range dir.AllDirs {
 		score := lookInDir(g, center, d)
@@ -133,9 +133,9 @@ func scoreTree(g *grid.Grid, center pos.P2) int {
 	return total
 }
 
-func solveB(g *grid.Grid) int {
+func solveB(g *grid.Grid[int]) int {
 	maxScore := 0
-	g.Walk(func(p pos.P2, v any) {
+	g.Walk(func(p pos.P2, _ int) {
 		if score := scoreTree(g, p); score > maxScore {
 			logger.LogF("new max score at %v: %v", p, score)
 			maxScore = score

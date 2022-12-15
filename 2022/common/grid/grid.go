@@ -24,21 +24,21 @@ import (
 	"github.com/simmonmt/aoc/2022/common/pos"
 )
 
-type Grid struct {
+type Grid[T any] struct {
 	w, h int
-	a    []any
+	a    []T
 }
 
-func New(w, h int) *Grid {
-	return &Grid{
+func New[T any](w, h int) *Grid[T] {
+	return &Grid[T]{
 		w: w,
 		h: h,
-		a: make([]any, w*h),
+		a: make([]T, w*h),
 	}
 }
 
-func NewFromLines(lines []string, cellMapper func(p pos.P2, r rune) (any, error)) (*Grid, error) {
-	g := New(len(lines[0]), len(lines))
+func NewFromLines[T any](lines []string, cellMapper func(p pos.P2, r rune) (T, error)) (*Grid[T], error) {
+	g := New[T](len(lines[0]), len(lines))
 	for y, line := range lines {
 		if len(line) != g.Width() {
 			return nil, fmt.Errorf("uneven line")
@@ -58,29 +58,29 @@ func NewFromLines(lines []string, cellMapper func(p pos.P2, r rune) (any, error)
 	return g, nil
 }
 
-func (g *Grid) IsValid(p pos.P2) bool {
+func (g *Grid[T]) IsValid(p pos.P2) bool {
 	return p.X >= 0 && p.X < g.w && p.Y >= 0 && p.Y < g.h
 }
 
-func (g *Grid) Width() int {
+func (g *Grid[T]) Width() int {
 	return g.w
 }
 
-func (g *Grid) Height() int {
+func (g *Grid[T]) Height() int {
 	return g.h
 }
 
-func (g *Grid) Set(p pos.P2, v any) {
+func (g *Grid[T]) Set(p pos.P2, v T) {
 	off := p.Y*g.w + p.X
 	g.a[off] = v
 }
 
-func (g *Grid) Get(p pos.P2) any {
+func (g *Grid[T]) Get(p pos.P2) T {
 	off := p.Y*g.w + p.X
 	return g.a[off]
 }
 
-func (g *Grid) Walk(walker func(p pos.P2, v any)) {
+func (g *Grid[T]) Walk(walker func(p pos.P2, v T)) {
 	for y := 0; y < g.h; y++ {
 		for x := 0; x < g.w; x++ {
 			p := pos.P2{X: x, Y: y}
@@ -89,7 +89,7 @@ func (g *Grid) Walk(walker func(p pos.P2, v any)) {
 	}
 }
 
-func (g *Grid) AllNeighbors(p pos.P2, includeDiag bool) []pos.P2 {
+func (g *Grid[T]) AllNeighbors(p pos.P2, includeDiag bool) []pos.P2 {
 	out := []pos.P2{}
 	for _, n := range p.AllNeighbors(includeDiag) {
 		if n.X < 0 || n.Y < 0 {
@@ -101,45 +101,6 @@ func (g *Grid) AllNeighbors(p pos.P2, includeDiag bool) []pos.P2 {
 		out = append(out, n)
 	}
 	return out
-}
-
-type IntGrid struct {
-	Grid
-}
-
-func NewInt(w, h int) *IntGrid {
-	return &IntGrid{
-		Grid: *New(w, h),
-	}
-}
-
-func (g *IntGrid) SetInt(p pos.P2, v int) {
-	g.Set(p, v)
-}
-
-func (g *IntGrid) GetInt(p pos.P2) int {
-	v, _ := g.Get(p).(int)
-	return v
-}
-
-func (g *IntGrid) WalkInt(walker func(p pos.P2, v int)) {
-	g.Walk(func(p pos.P2, v any) {
-		n, _ := v.(int)
-		walker(p, n)
-	})
-}
-
-func (g *IntGrid) DumpTo(w io.Writer) {
-	g.WalkInt(func(p pos.P2, v int) {
-		fmt.Fprintf(w, "%d", v)
-		if p.X == g.w-1 {
-			fmt.Fprintln(w)
-		}
-	})
-}
-
-func (g *IntGrid) Dump() {
-	g.DumpTo(os.Stdout)
 }
 
 type SparseGrid struct {

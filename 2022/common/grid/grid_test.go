@@ -15,17 +15,15 @@
 package grid
 
 import (
-	"bytes"
 	"reflect"
 	"strconv"
-	"strings"
 	"testing"
 
 	"github.com/simmonmt/aoc/2022/common/pos"
 )
 
 func TestGrid(t *testing.T) {
-	g := New(5, 6)
+	g := New[string](5, 6)
 
 	if got := g.Width(); got != 5 {
 		t.Errorf("g.Width() = %v, want 5", got)
@@ -44,13 +42,13 @@ func TestGrid(t *testing.T) {
 	g.Set(p, value1)
 	g.Set(op, value2)
 
-	if got := g.Get(p); !reflect.DeepEqual(got, value1) {
+	if got := g.Get(p); got != value1 {
 		t.Errorf("g.Get(%v) = %v, want %v", p, got, value1)
 	}
-	if got := g.Get(rp); got != nil {
-		t.Errorf("g.Get(%v) = %v, want nil", rp, got)
+	if got := g.Get(rp); got != "" {
+		t.Errorf("g.Get(%v) = '%v', want ''", rp, got)
 	}
-	if got := g.Get(op); !reflect.DeepEqual(got, value2) {
+	if got := g.Get(op); got != value2 {
 		t.Errorf("g.Get(%v) = %v, want %v", op, got, value2)
 	}
 
@@ -63,7 +61,7 @@ func TestGrid(t *testing.T) {
 }
 
 func TestGridWalk(t *testing.T) {
-	g := New(3, 2)
+	g := New[string](3, 2)
 
 	for y := 0; y < 2; y++ {
 		for x := 0; x < 3; x++ {
@@ -85,9 +83,9 @@ func TestGridWalk(t *testing.T) {
 	gotPos := []pos.P2{}
 	gotVals := []string{}
 
-	g.Walk(func(p pos.P2, v any) {
+	g.Walk(func(p pos.P2, v string) {
 		gotPos = append(gotPos, p)
-		gotVals = append(gotVals, v.(string))
+		gotVals = append(gotVals, v)
 	})
 
 	if !reflect.DeepEqual(gotPos, wantPos) {
@@ -136,7 +134,7 @@ func TestGridAllNeighbors(t *testing.T) {
 		},
 	}
 
-	b := New(3, 3)
+	b := New[int](3, 3)
 
 	for i, tc := range testCases {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
@@ -147,54 +145,6 @@ func TestGridAllNeighbors(t *testing.T) {
 					got, tc.want)
 			}
 		})
-	}
-}
-
-func TestIntGrid(t *testing.T) {
-	var g *IntGrid = NewInt(5, 6)
-
-	if got := g.Width(); got != 5 {
-		t.Errorf("g.Width() = %v, want 5", got)
-	}
-
-	if got := g.Height(); got != 6 {
-		t.Errorf("g.Height() = %v, want 6", got)
-	}
-
-	p := pos.P2{1, 2}
-	rp := pos.P2{2, 1}
-	op := pos.P2{3, 4}
-	value1 := 8
-	value2 := 7
-
-	g.SetInt(p, value1)
-	g.SetInt(op, value2)
-
-	if got := g.GetInt(p); !reflect.DeepEqual(got, value1) {
-		t.Errorf("g.Get(%v) = %v, want %v", p, got, value1)
-	}
-	if got, want := g.GetInt(rp), 0; got != want {
-		t.Errorf("g.Get(%v) = %v, want 0", rp, got)
-	}
-	if got := g.GetInt(op); !reflect.DeepEqual(got, value2) {
-		t.Errorf("g.Get(%v) = %v, want %v", op, got, value2)
-	}
-
-	want := strings.Join([]string{
-		"00000",
-		"00000",
-		"08000",
-		"00000",
-		"00070",
-		"00000",
-	}, "\n") + "\n"
-
-	buf := bytes.Buffer{}
-	g.DumpTo(&buf)
-	got := buf.String()
-
-	if got != want {
-		t.Errorf("dump got\n%v\n, want\n%v\n", got, want)
 	}
 }
 

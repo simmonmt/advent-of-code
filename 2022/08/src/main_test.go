@@ -35,7 +35,7 @@ var (
 	})
 )
 
-func buildGridOrDie(lines []string) *grid.Grid {
+func buildGridOrDie(lines []string) *grid.Grid[int] {
 	g, err := buildGrid(lines)
 	if err != nil {
 		panic(fmt.Sprintf("buildGrid = %v", err))
@@ -73,7 +73,7 @@ func TestSolveB(t *testing.T) {
 
 func TestLookInDir(t *testing.T) {
 	type TestCase struct {
-		g    *grid.Grid
+		g    *grid.Grid[int]
 		p    pos.P2
 		d    dir.Dir
 		want int
