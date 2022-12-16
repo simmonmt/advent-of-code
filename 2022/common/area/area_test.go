@@ -3,6 +3,7 @@ package area
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"testing"
 
 	"github.com/simmonmt/aoc/2022/common/pos"
@@ -70,6 +71,24 @@ func TestArea1DContains(t *testing.T) {
 	}
 }
 
+func TestArea1DContainsVal(t *testing.T) {
+	r := Area1D{2, 4}
+
+	for in, want := range map[int]bool{1: false, 2: true, 3: true, 4: true, 5: false} {
+		if got := r.ContainsVal(in); got != want {
+			t.Errorf("%v.ContainsVal(%v) = %v, want %v",
+				r, in, got, want)
+		}
+	}
+}
+
+func TestArea1DSize(t *testing.T) {
+	r := Area1D{2, 4}
+	if got, want := r.Size(), 3; got != want {
+		t.Errorf("%v.Size() = %v, want %v", r, got, want)
+	}
+}
+
 func TestArea1DOverlaps(t *testing.T) {
 	type TestCase struct {
 		one, two Area1D
@@ -99,6 +118,52 @@ func TestArea1DOverlaps(t *testing.T) {
 						tc.two, tc.one, got, tc.want)
 				}
 			})
+	}
+}
+
+func TestMerge1DRanges(t *testing.T) {
+	type TestCase struct {
+		ranges []Area1D
+		want   []Area1D
+	}
+
+	testCases := []TestCase{
+		TestCase{
+			ranges: []Area1D{
+				Area1D{12, 12},
+				Area1D{2, 14},
+				Area1D{2, 2},
+				Area1D{-2, 2},
+				Area1D{16, 24},
+				Area1D{14, 18},
+			},
+			want: []Area1D{
+				Area1D{-2, 24},
+			},
+		},
+		TestCase{
+			ranges: []Area1D{
+				Area1D{1, 5},
+				Area1D{6, 10},
+			},
+			want: []Area1D{Area1D{1, 10}},
+		},
+		TestCase{
+			ranges: []Area1D{
+				Area1D{6, 10},
+				Area1D{1, 5},
+			},
+			want: []Area1D{Area1D{1, 10}},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			if got := Merge1DRanges(tc.ranges); !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("Merge1DRanges(%v) = %v, want %v",
+					tc.ranges, got, tc.want)
+			}
+		})
 	}
 }
 

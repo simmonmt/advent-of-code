@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/simmonmt/aoc/2022/common/mtsmath"
 	"github.com/simmonmt/aoc/2022/common/pos"
 )
 
@@ -54,6 +55,10 @@ func (a Area1D) Contains(o Area1D) bool {
 	return a.From <= o.From && a.To >= o.To
 }
 
+func (a Area1D) ContainsVal(v int) bool {
+	return v >= a.From && v <= a.To
+}
+
 func (a Area1D) Overlaps(o Area1D) bool {
 	if a.From <= o.From {
 		return a.To >= o.From
@@ -62,8 +67,51 @@ func (a Area1D) Overlaps(o Area1D) bool {
 	}
 }
 
+func (a Area1D) Size() int {
+	return a.To - a.From + 1
+}
+
+// Merge joins two ranges that *must* overlap. The return value is
+// undefined if they don't.
+func (a Area1D) Merge(o Area1D) Area1D {
+	return Area1D{
+		From: mtsmath.Min(a.From, o.From),
+		To:   mtsmath.Max(a.To, o.To),
+	}
+}
+
 func (a Area1D) String() string {
 	return fmt.Sprintf("%d-%d", a.From, a.To)
+}
+
+// TODO: More efficient algorithm
+func Merge1DRanges(ranges []Area1D) []Area1D {
+	for i := 0; i < len(ranges); i++ {
+		for {
+			changed := false
+			out := ranges[0 : i+1]
+			for j := i + 1; j < len(ranges); j++ {
+				if out[i].Overlaps(ranges[j]) {
+					out[i] = out[i].Merge(ranges[j])
+					changed = true
+				} else if out[i].To+1 == ranges[j].From {
+					out[i].To = ranges[j].To
+					changed = true
+				} else if ranges[j].To+1 == out[i].From {
+					out[i].From = ranges[j].From
+					changed = true
+				} else {
+					out = append(out, ranges[j])
+				}
+			}
+			ranges = out
+			if !changed {
+				break
+			}
+		}
+	}
+
+	return ranges
 }
 
 type Area2D struct {
