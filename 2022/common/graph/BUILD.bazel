@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "graph",
+    srcs = [
+        "dijkstra.go",
+        "graph.go",
+    ],
+    importpath = "github.com/simmonmt/aoc/2022/common/graph",
+    visibility = ["//visibility:public"],
+    deps = ["//common/collections"],
+)
+
+go_test(
+    name = "graph_test",
+    srcs = ["dijkstra_test.go"],
+    embed = [":graph"],
+)
