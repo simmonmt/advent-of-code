@@ -1,0 +1,28 @@
+#!/bin/bash
+
+echo 'digraph G {'
+
+while read line; do
+    line=$(echo "$line" | tr '=;,' '   ')
+    eval set -- $line
+
+    from=$2
+    rate=$6
+    shift 10
+
+    fill="#ffffff"
+    if [[ "$from" = "AA" ]] ; then
+        fill="#0000ff"
+    elif [[ $rate > 0 ]] ; then
+        fill="#00ff00"
+    fi
+    echo "$from [label=\"$from $rate\",style=filled,fillcolor=\"$fill\"]"
+
+    for dest in $@ ; do
+        if [[ $from < $dest ]] ; then
+            echo "$from -> $dest [dir=none]"
+        fi
+    done
+done
+
+echo '}'
