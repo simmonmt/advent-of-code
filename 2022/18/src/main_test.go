@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/simmonmt/aoc/2022/common/logger"
+	"github.com/simmonmt/aoc/2022/common/pos"
 )
 
 var (
@@ -28,6 +29,23 @@ var (
 	rawSample   string
 	sampleLines []string
 )
+
+func TestFindOutside(t *testing.T) {
+	input, err := parseInput(sampleLines)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	start, end := pos.P3{1, 0, 0}, pos.P3{4, 4, 7}
+	outside := findOutside(start, end, input)
+
+	want := (end.X - start.X + 1) * (end.Y - start.Y + 1) * (end.Z - start.Z + 1)
+	want -= (len(input) + 1) // the empty space
+
+	if got := len(outside); got != want {
+		t.Errorf("got %v, want %v", got, want)
+	}
+}
 
 func TestSolveA(t *testing.T) {
 	input, err := parseInput(sampleLines)
@@ -46,7 +64,7 @@ func TestSolveB(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if got, want := solveB(input), -1; got != want {
+	if got, want := solveB(input), 58; got != want {
 		t.Errorf("solveB(sample) = %v, want %v", got, want)
 	}
 }
