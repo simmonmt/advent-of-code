@@ -240,7 +240,7 @@ func TestExecuteMinute(t *testing.T) {
 			release := tc.release
 			players := make([]PlayerState, len(tc.players))
 			copy(players, tc.players)
-			futures := executeMinute(g, 30, &release, players, tc.claimed)
+			futures := executeMinute(g, 1, 30, &release, players, tc.claimed)
 
 			sortedFutures := sortFutures(futures)
 			sortedWantFutures := sortFutures(tc.wantFutures)
@@ -268,12 +268,8 @@ func TestRunWorldSinglePlayer(t *testing.T) {
 		&InputNode{"CC", 2, []string{"BB"}},
 	})
 
-	players := [2]PlayerState{PlayerState{"AA", 0}}
-	got := runWorld(g, 1, 5, 1, &players, Release{}, map[graph.NodeID]bool{})
-	want := 5
-
-	if got != want {
-		t.Errorf("runWorld=%v, want %v", got, want)
+	if got, want := solve(g, 5, 1, "AA"), 5; got != want {
+		t.Errorf("solve = %v, want %v", got, want)
 	}
 }
 
@@ -284,12 +280,8 @@ func TestRunWorldTwoPlayer(t *testing.T) {
 		&InputNode{"CC", 2, []string{"BB"}},
 	})
 
-	players := [2]PlayerState{PlayerState{"AA", 0}, PlayerState{"AA", 0}}
-	got := runWorld(g, 1, 5, 2, &players, Release{}, map[graph.NodeID]bool{})
-	want := 7
-
-	if got != want {
-		t.Errorf("runWorld=%v, want %v", got, want)
+	if got, want := solve(g, 5, 2, "AA"), 7; got != want {
+		t.Errorf("solve = %v, want %v", got, want)
 	}
 }
 
@@ -310,7 +302,7 @@ func NoTestSolveB(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if got, want := solveB(input), -1; got != want {
+	if got, want := solveB(input), 1707; got != want {
 		t.Errorf("solveB(sample) = %v, want %v", got, want)
 	}
 }

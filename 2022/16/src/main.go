@@ -12,6 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTES:
+//  - This part 2 works, but it's incredibly slow. Hours slow.
+//  - It's probably silly to store node names and use a mask for visited when we
+//    could just use a bitmask.
+//  - It's not necessary (per reddit) to model two simultaneous actors. That
+//    also adds time. Instead of trying to simulate passing time, generate all
+//    possible paths then look for the best one? (we're going to go AA BB DD so
+//    figure out however long that takes).
+//  - This solution goes to great lengths to figure out the possible next
+//    neighbor for each node. Except we also went to great lengths to make a
+//    simplified graph where every node has a link to every other graph. So the
+//    set of possible neighbors for a given node is just all-visited.
+
 package main
 
 import (
@@ -19,6 +32,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -217,6 +231,17 @@ func findAvailableNeighbors(g *SimpleGraph, id graph.NodeID, left int, claimed m
 		}
 		out = append(out, dest)
 	}
+
+	sort.Slice(out, func(i, j int) bool {
+		if iCost, jCost := g.EdgeCost(id, out[i]), g.EdgeCost(id, out[j]); iCost < jCost {
+			return true
+		} else if iCost > jCost {
+			return false
+		}
+
+		return g.Rate(out[i]) > g.Rate(out[j])
+	})
+
 	return out
 }
 
@@ -233,22 +258,40 @@ func allPossibleActions(destsPerPlayer [][]graph.NodeID) [][]Action {
 		iDests := destsPerPlayer[0]
 		jDests := destsPerPlayer[1]
 
-		for i := -1; i < len(iDests); i++ {
-			for j := -1; j < len(jDests); j++ {
-				if j >= 0 && i >= 0 && iDests[i] == jDests[j] {
+		singles := [][]Action{}
+
+		for i := 0; i <= len(iDests); i++ {
+			iEmpty := i == len(iDests)
+
+			for j := 0; j <= len(jDests); j++ {
+				jEmpty := j == len(jDests)
+
+				if !iEmpty && !jEmpty && iDests[i] == jDests[j] {
 					continue
 				}
 
+				if iEmpty && jEmpty {
+					continue
+				}
 				group := []Action{}
-				if i >= 0 {
+				if !iEmpty {
 					group = append(group, Action{0, iDests[i]})
 				}
-				if j >= 0 {
+				if !jEmpty {
 					group = append(group, Action{1, jDests[j]})
 				}
-				groups = append(groups, group)
+
+				if len(group) == 1 {
+					singles = append(singles, group)
+				} else {
+					groups = append(groups, group)
+				}
 			}
 		}
+
+		groups = append(groups, singles...)
+		groups = append(groups, []Action{})
+
 		return groups
 	} else {
 		panic("bad number of players")
@@ -261,7 +304,7 @@ type Release struct {
 	rate  int
 }
 
-func executeMinute(g *SimpleGraph, left int, release *Release, players []PlayerState, claimed map[graph.NodeID]bool) (futures [][]Action) {
+func executeMinute(g *SimpleGraph, curMin, leftMin int, release *Release, players []PlayerState, claimed map[graph.NodeID]bool) (futures [][]Action) {
 	// t1 start to BB             (end mtg=1)
 	// t2 going to BB             (start mtg=1, end mtg=0 => rate++)
 	// t3 BB on, start to CC      (start mtg=0 => new dest, end mtg=>1)
@@ -286,12 +329,15 @@ func executeMinute(g *SimpleGraph, left int, release *Release, players []PlayerS
 
 	perPlayerDests := [][]graph.NodeID{}
 
+	hasDests := false
 	for i := 0; i < len(players); i++ {
 		state := &players[i]
 
 		dests := []graph.NodeID{}
 		if state.minsToArrive == 0 {
-			dests = findAvailableNeighbors(g, state.dest, left, claimed)
+			cur := state.dest // we're already there
+			dests = findAvailableNeighbors(g, cur, leftMin, claimed)
+			hasDests = true
 		} else {
 			state.minsToArrive--
 			if state.minsToArrive == 0 {
@@ -303,21 +349,136 @@ func executeMinute(g *SimpleGraph, left int, release *Release, players []PlayerS
 		perPlayerDests = append(perPlayerDests, dests)
 	}
 
-	return allPossibleActions(perPlayerDests)
-}
-
-func runWorld(g *SimpleGraph, curMin, maxMin int, numPlayers int, players *[2]PlayerState, release Release, claimed map[graph.NodeID]bool) int {
-	if curMin > maxMin {
-		return release.total
+	if !hasDests {
+		return nil // all still in motion
 	}
 
-	futures := executeMinute(g, maxMin-curMin, &release, (*players)[0:numPlayers], claimed)
+	futures = allPossibleActions(perPlayerDests)
 
-	maxRelease := 0
+	if curMin == 1 && len(players) == 1 {
+		fmt.Printf("in %v\n", len(futures))
+		out := [][]Action{}
+		for _, future := range futures {
+			if len(future) == 0 {
+				continue
+			}
+			out = append(out, future)
+		}
+		fmt.Printf("out %v\n", len(out))
+		return out
+	}
+
+	if curMin == 1 && len(players) == 2 {
+		fmt.Printf("in %v\n", len(futures))
+		singles := map[graph.NodeID]bool{}
+		doubles := map[string]bool{}
+
+		out := [][]Action{}
+		for _, future := range futures {
+			if len(future) == 0 {
+				continue
+			}
+
+			if len(future) == 1 {
+				if _, found := singles[future[0].Dest]; !found {
+					singles[future[0].Dest] = true
+					out = append(out, future)
+				}
+				continue
+			}
+
+			if len(future) != 2 {
+				panic("bad future")
+			}
+			a, b := future[0].Dest, future[1].Dest
+			if a > b {
+				a, b = b, a
+			}
+
+			key := fmt.Sprintf("%v/%v", a, b)
+			if _, found := doubles[key]; !found {
+				doubles[key] = true
+				out = append(out, future)
+			}
+		}
+
+		fmt.Printf("out %v\n", len(out))
+
+		return out
+	}
+
+	//fmt.Println(futures)
+	return futures
+}
+
+type ProgressTracker struct {
+	maxRelease  int
+	allOpenRate int
+	abandoned   int
+	minAllOpen  int
+}
+
+func runWorld(g *SimpleGraph, curMin, maxMin int, numPlayers int, players *[2]PlayerState, release Release, progress *ProgressTracker, claimed map[graph.NodeID]bool) {
+	if curMin > maxMin {
+		if release.total > progress.maxRelease {
+			fmt.Println("new max release", release.total)
+			progress.maxRelease = release.total
+		}
+		return
+	}
+
+	if progress.maxRelease > 0 {
+		minToGo := -1
+		for i := 0; i < numPlayers; i++ {
+			if minToGo == -1 || players[i].minsToArrive < minToGo {
+				minToGo = players[i].minsToArrive
+			}
+		}
+
+		total := release.total
+		if minToGo > 0 {
+			total += release.rate * minToGo
+		}
+		needed := progress.maxRelease - total
+		if (maxMin-curMin+minToGo+1)*progress.allOpenRate < needed {
+			// There's no way this subtree can set a new
+			// maxRelease so give up on it.
+			//logger.LogF("drop")
+			return
+		}
+	}
+
+	if release.rate == progress.allOpenRate {
+		//fmt.Println("claimed", len(claimed))
+		for i := 0; i < numPlayers; i++ {
+			if players[i].minsToArrive != 0 {
+				panic("bad")
+			}
+		}
+
+		total := release.total + release.rate*(maxMin-curMin+1)
+		if total > progress.maxRelease {
+			fmt.Println("new max release", total, "all open", curMin)
+			progress.maxRelease = total
+		}
+		return
+	}
+
+	futures := executeMinute(g, curMin, maxMin-curMin, &release,
+		(*players)[0:numPlayers], claimed)
+
+	if futures == nil {
+		runWorld(g, curMin+1, maxMin, numPlayers, players, release, progress, claimed)
+		return
+	}
 
 	// Set up the future (we're not in it until the call to runWorld). There
 	// will always be a future in which nobody does anything.
-	for _, future := range futures {
+	for i, future := range futures {
+		if curMin == 1 {
+			fmt.Printf("future %v of %v\n", i+1, len(futures))
+		}
+
 		start := len(claimed)
 
 		futurePlayers := *players
@@ -334,7 +495,9 @@ func runWorld(g *SimpleGraph, curMin, maxMin int, numPlayers int, players *[2]Pl
 
 		if false && logger.Enabled() {
 			logger.LogF("== Minute %d == ", curMin)
-			logger.LogF("Total release %d (cur rate %d)", release.total, release.rate)
+			logger.LogF("Total release %d (cur rate %d, max rate %d, max release %v)",
+				release.total, release.rate, progress.allOpenRate,
+				progress.maxRelease)
 			for i := 0; i < numPlayers; i++ {
 				if players[i].dest != futurePlayers[i].dest {
 					logger.LogF("player %d was %v now %v",
@@ -346,9 +509,8 @@ func runWorld(g *SimpleGraph, curMin, maxMin int, numPlayers int, players *[2]Pl
 		}
 
 		// runs that world until the end
-		if r := runWorld(g, curMin+1, maxMin, numPlayers, &futurePlayers, release, claimed); r > maxRelease {
-			maxRelease = r
-		}
+		runWorld(g, curMin+1, maxMin, numPlayers, &futurePlayers,
+			release, progress, claimed)
 
 		for _, action := range future {
 			if _, found := claimed[action.Dest]; !found {
@@ -361,22 +523,37 @@ func runWorld(g *SimpleGraph, curMin, maxMin int, numPlayers int, players *[2]Pl
 			panic("mismatch")
 		}
 	}
+}
 
-	return maxRelease
+func solve(g *SimpleGraph, maxMin int, numPlayers int, start graph.NodeID) int {
+	players := [2]PlayerState{}
+	for i := 0; i < numPlayers; i++ {
+		players[i].dest = start
+	}
+
+	allOpenRate := 0
+	for _, rate := range g.rates {
+		allOpenRate += rate
+	}
+
+	progress := &ProgressTracker{
+		maxRelease:  0,
+		allOpenRate: allOpenRate,
+	}
+
+	runWorld(g, 1, maxMin, numPlayers, &players, Release{}, progress,
+		map[graph.NodeID]bool{start: true})
+	return progress.maxRelease
 }
 
 func solveA(nodes []*InputNode) int {
 	g := simplifyInputGraph(nodes)
-	players := [2]PlayerState{PlayerState{"AA", 0}}
-	return runWorld(g, 1, 30, 1, &players, Release{}, map[graph.NodeID]bool{})
+	return solve(g, 30, 1, "AA")
 }
 
 func solveB(nodes []*InputNode) int {
 	g := simplifyInputGraph(nodes)
-	fmt.Printf("%+v\n", g)
-
-	players := [2]PlayerState{PlayerState{"AA", 0}, PlayerState{"AA", 0}}
-	return runWorld(g, 1, 26, 2, &players, Release{}, map[graph.NodeID]bool{})
+	return solve(g, 26, 2, "AA")
 }
 
 func main() {
