@@ -184,7 +184,6 @@ func TestExecuteMinute(t *testing.T) {
 			wantFutures: [][]Action{
 				[]Action{Action{0, "BB"}},
 				[]Action{Action{0, "CC"}},
-				[]Action{}, // no action
 			},
 		},
 
@@ -195,7 +194,7 @@ func TestExecuteMinute(t *testing.T) {
 
 			wantRelease: Release{total: 0, rate: 1},
 			wantPlayers: []PlayerState{PlayerState{"BB", 0}},
-			wantFutures: [][]Action{[]Action{}},
+			wantFutures: nil,
 		},
 
 		TestCase{ // Increment release but nowhere to go
@@ -205,7 +204,7 @@ func TestExecuteMinute(t *testing.T) {
 
 			wantRelease: Release{total: 7, rate: 4},
 			wantPlayers: []PlayerState{PlayerState{"CC", 0}},
-			wantFutures: [][]Action{[]Action{}},
+			wantFutures: nil,
 		},
 
 		TestCase{
@@ -222,13 +221,9 @@ func TestExecuteMinute(t *testing.T) {
 				PlayerState{"AA", 0},
 			},
 			wantFutures: [][]Action{
-				[]Action{}, // no action
 				[]Action{Action{0, "BB"}},
 				[]Action{Action{0, "CC"}},
-				[]Action{Action{1, "BB"}},
-				[]Action{Action{1, "CC"}},
 				[]Action{Action{0, "BB"}, Action{1, "CC"}},
-				[]Action{Action{0, "CC"}, Action{1, "BB"}},
 			},
 		},
 	}
