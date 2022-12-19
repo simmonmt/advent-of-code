@@ -12,7 +12,6 @@ go_library(
     importpath = "github.com/simmonmt/aoc/2022/17/src",
     visibility = ["//visibility:private"],
     deps = [
-        "//common/dir",
         "//common/filereader",
         "//common/grid",
         "//common/logger",
@@ -24,7 +23,10 @@ go_test(
     name = "src_test",
     srcs = ["main_test.go"],
     embed = [":src_lib"],
-    embedsrcs = ["sample.txt", "input.txt"],
+    embedsrcs = [
+        "sample.txt",
+        "input.txt",
+    ],
     deps = [
         "//common/logger",
     ],
