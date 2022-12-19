@@ -24,6 +24,7 @@ go_test(
     embed = [":src_lib"],
     embedsrcs = ["sample.txt"],
     deps = [
+        "//common/graph",
         "//common/logger",
     ],
 )
