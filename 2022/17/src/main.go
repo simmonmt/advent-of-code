@@ -154,6 +154,10 @@ func (f *PartFactory) Next(bottomLeft pos.P2) Part {
 	return part
 }
 
+func (f *PartFactory) Peek() int {
+	return f.next
+}
+
 func dumpGrid(g *grid.SparseGrid) {
 	var b strings.Builder
 	g.DumpTo(true, func(p pos.P2, v any, found bool) string {
@@ -170,54 +174,144 @@ func dumpGrid(g *grid.SparseGrid) {
 	}
 }
 
-func solveA(dirs string) int {
-	partFactory := NewPartFactory()
-	g := grid.NewSparseGrid()
+type DirFactory struct {
+	dirs string
+	next int
+}
 
-	var part Part
-	numParts := 0
+func NewDirFactory(dirs string) *DirFactory {
+	return &DirFactory{dirs, 0}
+}
+
+func (f *DirFactory) Next() byte {
+	r := f.dirs[f.next]
+	f.next = (f.next + 1) % len(f.dirs)
+	return r
+}
+
+func (f *DirFactory) Peek() int {
+	return f.next
+}
+
+func runPart(g *grid.SparseGrid, partFactory *PartFactory, dirFactory *DirFactory) pos.P2 {
+	var bottomLeft pos.P2
+	if g.Empty() {
+		bottomLeft = pos.P2{2, 3}
+	} else {
+		bottomLeft = pos.P2{2, g.End().Y + 4}
+	}
+
+	part := partFactory.Next(bottomLeft)
+
 	for i := 0; ; i++ {
-		if part == nil {
-			var bottomLeft pos.P2
-			if numParts == 0 {
-				bottomLeft = pos.P2{2, 3}
-			} else {
-				bottomLeft = pos.P2{2, g.End().Y + 4}
-			}
-
-			part = partFactory.Next(bottomLeft)
-			numParts++
-			//logger.LogF("%d: new at %v", numParts, part.Pos())
-		}
-
-		push := dirs[i%len(dirs)]
-		if push == '<' {
+		if dirFactory.Next() == '<' {
 			part.ShiftLeft(g)
 		} else {
 			part.ShiftRight(g)
 		}
 
-		//logger.LogF("%d: side push %v; new bl %v", numParts, string(push), part.Pos())
-
 		if !part.ShiftDown(g) {
 			part.Place(g)
-			part = nil
-
-			// if logger.Enabled() {
-			// 	dumpGrid(g)
-			// }
-
-			if numParts == 2022 {
-				break
-			}
+			return part.Pos()
 		}
+	}
+}
+
+func measureHeight(dirs string, numParts int) int {
+	g := grid.NewSparseGrid()
+	partFactory := NewPartFactory()
+	dirFactory := NewDirFactory(dirs)
+
+	for i := 0; i < numParts; i++ {
+		runPart(g, partFactory, dirFactory)
 	}
 
 	return g.End().Y + 1
 }
 
-func solveB(dirs string) int {
-	return -1
+func solveA(dirs string) int {
+	return measureHeight(dirs, 2022)
+}
+
+type HistoryKey struct {
+	posns   [5]pos.P2
+	dirNext int
+}
+
+type HistoryEnt struct {
+	lastPartIdx int
+	height      int
+}
+
+func findRepeat(dirs string) (first, second HistoryEnt) {
+	g := grid.NewSparseGrid()
+	partFactory := NewPartFactory()
+	dirFactory := NewDirFactory(dirs)
+
+	posns := [5]pos.P2{}
+	history := map[HistoryKey]HistoryEnt{}
+
+	for i := 0; ; i++ {
+		partIdx := partFactory.Peek()
+		posns[partIdx] = runPart(g, partFactory, dirFactory)
+
+		if partIdx == 4 {
+			for i := 1; i < 5; i++ {
+				posns[i].Y -= posns[0].Y
+			}
+			posns[0].Y = 0
+
+			height := g.End().Y + 1
+			key := HistoryKey{
+				posns, dirFactory.Peek(),
+			}
+
+			if ent, found := history[key]; found {
+				return ent, HistoryEnt{i, height}
+			} else {
+				history[key] = HistoryEnt{i, height}
+			}
+		}
+	}
+}
+
+func measureTallHeight(dirs string, numParts int64) int64 {
+	first, second := findRepeat(dirs)
+
+	logger.LogF("seq part [%v-%v]>%v repeats at [%v-%v]>%v",
+		first.lastPartIdx-4, first.lastPartIdx, first.height,
+		second.lastPartIdx-4, second.lastPartIdx, second.height)
+
+	// play parts 0-first => first.height
+
+	// every second.lastPartIdx-first.lastPartIdx gets us another
+	// second.height-first.height
+
+	prologueLen := int64(first.lastPartIdx + 1)
+	prologueHeight := int64(first.height)
+
+	repLen := int64(second.lastPartIdx - first.lastPartIdx)
+	repHeight := int64(second.height - first.height)
+
+	numReps := (numParts - prologueLen) / repLen
+	suffixLen := (numParts - prologueLen) % repLen
+
+	// we can remove entire repeats entirely
+	simLen := prologueLen + suffixLen
+
+	simHeight := int64(measureHeight(dirs, int(simLen)))
+
+	suffixHeight := simHeight - prologueHeight
+
+	totalHeight := prologueHeight + repHeight*numReps + suffixHeight
+	//fmt.Println(prologueHeight, repHeight, numReps, suffixHeight)
+
+	return totalHeight
+}
+
+func solveB(dirs string) int64 {
+	need := int64(1000000000000)
+	return measureTallHeight(dirs, need)
 }
 
 func main() {

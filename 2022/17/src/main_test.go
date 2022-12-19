@@ -17,6 +17,7 @@ package main
 import (
 	_ "embed"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -25,28 +26,60 @@ import (
 
 var (
 	//go:embed sample.txt
-	rawSample   string
-	sampleLines []string
+	rawSample  string
+	sampleLine string
+
+	//go:embed input.txt
+	rawInput  string
+	inputLine string
 )
 
-func TestSolveA(t *testing.T) {
-	input, err := parseInput(sampleLines)
-	if err != nil {
-		t.Fatal(err)
-	}
+func TestValidateMath(t *testing.T) {
+	for i, dirs := range []string{sampleLine, inputLine} {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			first, second := findRepeat(dirs)
 
-	if got, want := solveA(input), 3068; got != want {
+			prologueLen := first.lastPartIdx + 1
+			prologueHeight := first.height
+
+			repLen := second.lastPartIdx - first.lastPartIdx
+			repHeight := second.height - first.height
+
+			trialLen := prologueLen + repLen*7
+			wantHeight := prologueHeight + repHeight*7
+
+			if got := measureHeight(dirs, trialLen); got != wantHeight {
+				t.Errorf("got %v, want %v", got, wantHeight)
+			}
+		})
+	}
+}
+
+func TestMeasureTallHeight(t *testing.T) {
+	for i, dirs := range []string{sampleLine, inputLine} {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			height := 100000
+			want := int64(measureHeight(dirs, height))
+			got := measureTallHeight(dirs, int64(height))
+
+			if got != want {
+				t.Errorf("want %v, got %v", want, got)
+			}
+		})
+	}
+}
+
+func TestSolveA(t *testing.T) {
+	if got, want := solveA(sampleLine), 3068; got != want {
 		t.Errorf("solveA(sample) = %v, want %v", got, want)
+	}
+	if got, want := solveA(inputLine), 3133; got != want {
+		t.Errorf("solveA(input) = %v, want %v", got, want)
 	}
 }
 
 func TestSolveB(t *testing.T) {
-	input, err := parseInput(sampleLines)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if got, want := solveB(input), -1; got != want {
+	if got, want := solveB(sampleLine), int64(1514285714288); got != want {
 		t.Errorf("solveB(sample) = %v, want %v", got, want)
 	}
 }
@@ -54,10 +87,8 @@ func TestSolveB(t *testing.T) {
 func TestMain(m *testing.M) {
 	logger.Init(true)
 
-	sampleLines = strings.Split(rawSample, "\n")
-	if len(sampleLines) > 0 && sampleLines[len(sampleLines)-1] == "" {
-		sampleLines = sampleLines[0 : len(sampleLines)-1]
-	}
+	sampleLine = strings.Split(rawSample, "\n")[0]
+	inputLine = strings.Split(rawInput, "\n")[0]
 
 	os.Exit(m.Run())
 }
