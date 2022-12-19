@@ -15,7 +15,6 @@
 package main
 
 import (
-	"container/list"
 	"flag"
 	"fmt"
 	"log"
@@ -188,120 +187,196 @@ func simplifyInputGraph(nodes []*InputNode) *SimpleGraph {
 	return simpleGraph
 }
 
-type PathManager struct {
-	g     *SimpleGraph
-	start graph.NodeID
-
-	visited map[graph.NodeID]bool
-	path    *list.List
-
-	maxRelease     int
-	maxReleasePath []graph.NodeID
+type PlayerState struct {
+	dest         graph.NodeID
+	minsToArrive int
 }
 
-func NewPathManager(g *SimpleGraph, start graph.NodeID) *PathManager {
-	return &PathManager{
-		g:       g,
-		start:   start,
-		visited: map[graph.NodeID]bool{},
-		path:    list.New(),
+func (s *PlayerState) Clone() *PlayerState {
+	out := &PlayerState{
+		dest:         s.dest,
+		minsToArrive: s.minsToArrive,
 	}
+
+	return out
 }
 
-func pathListToSlice(path *list.List) []graph.NodeID {
+type Action struct {
+	Player int
+	Dest   graph.NodeID
+}
+
+func findAvailableNeighbors(g *SimpleGraph, id graph.NodeID, left int, claimed map[graph.NodeID]bool) []graph.NodeID {
 	out := []graph.NodeID{}
-	for elem := path.Front(); elem != nil; elem = elem.Next() {
-		out = append(out, elem.Value.(graph.NodeID))
+	for dest, cost := range g.AllEdges(id) {
+		if _, found := claimed[dest]; found {
+			continue
+		}
+		if cost > left {
+			continue
+		}
+		out = append(out, dest)
 	}
 	return out
 }
 
-func pathListToString(path *list.List) string {
-	out := []string{}
-	for elem := path.Front(); elem != nil; elem = elem.Next() {
-		out = append(out, string(elem.Value.(graph.NodeID)))
+func allPossibleActions(destsPerPlayer [][]graph.NodeID) [][]Action {
+	// TODO: write general version of this
+	groups := [][]Action{}
+
+	if len(destsPerPlayer) == 1 {
+		for _, neighbor := range destsPerPlayer[0] {
+			groups = append(groups, []Action{Action{0, neighbor}})
+		}
+		return append(groups, []Action{}) // no action
+	} else if len(destsPerPlayer) == 2 {
+		iDests := destsPerPlayer[0]
+		jDests := destsPerPlayer[1]
+
+		for i := -1; i < len(iDests); i++ {
+			for j := -1; j < len(jDests); j++ {
+				if j >= 0 && i >= 0 && iDests[i] == jDests[j] {
+					continue
+				}
+
+				group := []Action{}
+				if i >= 0 {
+					group = append(group, Action{0, iDests[i]})
+				}
+				if j >= 0 {
+					group = append(group, Action{1, jDests[j]})
+				}
+				groups = append(groups, group)
+			}
+		}
+		return groups
+	} else {
+		panic("bad number of players")
 	}
-	return strings.Join(out, ",")
+
 }
 
-func (m *PathManager) computeRelease(left int) int {
-	cur := m.start
-	totalRelease := 0
-	releasePerMin := 0
-	for elem := m.path.Front().Next(); elem != nil; elem = elem.Next() {
-		stepID := elem.Value.(graph.NodeID)
-		stepCost := m.g.EdgeCost(cur, stepID)
-
-		// cost includes the minutes to get to stepID and 1min to turn
-		// stepID on.
-		totalRelease += releasePerMin * stepCost
-
-		// Future minutes will include this rate too now that it's on.
-		// If we turn a valve on in t=1 it doesn't count until t=2.
-		releasePerMin += m.g.Rate(stepID)
-
-		// We've now accounted for t=0 through the time this valve was
-		// turned on.
-
-		cur = stepID
-	}
-
-	// We've accounted for t=0 through the time the last valve was turned
-	// on. We'll let everything run for the remaining `left` minutes.
-	totalRelease += releasePerMin * left
-
-	return totalRelease
+type Release struct {
+	total int
+	rate  int
 }
 
-func (m *PathManager) Visit(id graph.NodeID, left int) {
-	m.path.PushBack(id)
-	m.visited[id] = true
+func executeMinute(g *SimpleGraph, left int, release *Release, players []PlayerState, claimed map[graph.NodeID]bool) (futures [][]Action) {
+	// t1 start to BB             (end mtg=1)
+	// t2 going to BB             (start mtg=1, end mtg=0 => rate++)
+	// t3 BB on, start to CC      (start mtg=0 => new dest, end mtg=>1)
+	// t4 BB on, going to CC      (start mtg=1, end mtg=0 => rate++)
+	// t5 BB,CC on, ...           (start mtg=0 => new dest...)
 
-	release := m.computeRelease(left)
-	if release > m.maxRelease {
-		m.maxRelease = release
-		m.maxReleasePath = pathListToSlice(m.path)
-	}
-}
+	// total += rate
 
-func (m *PathManager) UnvisitLast() {
-	elem := m.path.Back()
-	last := elem.Value.(graph.NodeID)
-	m.path.Remove(elem)
-	delete(m.visited, last)
-}
+	// for player := range players {
+	// 	if player.mtg == 0 {
+	// 		player.dest = newDest
+	// 		player.mtg = newMtg
+	// 	} else if player.mtg > 0 {
+	// 		player.mtg--
+	// 		if player.mtg == 0 {
+	// 			rate++
+	// 		}
+	// 	}
+	// }
 
-func (m *PathManager) Seen(id graph.NodeID) bool {
-	return m.visited[id]
-}
+	release.total += release.rate
 
-func (m *PathManager) MaxReleased() int {
-	return m.maxRelease
-}
+	perPlayerDests := [][]graph.NodeID{}
 
-func findMaxPath(g *SimpleGraph, cur graph.NodeID, left int, pathManager *PathManager) {
-	pathManager.Visit(cur, left)
-	defer pathManager.UnvisitLast()
+	for i := 0; i < len(players); i++ {
+		state := &players[i]
 
-	for neighbor, cost := range g.AllEdges(cur) {
-		if cost > left || pathManager.Seen(neighbor) {
-			continue
+		dests := []graph.NodeID{}
+		if state.minsToArrive == 0 {
+			dests = findAvailableNeighbors(g, state.dest, left, claimed)
+		} else {
+			state.minsToArrive--
+			if state.minsToArrive == 0 {
+				// was >0, now 0, arrived at dest
+				release.rate += g.Rate(state.dest)
+			}
 		}
 
-		findMaxPath(g, neighbor, left-cost, pathManager)
+		perPlayerDests = append(perPlayerDests, dests)
 	}
+
+	return allPossibleActions(perPlayerDests)
+}
+
+func runWorld(g *SimpleGraph, curMin, maxMin int, numPlayers int, players *[2]PlayerState, release Release, claimed map[graph.NodeID]bool) int {
+	if curMin > maxMin {
+		return release.total
+	}
+
+	futures := executeMinute(g, maxMin-curMin, &release, (*players)[0:numPlayers], claimed)
+
+	maxRelease := 0
+
+	// Set up the future (we're not in it until the call to runWorld). There
+	// will always be a future in which nobody does anything.
+	for _, future := range futures {
+		start := len(claimed)
+
+		futurePlayers := *players
+		for _, action := range future {
+			fp := &futurePlayers[action.Player]
+			fp.minsToArrive = g.EdgeCost(fp.dest, action.Dest) - 1
+			fp.dest = action.Dest
+
+			if _, found := claimed[action.Dest]; found {
+				panic("reclaim")
+			}
+			claimed[action.Dest] = true
+		}
+
+		if false && logger.Enabled() {
+			logger.LogF("== Minute %d == ", curMin)
+			logger.LogF("Total release %d (cur rate %d)", release.total, release.rate)
+			for i := 0; i < numPlayers; i++ {
+				if players[i].dest != futurePlayers[i].dest {
+					logger.LogF("player %d was %v now %v",
+						i, players[i], futurePlayers[i])
+				} else {
+					logger.LogF("player %d %v", i, futurePlayers[i])
+				}
+			}
+		}
+
+		// runs that world until the end
+		if r := runWorld(g, curMin+1, maxMin, numPlayers, &futurePlayers, release, claimed); r > maxRelease {
+			maxRelease = r
+		}
+
+		for _, action := range future {
+			if _, found := claimed[action.Dest]; !found {
+				panic("bad unclaim")
+			}
+			delete(claimed, action.Dest)
+		}
+
+		if len(claimed) != start {
+			panic("mismatch")
+		}
+	}
+
+	return maxRelease
 }
 
 func solveA(nodes []*InputNode) int {
-	simpleGraph := simplifyInputGraph(nodes)
-	pathManager := NewPathManager(simpleGraph, "AA")
-	findMaxPath(simpleGraph, "AA", 30, pathManager)
-
-	return pathManager.MaxReleased()
+	g := simplifyInputGraph(nodes)
+	players := [2]PlayerState{PlayerState{"AA", 0}}
+	return runWorld(g, 1, 30, 1, &players, Release{}, map[graph.NodeID]bool{})
 }
 
 func solveB(nodes []*InputNode) int {
-	return -1
+	g := simplifyInputGraph(nodes)
+	fmt.Printf("%+v\n", g)
+
+	players := [2]PlayerState{PlayerState{"AA", 0}, PlayerState{"AA", 0}}
+	return runWorld(g, 1, 26, 2, &players, Release{}, map[graph.NodeID]bool{})
 }
 
 func main() {
@@ -322,6 +397,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("A", solveA(nodes))
+	//fmt.Println("A", solveA(nodes))
 	fmt.Println("B", solveB(nodes))
 }
