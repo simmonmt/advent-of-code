@@ -136,6 +136,10 @@ func (g *SparseGrid) End() pos.P2 {
 	return g.end
 }
 
+func (g *SparseGrid) Empty() bool {
+	return g.start.Equals(g.end)
+}
+
 func (g *SparseGrid) Set(p pos.P2, v any) {
 	if len(g.a) == 0 {
 		g.start, g.end = p, p
