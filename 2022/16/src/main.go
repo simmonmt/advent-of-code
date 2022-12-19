@@ -13,9 +13,12 @@
 // limitations under the License.
 
 // NOTES:
-//  - This part 2 works, but it's incredibly slow. Hours slow.
-//  - It's probably silly to store node names and use a mask for visited when we
-//    could just use a bitmask.
+//  - This part 2 works, but it's incredibly slow. Hours slow. The only saving
+//    grace is that the sorting it uses (prioritizing short trips to high-rate
+//    nodes), helped by the short-circuiting here and there, leads it to the
+//    highest-value path early on with my input.
+//  - It's silly to store node names and use a map for visited when we could
+//    just use a bitmask.
 //  - It's not necessary (per reddit) to model two simultaneous actors. That
 //    also adds time. Instead of trying to simulate passing time, generate all
 //    possible paths then look for the best one? (we're going to go AA BB DD so
