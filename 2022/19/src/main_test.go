@@ -53,7 +53,7 @@ func TestSolveA(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if got, want := solveA(input), -1; got != want {
+	if got, want := solveA(input), 33; got != want {
 		t.Errorf("solveA(sample) = %v, want %v", got, want)
 	}
 }
@@ -64,8 +64,9 @@ func TestSolveB(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if got, want := solveB(input), -1; got != want {
-		t.Errorf("solveB(sample) = %v, want %v", got, want)
+	if got, want := solveBlueprint(input[0], 32), 56; got != want {
+		t.Errorf("solveBlueprint(input[0], 32) = %v, want %v",
+			got, want)
 	}
 }
 

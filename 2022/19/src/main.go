@@ -240,9 +240,9 @@ func solveBlueprint(blueprint Blueprint, timeLimit int) int {
 		encoded, _ := queue.Next()
 		state := DecodeState(encoded)
 
-		if logger.Enabled() {
-			logger.LogF("cur %v", state.String())
-		}
+		// if logger.Enabled() {
+		// 	logger.LogF("cur %v", state.String())
+		// }
 
 		neighbors := []State{}
 		if state.Min() != timeLimit {
@@ -251,9 +251,9 @@ func solveBlueprint(blueprint Blueprint, timeLimit int) int {
 
 		for i := 0; i < len(neighbors); i++ {
 			neighbor := &neighbors[i]
-			if logger.Enabled() {
-				logger.LogF("  neighbor %v", neighbor.String())
-			}
+			// if logger.Enabled() {
+			// 	logger.LogF("  neighbor %v", neighbor.String())
+			// }
 
 			if !viable(neighbor, maxGeodes, timeLimit) {
 				continue
