@@ -12,7 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// -9668 wrong
+// TODO
+//  Rebalance the tree as we insert. The input is such that the tree
+//  doesn't get wildly out of balance (much to my surprise), but it'd
+//  be nice to make it more so.
 
 package main
 
@@ -24,6 +27,7 @@ import (
 
 	"github.com/simmonmt/aoc/2022/common/filereader"
 	"github.com/simmonmt/aoc/2022/common/logger"
+	"github.com/simmonmt/aoc/2022/common/mtsmath"
 )
 
 var (
@@ -67,16 +71,23 @@ func (n *TreeNode) fillList(l []int) {
 }
 
 func (n *TreeNode) Check() {
+	n.CheckSubtree()
+	if n.up != nil {
+		panic("up should be nil for head")
+	}
+}
+
+func (n *TreeNode) CheckSubtree() {
 	wantSz := 1
 	if n.before != nil {
-		n.before.Check()
+		n.before.CheckSubtree()
 		if n.before.up != n {
 			panic("bad n.before")
 		}
 		wantSz += n.before.size
 	}
 	if n.after != nil {
-		n.after.Check()
+		n.after.CheckSubtree()
 		if n.after.up != n {
 			panic("bad n.after")
 		}
@@ -94,6 +105,21 @@ func (n *TreeNode) AsList() []int {
 	l := make([]int, n.size)
 	n.fillList(l)
 	return l
+}
+
+func (n *TreeNode) Walk(walker func(t *TreeNode)) {
+	todo := []*TreeNode{n}
+
+	for i := 0; i < len(todo); i++ {
+		t := todo[i]
+		walker(t)
+		if t.before != nil {
+			todo = append(todo, t.before)
+		}
+		if t.after != nil {
+			todo = append(todo, t.after)
+		}
+	}
 }
 
 func (n *TreeNode) Forward() *TreeNode {
@@ -173,7 +199,7 @@ func (n *TreeNode) FindIndex(i int) *TreeNode {
 
 func (n *TreeNode) Remove(head **TreeNode) {
 	if n.before == nil && n.after == nil {
-		// fmt.Println("no children case")
+		//logger.LogF("no children case")
 
 		if n.up == nil {
 			panic("can't remove last")
@@ -187,6 +213,8 @@ func (n *TreeNode) Remove(head **TreeNode) {
 			p.after = nil
 		}
 
+		n.size = 1
+
 		for ; p != nil; p = p.up {
 			p.size--
 		}
@@ -194,7 +222,7 @@ func (n *TreeNode) Remove(head **TreeNode) {
 	}
 
 	if (n.before == nil) != (n.after == nil) {
-		//fmt.Println("one child case")
+		//logger.LogF("one child case")
 
 		// has before or after but not both, so replace this
 		// node with the one that exists.
@@ -205,19 +233,20 @@ func (n *TreeNode) Remove(head **TreeNode) {
 
 		if n.up == nil {
 			*head = rep
-			return
-		}
-		p := n.up
-
-		rep.up = p
-		if p.before == n {
-			p.before = rep
+			rep.up = nil
 		} else {
-			p.after = rep
-		}
+			p := n.up
 
-		for ; p != nil; p = p.up {
-			p.size--
+			rep.up = p
+			if p.before == n {
+				p.before = rep
+			} else {
+				p.after = rep
+			}
+
+			for ; p != nil; p = p.up {
+				p.size--
+			}
 		}
 
 		n.size = 1
@@ -226,18 +255,16 @@ func (n *TreeNode) Remove(head **TreeNode) {
 		return
 	}
 
-	//fmt.Println("two children case")
+	//logger.LogF("two children case")
 
 	// has both before and after
 	var rep *TreeNode
 	if n.before.size < n.after.size {
 		// find least from bigger after subtree
-		//fmt.Println("from after")
 		for rep = n.after; rep.before != nil; rep = rep.before {
 		}
 	} else {
 		// find greatest from bigger before subtree
-		//fmt.Println("from before")
 		for rep = n.before; rep.after != nil; rep = rep.after {
 		}
 	}
@@ -334,21 +361,26 @@ func mixIteration(ptr *TreeNode, head *TreeNode, ptrs []*TreeNode) *TreeNode {
 	// the index before cur's
 	beforeCur := (cur - 1) % len(ptrs)
 
+	tmpLen := len(ptrs) - 1 // without cur
+
 	// the index before where cur will go
 	beforeNew := beforeCur + ptr.val
-	for beforeNew < len(ptrs)-1 {
-		beforeNew += len(ptrs) - 1
+	if beforeNew < 0 {
+		beforeNew += ((mtsmath.Abs(beforeNew) / tmpLen) + 1) * tmpLen
 	}
-	beforeNew %= len(ptrs) - 1
+	beforeNew %= tmpLen
 
 	ptr.Remove(&head)
-	ptr.InsertAfter(head.FindIndex(beforeNew))
+	if logger.Enabled() {
+		head.Check()
+	}
+	beforeNewPtr := head.FindIndex(beforeNew)
+	ptr.InsertAfter(beforeNewPtr)
 	return head
 }
 
 func mix(head *TreeNode, ptrs []*TreeNode) *TreeNode {
 	for _, ptr := range ptrs {
-		//fmt.Println(i)
 		head.Check()
 		head = mixIteration(ptr, head, ptrs)
 	}
@@ -360,14 +392,19 @@ func lookup(head *TreeNode, i int) int {
 	return head.FindIndex(i % head.size).val
 }
 
-func solveA(nums []int) int {
-	fmt.Println(len(nums), "nums")
+func balanceWalker(t *TreeNode) {
+	beforeSz, afterSz := 0, 0
+	if t.before != nil {
+		beforeSz = t.before.size
+	}
+	if t.after != nil {
+		afterSz = t.after.size
+	}
 
-	ptrs := make([]*TreeNode, len(nums))
-	head := makeTree(nums, ptrs)
+	fmt.Printf("%5d %5d %5d\n", t.Index(), beforeSz, afterSz)
+}
 
-	head = mix(head, ptrs)
-
+func getAnswer(head *TreeNode, ptrs []*TreeNode) int {
 	var zero *TreeNode
 	for _, ptr := range ptrs {
 		if ptr.val == 0 {
@@ -375,8 +412,6 @@ func solveA(nums []int) int {
 			break
 		}
 	}
-
-	fmt.Printf("zero at %v\n", zero.Index())
 
 	sum := 0
 	for _, n := range []int{1000, 2000, 3000} {
@@ -386,8 +421,37 @@ func solveA(nums []int) int {
 	return sum
 }
 
+func solveA(nums []int) int {
+	//fmt.Println(len(nums), "nums")
+
+	ptrs := make([]*TreeNode, len(nums))
+	head := makeTree(nums, ptrs)
+
+	head = mix(head, ptrs)
+	return getAnswer(head, ptrs)
+}
+
 func solveB(nums []int) int {
-	return -1
+	bigs := make([]int, len(nums))
+	for i, num := range nums {
+		bigs[i] = num * 811589153
+	}
+	nums = nil // so bad things happen if we try to use it
+
+	ptrs := make([]*TreeNode, len(bigs))
+	head := makeTree(bigs, ptrs)
+
+	//fmt.Println(head.AsList())
+	for i := 0; i < 10; i++ {
+		//fmt.Println(i)
+		head = mix(head, ptrs)
+		//fmt.Println(head.AsList())
+	}
+
+	// See how unbalanced the tree is
+	// head.Walk(balanceWalker)
+
+	return getAnswer(head, ptrs)
 }
 
 func main() {

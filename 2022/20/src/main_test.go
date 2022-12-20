@@ -140,7 +140,7 @@ func TestIndex(t *testing.T) {
 	}
 }
 
-func TestRemove(t *testing.T) {
+func TestRemoveSample(t *testing.T) {
 	nums, err := parseInput(sampleLines)
 	if err != nil {
 		t.Fatal(err)
@@ -151,18 +151,59 @@ func TestRemove(t *testing.T) {
 			ptrs := make([]*TreeNode, len(nums))
 			head := makeTree(nums, ptrs)
 
-			want := []int{}
+			wantElems := []int{}
 			if i > 0 {
-				want = append(want, nums[0:i]...)
+				wantElems = append(wantElems, nums[0:i]...)
 			}
 			if i < len(nums)-1 {
-				want = append(want, nums[i+1:]...)
+				wantElems = append(wantElems, nums[i+1:]...)
 			}
+
+			wantNode := &TreeNode{size: 1, val: ptrs[i].val}
 
 			ptrs[i].Remove(&head)
 
-			if got := head.AsList(); !reflect.DeepEqual(got, want) {
-				t.Errorf("got %v, want %v", got, want)
+			if got := head.AsList(); !reflect.DeepEqual(got, wantElems) {
+				t.Errorf("got %v, want %v", got, wantElems)
+			}
+
+			if got := ptrs[i]; !reflect.DeepEqual(got, wantNode) {
+				t.Errorf("got %+v, want %+v", got, wantNode)
+			}
+
+		})
+	}
+}
+
+func TestRemove(t *testing.T) {
+	type TestCase struct {
+		removals []int
+		want     []int
+	}
+
+	testCases := []TestCase{
+		TestCase{[]int{0, 1, 2, 3}, []int{4, 5, 6}},
+	}
+
+	nums := []int{0, 1, 2, 3, 4, 5, 6}
+	for i, tc := range testCases {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			ptrs := make([]*TreeNode, len(nums))
+			head := makeTree(nums, ptrs)
+
+			for _, removal := range tc.removals {
+				ptrs[removal].Remove(&head)
+				head.Check()
+
+				wantNode := &TreeNode{size: 1, val: ptrs[removal].val}
+				if got := ptrs[removal]; !reflect.DeepEqual(got, wantNode) {
+					t.Errorf("removal %v: got %+v, want %+v",
+						removal, got, wantNode)
+				}
+			}
+
+			if got := head.AsList(); !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("got %v, want %v", got, tc.want)
 			}
 		})
 	}
@@ -180,12 +221,14 @@ func TestInsert(t *testing.T) {
 			head := makeTree(nums, ptrs)
 
 			ptrs[0].Remove(&head)
+			head.Check()
 			victim := ptrs[0]
 
 			afterIdx := i
 			after := head.FindIndex(afterIdx)
 
 			victim.InsertAfter(after)
+			head.Check()
 
 			want := []int{}
 			for j := 1; j < len(nums); j++ {
@@ -335,7 +378,7 @@ func TestSolveB(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if got, want := solveB(input), -1; got != want {
+	if got, want := solveB(input), 1623178306; got != want {
 		t.Errorf("solveB(sample) = %v, want %v", got, want)
 	}
 }

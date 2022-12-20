@@ -14,6 +14,7 @@ go_library(
     deps = [
         "//common/filereader",
         "//common/logger",
+        "//common/mtsmath",
     ],
 )
 
