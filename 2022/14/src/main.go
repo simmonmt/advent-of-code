@@ -40,14 +40,9 @@ const (
 	SAND  Contents = 2
 )
 
-func dumpMap(p pos.P2, v any, found bool) string {
+func dumpMap(p pos.P2, c Contents, found bool) string {
 	if !found {
 		return "."
-	}
-
-	c, ok := v.(Contents)
-	if !ok {
-		return "?"
 	}
 
 	switch c {
@@ -62,7 +57,7 @@ func dumpMap(p pos.P2, v any, found bool) string {
 	}
 }
 
-func drawLine(g *grid.SparseGrid, from, to pos.P2) {
+func drawLine(g *grid.SparseGrid[Contents], from, to pos.P2) {
 	inc := pos.P2{}
 	if from.X != to.X {
 		delta := to.X - from.X
@@ -79,8 +74,8 @@ func drawLine(g *grid.SparseGrid, from, to pos.P2) {
 	g.Set(to, WALL)
 }
 
-func parseInput(lines []string) (*grid.SparseGrid, error) {
-	g := grid.NewSparseGrid()
+func parseInput(lines []string) (*grid.SparseGrid[Contents], error) {
+	g := grid.NewSparseGrid[Contents]()
 
 	for i, line := range lines {
 		coords := []pos.P2{}
@@ -101,20 +96,15 @@ func parseInput(lines []string) (*grid.SparseGrid, error) {
 	return g, nil
 }
 
-func addSand(g *grid.SparseGrid, start pos.P2, floorY int) (cameToRest bool) {
+func addSand(g *grid.SparseGrid[Contents], start pos.P2, floorY int) (cameToRest bool) {
 	isOpen := func(p pos.P2) bool {
 		if floorY != -1 && p.Y == floorY {
 			return false
 		}
 
 		v, found := g.Get(p)
-		return !found || v.(Contents) == START
+		return !found || v == START
 	}
-
-	// getContents := func(p pos.P2) Contents {
-	// 	v, found := g.Get(p)
-	// 	return v.(Contents)
-	// }
 
 	p := start
 	for i := 0; i < 10000; i++ {
@@ -148,7 +138,7 @@ func addSand(g *grid.SparseGrid, start pos.P2, floorY int) (cameToRest bool) {
 	panic("too many")
 }
 
-func solveA(g *grid.SparseGrid, start pos.P2) int {
+func solveA(g *grid.SparseGrid[Contents], start pos.P2) int {
 	var num int
 	for num = 0; addSand(g, start, -1); num++ {
 		if logger.Enabled() {
@@ -164,7 +154,7 @@ func solveA(g *grid.SparseGrid, start pos.P2) int {
 	return num
 }
 
-func solveB(g *grid.SparseGrid, start pos.P2) int {
+func solveB(g *grid.SparseGrid[Contents], start pos.P2) int {
 	floorY := g.End().Y + 2
 
 	num := 0
@@ -179,7 +169,7 @@ func solveB(g *grid.SparseGrid, start pos.P2) int {
 			g.Dump(true, dumpMap)
 		}
 
-		if v, found := g.Get(start); found && v.(Contents) == SAND {
+		if v, found := g.Get(start); found && v == SAND {
 			return num
 		}
 	}

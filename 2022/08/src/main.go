@@ -88,7 +88,7 @@ func solveA(g *grid.Grid[int]) int {
 		for p := side.Start; g.IsValid(p); p.Add(side.Inc) {
 			maxHeight := -1
 			for in := p; g.IsValid(in) && maxHeight != 9; in.Add(side.In) {
-				height := g.Get(in)
+				height, _ := g.Get(in)
 
 				if height > maxHeight {
 					maxHeight = height
@@ -112,11 +112,11 @@ func solveA(g *grid.Grid[int]) int {
 }
 
 func lookInDir(g *grid.Grid[int], center pos.P2, d dir.Dir) int {
-	centerHeight := g.Get(center)
+	centerHeight, _ := g.Get(center)
 	canSee := 0
 	for p := d.From(center); g.IsValid(p); p = d.From(p) {
 		canSee++
-		if height := g.Get(p); height >= centerHeight {
+		if height, _ := g.Get(p); height >= centerHeight {
 			break
 		}
 	}

@@ -66,11 +66,11 @@ func (ac *astarClient) AllNeighbors(start string) []string {
 	if err != nil {
 		panic("bad start")
 	}
-	pHeight := ac.g.Get(p)
+	pHeight, _ := ac.g.Get(p)
 
 	out := []string{}
 	for _, n := range ac.g.AllNeighbors(p, false) {
-		if nHeight := ac.g.Get(n); nHeight <= pHeight+1 {
+		if nHeight, _ := ac.g.Get(n); nHeight <= pHeight+1 {
 			out = append(out, n.String())
 		}
 	}

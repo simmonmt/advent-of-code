@@ -42,14 +42,17 @@ func TestGrid(t *testing.T) {
 	g.Set(p, value1)
 	g.Set(op, value2)
 
-	if got := g.Get(p); got != value1 {
-		t.Errorf("g.Get(%v) = %v, want %v", p, got, value1)
+	if got, found := g.Get(p); !found || got != value1 {
+		t.Errorf("g.Get(%v) = %v, %v, want %v, true",
+			p, got, found, value1)
 	}
-	if got := g.Get(rp); got != "" {
-		t.Errorf("g.Get(%v) = '%v', want ''", rp, got)
+	if got, found := g.Get(rp); !found || got != "" {
+		t.Errorf("g.Get(%v) = '%v', %v, want '', true",
+			rp, got, found)
 	}
-	if got := g.Get(op); got != value2 {
-		t.Errorf("g.Get(%v) = %v, want %v", op, got, value2)
+	if got, found := g.Get(op); !found || got != value2 {
+		t.Errorf("g.Get(%v) = %v, %v, want %v, true",
+			op, got, found, value2)
 	}
 
 	if got := g.IsValid(pos.P2{1, 2}); !got {
@@ -149,7 +152,7 @@ func TestGridAllNeighbors(t *testing.T) {
 }
 
 func TestSparseGrid(t *testing.T) {
-	g := NewSparseGrid()
+	g := NewSparseGrid[string]()
 
 	p := pos.P2{1, 2}
 	rp := pos.P2{2, 1}
@@ -163,8 +166,8 @@ func TestSparseGrid(t *testing.T) {
 	if got, found := g.Get(p); !found || !reflect.DeepEqual(got, value1) {
 		t.Errorf("g.Get(%v) = %v, %v, want %v, true", p, got, found, value1)
 	}
-	if got, found := g.Get(rp); found || got != nil {
-		t.Errorf("g.Get(%v) = %v, %v, want nil, false", rp, got, found)
+	if got, found := g.Get(rp); found {
+		t.Errorf("g.Get(%v) = %v, %v, want _, false", rp, got, found)
 	}
 	if got, found := g.Get(op); !found || !reflect.DeepEqual(got, value2) {
 		t.Errorf("g.Get(%v) = %v, %v, want %v, true", op, got, found, value2)

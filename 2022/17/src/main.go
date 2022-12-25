@@ -40,10 +40,10 @@ func parseInput(lines []string) (string, error) {
 }
 
 type Part interface {
-	ShiftLeft(g *grid.SparseGrid) bool
-	ShiftRight(g *grid.SparseGrid) bool
-	ShiftDown(g *grid.SparseGrid) bool
-	Place(g *grid.SparseGrid)
+	ShiftLeft(g *grid.SparseGrid[bool]) bool
+	ShiftRight(g *grid.SparseGrid[bool]) bool
+	ShiftDown(g *grid.SparseGrid[bool]) bool
+	Place(g *grid.SparseGrid[bool])
 	Pos() pos.P2
 }
 
@@ -63,7 +63,7 @@ func (p *partImpl) Pos() pos.P2 {
 	return p.bottomLeft
 }
 
-func (p *partImpl) shift(g *grid.SparseGrid, elemOff pos.P2) bool {
+func (p *partImpl) shift(g *grid.SparseGrid[bool], elemOff pos.P2) bool {
 	for _, elem := range p.elems {
 		new := p.bottomLeft
 		new.Add(elem)
@@ -85,19 +85,19 @@ func (p *partImpl) shift(g *grid.SparseGrid, elemOff pos.P2) bool {
 	return true
 }
 
-func (p *partImpl) ShiftLeft(g *grid.SparseGrid) bool {
+func (p *partImpl) ShiftLeft(g *grid.SparseGrid[bool]) bool {
 	return p.shift(g, pos.P2{-1, 0})
 }
 
-func (p *partImpl) ShiftRight(g *grid.SparseGrid) bool {
+func (p *partImpl) ShiftRight(g *grid.SparseGrid[bool]) bool {
 	return p.shift(g, pos.P2{1, 0})
 }
 
-func (p *partImpl) ShiftDown(g *grid.SparseGrid) bool {
+func (p *partImpl) ShiftDown(g *grid.SparseGrid[bool]) bool {
 	return p.shift(g, pos.P2{0, -1})
 }
 
-func (p *partImpl) Place(g *grid.SparseGrid) {
+func (p *partImpl) Place(g *grid.SparseGrid[bool]) {
 	for _, elem := range p.elems {
 		p := p.bottomLeft
 		p.Add(elem)
@@ -158,9 +158,9 @@ func (f *PartFactory) Peek() int {
 	return f.next
 }
 
-func dumpGrid(g *grid.SparseGrid) {
+func dumpGrid(g *grid.SparseGrid[bool]) {
 	var b strings.Builder
-	g.DumpTo(true, func(p pos.P2, v any, found bool) string {
+	g.DumpTo(true, func(p pos.P2, v bool, found bool) string {
 		if found {
 			return "#"
 		} else {
@@ -193,7 +193,7 @@ func (f *DirFactory) Peek() int {
 	return f.next
 }
 
-func runPart(g *grid.SparseGrid, partFactory *PartFactory, dirFactory *DirFactory) pos.P2 {
+func runPart(g *grid.SparseGrid[bool], partFactory *PartFactory, dirFactory *DirFactory) pos.P2 {
 	var bottomLeft pos.P2
 	if g.Empty() {
 		bottomLeft = pos.P2{2, 3}
@@ -218,7 +218,7 @@ func runPart(g *grid.SparseGrid, partFactory *PartFactory, dirFactory *DirFactor
 }
 
 func measureHeight(dirs string, numParts int) int {
-	g := grid.NewSparseGrid()
+	g := grid.NewSparseGrid[bool]()
 	partFactory := NewPartFactory()
 	dirFactory := NewDirFactory(dirs)
 
@@ -244,7 +244,7 @@ type HistoryEnt struct {
 }
 
 func findRepeat(dirs string) (first, second HistoryEnt) {
-	g := grid.NewSparseGrid()
+	g := grid.NewSparseGrid[bool]()
 	partFactory := NewPartFactory()
 	dirFactory := NewDirFactory(dirs)
 
