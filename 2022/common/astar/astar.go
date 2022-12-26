@@ -28,7 +28,7 @@ import (
 )
 
 type ClientInterface interface {
-	AllNeighbors(start string) []string
+	AllNeighbors(node string) []string
 	EstimateDistance(start, end string) uint
 
 	// NeighborDistance returns the distance between two known direct
