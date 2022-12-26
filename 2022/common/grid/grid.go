@@ -61,13 +61,15 @@ func dumpTo[V any, T dumpableGrid[V]](g T, withCoords bool, mapper func(p pos.P2
 		div *= 10
 	}
 
-	for i := xDigits; i > 0; i-- {
-		fmt.Fprintf(bw, "%*s ", yDigits, "")
-		for x := start.X; x <= end.X; x++ {
-			fmt.Fprintf(bw, "%*d", maxCellWidth, (x/div)%10)
+	if withCoords {
+		for i := xDigits; i > 0; i-- {
+			fmt.Fprintf(bw, "%*s ", yDigits, "")
+			for x := start.X; x <= end.X; x++ {
+				fmt.Fprintf(bw, "%*d", maxCellWidth, (x/div)%10)
+			}
+			fmt.Fprintln(bw)
+			div /= 10
 		}
-		fmt.Fprintln(bw)
-		div /= 10
 	}
 
 	for i := 0; i < len(rows); i++ {
