@@ -6,8 +6,8 @@ go_library(
     importpath = "github.com/simmonmt/aoc/2022/common/astar",
     visibility = ["//visibility:public"],
     deps = [
+        "//common/collections",
         "//common/logger",
-        "@com_github_google_btree//:btree",
     ],
 )
 

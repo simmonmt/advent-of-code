@@ -99,26 +99,6 @@ func TestAStar(t *testing.T) {
 	}
 }
 
-func TestFScoreMap(t *testing.T) {
-	m := newFScoreMap()
-	m.Set("a", 6)
-	m.Set("b", 2)
-	m.Set("c", 1)
-	m.Set("d", 1)
-	m.Set("e", 1)
-
-	found := []string{}
-	m.Walk(func(item *fScoreItem) bool {
-		found = append(found, fmt.Sprintf("%v:%v", item.Name, item.Value))
-		return true
-	})
-
-	expected := []string{"c:1", "d:1", "e:1", "b:2", "a:6"}
-	if !reflect.DeepEqual(expected, found) {
-		t.Errorf("got %v, wanted %v", found, expected)
-	}
-}
-
 func TestMain(m *testing.M) {
 	flag.Parse()
 	logger.Init(true)

@@ -21,10 +21,10 @@ type PriorityQueue[T ValueType] interface {
 	IsEmpty() bool
 }
 
-// Gives a priority queue that returns the
+// Use to create a queue that returns the lowest priority first
 func LessThan(a, b int) bool { return a < b }
 
-// Use to have a queue that returns the highest priority first
+// Use to create a queue that returns the highest priority first
 func GreaterThan(a, b int) bool { return a > b }
 
 // A simple priority queue implementation using a linked list. Shouldn't be used
