@@ -21,4 +21,7 @@ nogo(
     name = "nogo",
     vet = True,
     visibility = ["//visibility:public"],
+    # Remove once rules_go releases after 0.37 containing 
+    # bazelbuild/rules_go@de2074e. Verify that bazel-bin is created.
+    tags = ["manual"],
 )
