@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "collections",
+    srcs = [
+        "priority_queue.go",
+        "stack.go",
+    ],
+    importpath = "github.com/simmonmt/aoc/2023/common/collections",
+    visibility = ["//visibility:public"],
+    deps = ["@org_golang_x_exp//constraints"],
+)
+
+go_test(
+    name = "collections_test",
+    srcs = [
+        "collections_test.go",
+        "priority_queue_test.go",
+        "stack_test.go",
+    ],
+    embed = [":collections"],
+    deps = ["//common/testutils"],
+)

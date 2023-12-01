@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "area",
+    srcs = ["area.go"],
+    importpath = "github.com/simmonmt/aoc/2023/common/area",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//common/mtsmath",
+        "//common/pos",
+    ],
+)
+
+go_test(
+    name = "area_test",
+    srcs = ["area_test.go"],
+    embed = [":area"],
+    deps = ["//common/pos"],
+)
