@@ -14,28 +14,99 @@
 
 package logger
 
-import "fmt"
-
-var (
-	loggingEnabled = false
+import (
+	"context"
+	"fmt"
+	"io"
+	"log/slog"
+	"os"
+	"path/filepath"
+	"runtime"
+	"sync"
+	"time"
 )
 
-func Init(enabled bool) {
-	loggingEnabled = enabled
+// logHandler is a simplistic handler that ignores groups and attributes. Its
+// sole purpose is to format log lines in a compact way.
+type logHandler struct {
+	minLevel slog.Leveler
+	logTime  bool
+	mu       *sync.Mutex
+	out      io.Writer
 }
 
-func Enabled() bool {
-	return loggingEnabled
-}
-
-func LogLn(a ...any) {
-	if loggingEnabled {
-		fmt.Println(a...)
+func newLogHandler(out io.Writer, minLevel slog.Leveler) *logHandler {
+	return &logHandler{
+		minLevel: minLevel,
+		logTime:  false,
+		out:      out,
+		mu:       &sync.Mutex{},
 	}
 }
 
-func LogF(msg string, a ...any) {
-	if loggingEnabled {
-		fmt.Printf(msg+"\n", a...)
+func (h *logHandler) Enabled(ctx context.Context, level slog.Level) bool {
+	return level >= h.minLevel.Level()
+}
+
+func levelToChar(level slog.Level) byte {
+	switch {
+	case level < slog.LevelInfo:
+		return 'D'
+	case level == slog.LevelInfo:
+		return 'I'
+	case level == slog.LevelWarn:
+		return 'W'
+	case level == slog.LevelError:
+		return 'E'
+	case level >= 10:
+		return '*'
+	default:
+		return byte('0' + int(level))
 	}
+}
+
+func (h *logHandler) Handle(ctx context.Context, r slog.Record) error {
+	buf := make([]byte, 0, 1024)
+	buf = append(buf, levelToChar(r.Level))
+
+	if h.logTime && !r.Time.IsZero() {
+		buf = fmt.Appendf(buf, "%s", r.Time.Format(time.RFC3339))
+	}
+	if r.PC != 0 {
+		fs := runtime.CallersFrames([]uintptr{r.PC})
+		f, _ := fs.Next()
+		buf = fmt.Appendf(buf, fmt.Sprintf(" %s:%d", filepath.Base(f.File), f.Line))
+	}
+	buf = append(buf, ' ')
+	buf = append(buf, []byte(r.Message)...)
+	buf = append(buf, '\n')
+
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	_, err := h.out.Write(buf)
+	return err
+}
+
+func (h *logHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	return h
+}
+
+func (h *logHandler) WithGroup(name string) slog.Handler {
+	return h
+}
+
+func Init(debug bool) {
+	level := slog.LevelInfo
+	if debug {
+		level = slog.LevelDebug
+	}
+
+	slog.SetDefault(slog.New(newLogHandler(os.Stderr, level)))
+}
+
+func LogF(format string, args ...any) {
+	var pcs [1]uintptr
+	runtime.Callers(2, pcs[:]) // skip [Callers, Infof]
+	r := slog.NewRecord(time.Now(), slog.LevelInfo, fmt.Sprintf(format, args...), pcs[0])
+	_ = slog.Default().Handler().Handle(context.Background(), r)
 }
