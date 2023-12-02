@@ -25,17 +25,3 @@ func Abs[V constraints.Integer | constraints.Float](val V) V {
 		return -val
 	}
 }
-
-func Min[V constraints.Integer | constraints.Float](a, b V) V {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func Max[V constraints.Integer | constraints.Float](a, b V) V {
-	if a > b {
-		return a
-	}
-	return b
-}

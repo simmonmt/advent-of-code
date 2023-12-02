@@ -5,7 +5,6 @@ go_library(
     srcs = ["strutil.go"],
     importpath = "github.com/simmonmt/aoc/2023/common/strutil",
     visibility = ["//visibility:public"],
-    deps = ["//common/mtsmath"],
 )
 
 go_test(

@@ -6,7 +6,6 @@ go_library(
     importpath = "github.com/simmonmt/aoc/2023/common/area",
     visibility = ["//visibility:public"],
     deps = [
-        "//common/mtsmath",
         "//common/pos",
     ],
 )

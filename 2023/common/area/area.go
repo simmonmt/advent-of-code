@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/simmonmt/aoc/2023/common/mtsmath"
 	"github.com/simmonmt/aoc/2023/common/pos"
 )
 
@@ -75,8 +74,8 @@ func (a Area1D) Size() int {
 // undefined if they don't.
 func (a Area1D) Merge(o Area1D) Area1D {
 	return Area1D{
-		From: mtsmath.Min(a.From, o.From),
-		To:   mtsmath.Max(a.To, o.To),
+		From: min(a.From, o.From),
+		To:   max(a.To, o.To),
 	}
 }
 

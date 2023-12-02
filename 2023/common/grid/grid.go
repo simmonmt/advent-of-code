@@ -20,7 +20,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/simmonmt/aoc/2023/common/mtsmath"
 	"github.com/simmonmt/aoc/2023/common/pos"
 )
 
@@ -51,7 +50,7 @@ func dumpTo[V any, T dumpableGrid[V]](g T, withCoords bool, mapper func(p pos.P2
 			v, found := g.Get(p)
 			s := mapper(p, v, found)
 			row[j] = s
-			maxCellWidth = mtsmath.Max(maxCellWidth, len(s))
+			maxCellWidth = max(maxCellWidth, len(s))
 		}
 		rows[i] = row
 	}

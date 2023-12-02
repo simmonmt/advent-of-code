@@ -18,8 +18,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
-	"github.com/simmonmt/aoc/2023/common/mtsmath"
 )
 
 func StringToInt64s(str string) ([]int64, error) {
@@ -36,7 +34,7 @@ func StringToInt64s(str string) ([]int64, error) {
 }
 
 func StringDiff(a, b string) (bool, string) {
-	minLen := mtsmath.Min(len(a), len(b))
+	minLen := min(len(a), len(b))
 	for i := 0; i < minLen; i++ {
 		if a[i] != b[i] {
 			return true, fmt.Sprintf("mismatch at char %v: %v != %v",
