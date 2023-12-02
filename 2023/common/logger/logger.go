@@ -66,6 +66,10 @@ func levelToChar(level slog.Level) byte {
 }
 
 func (h *logHandler) Handle(ctx context.Context, r slog.Record) error {
+	if !h.Enabled(ctx, r.Level) {
+		return nil
+	}
+
 	buf := make([]byte, 0, 1024)
 	buf = append(buf, levelToChar(r.Level))
 
@@ -95,9 +99,9 @@ func (h *logHandler) WithGroup(name string) slog.Handler {
 	return h
 }
 
-func Init(debug bool) {
-	level := slog.LevelInfo
-	if debug {
+func Init(log bool) {
+	level := slog.Level(999)
+	if log {
 		level = slog.LevelDebug
 	}
 
