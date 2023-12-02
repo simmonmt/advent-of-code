@@ -33,9 +33,9 @@ func TestGrid(t *testing.T) {
 		t.Errorf("g.Height() = %v, want 6", got)
 	}
 
-	p := pos.P2{1, 2}
-	rp := pos.P2{2, 1}
-	op := pos.P2{3, 4}
+	p := pos.P2{X: 1, Y: 2}
+	rp := pos.P2{X: 2, Y: 1}
+	op := pos.P2{X: 3, Y: 4}
 	value1 := "testvalue1"
 	value2 := "testvalue2"
 
@@ -55,10 +55,10 @@ func TestGrid(t *testing.T) {
 			op, got, found, value2)
 	}
 
-	if got := g.IsValid(pos.P2{1, 2}); !got {
+	if got := g.IsValid(pos.P2{X: 1, Y: 2}); !got {
 		t.Errorf("g.IsValid({1,2}) = %v, want true", got)
 	}
-	if got := g.IsValid(pos.P2{99, 99}); got {
+	if got := g.IsValid(pos.P2{X: 99, Y: 99}); got {
 		t.Errorf("g.IsValid({99,99}) = %v, want false", got)
 	}
 }
@@ -74,8 +74,8 @@ func TestGridWalk(t *testing.T) {
 	}
 
 	wantPos := []pos.P2{
-		pos.P2{0, 0}, pos.P2{1, 0}, pos.P2{2, 0},
-		pos.P2{0, 1}, pos.P2{1, 1}, pos.P2{2, 1},
+		pos.P2{X: 0, Y: 0}, pos.P2{X: 1, Y: 0}, pos.P2{X: 2, Y: 0},
+		pos.P2{X: 0, Y: 1}, pos.P2{X: 1, Y: 1}, pos.P2{X: 2, Y: 1},
 	}
 
 	wantVals := []string{
@@ -108,31 +108,31 @@ func TestGridAllNeighbors(t *testing.T) {
 
 	testCases := []TestCase{
 		TestCase{
-			pos.P2{0, 0},
+			pos.P2{X: 0, Y: 0},
 			false,
-			[]pos.P2{pos.P2{1, 0}, pos.P2{0, 1}},
+			[]pos.P2{pos.P2{X: 1, Y: 0}, pos.P2{X: 0, Y: 1}},
 		},
 		TestCase{
-			pos.P2{0, 0},
+			pos.P2{X: 0, Y: 0},
 			true,
-			[]pos.P2{pos.P2{1, 0}, pos.P2{0, 1}, pos.P2{1, 1}},
+			[]pos.P2{pos.P2{X: 1, Y: 0}, pos.P2{X: 0, Y: 1}, pos.P2{X: 1, Y: 1}},
 		},
 		TestCase{
-			pos.P2{1, 1},
+			pos.P2{X: 1, Y: 1},
 			false,
 			[]pos.P2{
-				pos.P2{0, 1}, pos.P2{2, 1}, pos.P2{1, 0},
-				pos.P2{1, 2},
+				pos.P2{X: 0, Y: 1}, pos.P2{X: 2, Y: 1}, pos.P2{X: 1, Y: 0},
+				pos.P2{X: 1, Y: 2},
 			},
 		},
 		TestCase{
-			pos.P2{1, 1},
+			pos.P2{X: 1, Y: 1},
 			true,
 			[]pos.P2{
-				pos.P2{0, 1}, pos.P2{2, 1}, pos.P2{1, 0},
-				pos.P2{1, 2},
-				pos.P2{0, 0}, pos.P2{2, 0},
-				pos.P2{0, 2}, pos.P2{2, 2},
+				pos.P2{X: 0, Y: 1}, pos.P2{X: 2, Y: 1}, pos.P2{X: 1, Y: 0},
+				pos.P2{X: 1, Y: 2},
+				pos.P2{X: 0, Y: 0}, pos.P2{X: 2, Y: 0},
+				pos.P2{X: 0, Y: 2}, pos.P2{X: 2, Y: 2},
 			},
 		},
 	}
@@ -154,9 +154,9 @@ func TestGridAllNeighbors(t *testing.T) {
 func TestSparseGrid(t *testing.T) {
 	g := NewSparseGrid[string]()
 
-	p := pos.P2{1, 2}
-	rp := pos.P2{2, 1}
-	op := pos.P2{3, 4}
+	p := pos.P2{X: 1, Y: 2}
+	rp := pos.P2{X: 2, Y: 1}
+	op := pos.P2{X: 3, Y: 4}
 	value1 := "testvalue1"
 	value2 := "testvalue2"
 
@@ -173,10 +173,10 @@ func TestSparseGrid(t *testing.T) {
 		t.Errorf("g.Get(%v) = %v, %v, want %v, true", op, got, found, value2)
 	}
 
-	if got, want := g.Start(), (pos.P2{1, 2}); !got.Equals(want) {
+	if got, want := g.Start(), (pos.P2{X: 1, Y: 2}); !got.Equals(want) {
 		t.Errorf("g.Start() = %v, want %v", got, want)
 	}
-	if got, want := g.End(), (pos.P2{3, 4}); !got.Equals(want) {
+	if got, want := g.End(), (pos.P2{X: 3, Y: 4}); !got.Equals(want) {
 		t.Errorf("g.End() = %v, want %v", got, want)
 	}
 }

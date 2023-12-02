@@ -175,13 +175,13 @@ func TestArea3DContains(t *testing.T) {
 
 	testCases := []TestCase{
 		TestCase{ // completely disjoint
-			Area3D{pos.P3{-5, 0, -3}, pos.P3{-3, 2, 5}},
-			Area3D{pos.P3{10, 10, 10}, pos.P3{12, 12, 12}},
+			Area3D{pos.P3{X: -5, Y: 0, Z: -3}, pos.P3{X: -3, Y: 2, Z: 5}},
+			Area3D{pos.P3{X: 10, Y: 10, Z: 10}, pos.P3{X: 12, Y: 12, Z: 12}},
 			false,
 		},
 		TestCase{ // containing
-			Area3D{pos.P3{-1, -1, -1}, pos.P3{7, 8, 9}},
-			Area3D{pos.P3{1, 2, 3}, pos.P3{2, 4, 6}},
+			Area3D{pos.P3{X: -1, Y: -1, Z: -1}, pos.P3{X: 7, Y: 8, Z: 9}},
+			Area3D{pos.P3{X: 1, Y: 2, Z: 3}, pos.P3{X: 2, Y: 4, Z: 6}},
 			true,
 		},
 	}
@@ -205,13 +205,13 @@ func TestArea3DOverlaps(t *testing.T) {
 
 	testCases := []TestCase{
 		TestCase{ // completely disjoint
-			Area3D{pos.P3{-5, 0, -3}, pos.P3{-3, 2, 5}},
-			Area3D{pos.P3{10, 10, 10}, pos.P3{12, 12, 12}},
+			Area3D{pos.P3{X: -5, Y: 0, Z: -3}, pos.P3{X: -3, Y: 2, Z: 5}},
+			Area3D{pos.P3{X: 10, Y: 10, Z: 10}, pos.P3{X: 12, Y: 12, Z: 12}},
 			false,
 		},
 		TestCase{ // containing
-			Area3D{pos.P3{1, 2, 3}, pos.P3{2, 4, 6}},
-			Area3D{pos.P3{-1, -1, -1}, pos.P3{7, 8, 9}},
+			Area3D{pos.P3{X: 1, Y: 2, Z: 3}, pos.P3{X: 2, Y: 4, Z: 6}},
+			Area3D{pos.P3{X: -1, Y: -1, Z: -1}, pos.P3{X: 7, Y: 8, Z: 9}},
 			true,
 		},
 	}

@@ -46,7 +46,7 @@ func dumpTo[V any, T dumpableGrid[V]](g T, withCoords bool, mapper func(p pos.P2
 		row := make([]string, width)
 		for j := 0; j < width; j++ {
 			x := start.X + j
-			p := pos.P2{x, y}
+			p := pos.P2{X: x, Y: y}
 			v, found := g.Get(p)
 			s := mapper(p, v, found)
 			row[j] = s
@@ -119,11 +119,11 @@ func NewFromLines[T any](lines []string, cellMapper func(p pos.P2, r rune) (T, e
 }
 
 func (g *Grid[T]) Start() pos.P2 {
-	return pos.P2{0, 0}
+	return pos.P2{X: 0, Y: 0}
 }
 
 func (g *Grid[T]) End() pos.P2 {
-	return pos.P2{g.w - 1, g.h - 1}
+	return pos.P2{X: g.w - 1, Y: g.h - 1}
 }
 
 func (g *Grid[T]) IsValid(p pos.P2) bool {
