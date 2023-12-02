@@ -104,7 +104,7 @@ func Init(debug bool) {
 	slog.SetDefault(slog.New(newLogHandler(os.Stderr, level)))
 }
 
-func LogF(format string, args ...any) {
+func Infof(format string, args ...any) {
 	var pcs [1]uintptr
 	runtime.Callers(2, pcs[:]) // skip [Callers, Infof]
 	r := slog.NewRecord(time.Now(), slog.LevelInfo, fmt.Sprintf(format, args...), pcs[0])

@@ -62,7 +62,7 @@ func reconstructPath(cameFrom map[string]string, current string) []string {
 }
 
 func AStar(start, goal string, client ClientInterface) []string {
-	logger.LogF("astar start %v goal %v", start, goal)
+	logger.Infof("astar start %v goal %v", start, goal)
 
 	openSet := collections.NewPriorityQueue[string](collections.LessThan)
 	cameFrom := map[string]string{}
@@ -77,10 +77,10 @@ func AStar(start, goal string, client ClientInterface) []string {
 	fScore[start] = startEstimate
 
 	for round := 0; !openSet.IsEmpty(); round++ {
-		logger.LogF("===round %v", round)
-		logger.LogF("open set %v", openSet)
-		logger.LogF("gScore %+v", gScore)
-		logger.LogF("fScore %+v", fScore)
+		logger.Infof("===round %v", round)
+		logger.Infof("open set %v", openSet)
+		logger.Infof("gScore %+v", gScore)
+		logger.Infof("fScore %+v", fScore)
 
 		current, _ := openSet.Next()
 		if client.GoalReached(current, goal) {
@@ -90,13 +90,13 @@ func AStar(start, goal string, client ClientInterface) []string {
 		currentGScore := gScore.Get(current)
 
 		neighbors := client.AllNeighbors(current)
-		logger.LogF("neighbors of %v: %v", current, neighbors)
+		logger.Infof("neighbors of %v: %v", current, neighbors)
 		for _, neighbor := range neighbors {
 			neighborGScore := currentGScore +
 				client.NeighborDistance(current, neighbor)
 
 			if neighborGScore >= gScore.Get(neighbor) {
-				logger.LogF("%v to %v isn't better", current, neighbor)
+				logger.Infof("%v to %v isn't better", current, neighbor)
 				continue // not a better path
 			}
 

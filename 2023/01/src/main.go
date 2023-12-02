@@ -55,7 +55,7 @@ func solveA(input []string) int {
 	total := 0
 	for _, line := range input {
 		num := solveALine(line)
-		logger.LogF("input %v output %v", line, num)
+		logger.Infof("input %v output %v", line, num)
 		total += num
 	}
 
@@ -95,7 +95,7 @@ func solveB(input []string) int {
 	total := 0
 	for _, line := range input {
 		num := solveBLine(line)
-		logger.LogF("input %v output %v", line, num)
+		logger.Infof("input %v output %v", line, num)
 		total += num
 	}
 
