@@ -29,6 +29,7 @@ gazelle(name = "gazelle_cmd")
 
 nogo(
     name = "nogo",
+    config = "nogo.config.json",
     visibility = ["//visibility:public"],
     deps = TOOLS_NOGO,
 )

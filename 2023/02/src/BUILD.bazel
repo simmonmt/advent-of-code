@@ -9,7 +9,7 @@ go_binary(
 go_library(
     name = "src_lib",
     srcs = ["main.go"],
-    importpath = "github.com/simmonmt/aoc/2023/tpl/src",
+    importpath = "github.com/simmonmt/aoc/2023/02/src",
     visibility = ["//visibility:private"],
     deps = [
         "//common/filereader",

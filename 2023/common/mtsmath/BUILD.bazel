@@ -5,14 +5,12 @@ go_library(
     srcs = ["mtsmath.go"],
     importpath = "github.com/simmonmt/aoc/2023/common/mtsmath",
     visibility = ["//visibility:public"],
-    deps = [
-        "//common/testutils",
-        "@org_golang_x_exp//constraints",
-    ],
+    deps = ["@org_golang_x_exp//constraints"],
 )
 
 go_test(
     name = "mtsmath_test",
     srcs = ["mtsmath_test.go"],
     embed = [":mtsmath"],
+    deps = ["//common/testutils"],
 )
