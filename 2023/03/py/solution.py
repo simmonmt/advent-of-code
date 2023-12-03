@@ -10,7 +10,7 @@
 # We make a point of processing the input as a stream. It's more efficient to
 # do it this way (vs reading the entire file into memory).
 
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Generator, Iterator, List, Tuple
 from collections import namedtuple
 
 Finding = namedtuple('Finding', ['loc', 'num'])
@@ -72,7 +72,7 @@ def find_numbers(prev: str, cur: str, next: str, y: int) -> List[Finding]:
     return out
 
 
-def walker(input: Iterable) -> Tuple[str, str, str]:
+def walker(input: Iterator[str]) -> Generator[Lines, None, None]:
     prev, next_ = "", next(input).rstrip()
 
     while next_:
@@ -87,7 +87,7 @@ def walker(input: Iterable) -> Tuple[str, str, str]:
         prev = cur
 
 
-def solve_a(input: Iterable[str]):
+def solve_a(input: Iterator[str]):
     nums: Dict[Pos, int] = {}
     for y, lines in enumerate(walker(input)):
         for finding in find_numbers(lines.prev, lines.cur, lines.next_, y):
@@ -96,7 +96,7 @@ def solve_a(input: Iterable[str]):
     return sum(nums.values())
 
 
-def solve_b(input: Iterable[str]):
+def solve_b(input: Iterator[str]):
     out = 0
     for y, lines in enumerate(walker(input)):
         for x, c in enumerate(lines.cur):
