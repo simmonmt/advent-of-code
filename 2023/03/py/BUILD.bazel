@@ -1,0 +1,17 @@
+py_binary(
+    name = "solution",
+    srcs = ["main.py"],
+    main = "main.py",
+    deps = [":solution_lib"],
+)
+
+py_library(
+    name = "solution_lib",
+    srcs = ["solution.py"],
+)
+
+py_test(
+    name = "solution_test",
+    srcs = ["solution_test.py"],
+    deps = [":solution_lib"],
+)
