@@ -126,6 +126,11 @@ func walkBoard(input []string, cb func(prev, cur, next string, y int)) {
 }
 
 func solveA(input []string) int {
+	// For fun, solve it without needing to keep the entire board in
+	// memory. My boilderplate reads the whole input into the array that's
+	// passed to the solve methods, but the algorithm doesn't depend on
+	// that. walkBoard could just as easily stream its input.
+	//
 	// keep prev, cur, next lines
 	// scan cur. if cur has symbol, look at adjacencies in prev, next.
 	// if number found, parse the whole thing, get starting coords
