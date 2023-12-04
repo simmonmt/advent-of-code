@@ -1,5 +1,7 @@
 import unittest
-from solution import solve_a, solve_b
+import importlib
+
+solution = importlib.import_module('03.py.solution')
 
 SAMPLE_INPUT = [
     '467..114..\n',
@@ -17,10 +19,10 @@ SAMPLE_INPUT = [
 
 class TestSolution(unittest.TestCase):
     def test_solve_a(self):
-        self.assertEqual(solve_a(iter(SAMPLE_INPUT)), 4361)
+        self.assertEqual(solution.solve_a(iter(SAMPLE_INPUT)), 4361)
 
     def test_solve_b(self):
-        self.assertEqual(solve_b(iter(SAMPLE_INPUT)), 467835)
+        self.assertEqual(solution.solve_b(iter(SAMPLE_INPUT)), 467835)
 
 
 if __name__ == '__main__':
