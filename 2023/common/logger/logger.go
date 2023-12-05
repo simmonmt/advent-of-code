@@ -114,3 +114,15 @@ func Infof(format string, args ...any) {
 	r := slog.NewRecord(time.Now(), slog.LevelInfo, fmt.Sprintf(format, args...), pcs[0])
 	_ = slog.Default().Handler().Handle(context.Background(), r)
 }
+
+func Errorf(format string, args ...any) {
+	var pcs [1]uintptr
+	runtime.Callers(2, pcs[:]) // skip [Callers, Errorf]
+	r := slog.NewRecord(time.Now(), slog.LevelError, fmt.Sprintf(format, args...), pcs[0])
+	_ = slog.Default().Handler().Handle(context.Background(), r)
+}
+
+func Fatalf(format string, args ...any) {
+	Errorf(format, args...)
+	os.Exit(1)
+}
