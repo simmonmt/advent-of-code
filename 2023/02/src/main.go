@@ -17,7 +17,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
@@ -179,17 +178,17 @@ func main() {
 	logger.Init(*verbose)
 
 	if *input == "" {
-		log.Fatalf("--input is required")
+		logger.Fatalf("--input is required")
 	}
 
 	lines, err := filereader.Lines(*input)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatalf("failed to read input: %v", err)
 	}
 
 	input, err := parseInput(lines)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatalf("failed to parse input: %v", err)
 	}
 
 	fmt.Println("A", solveA(input))
