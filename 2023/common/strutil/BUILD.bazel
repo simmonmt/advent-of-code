@@ -11,4 +11,5 @@ go_test(
     name = "strutil_test",
     srcs = ["strutil_test.go"],
     embed = [":strutil"],
+    deps = ["@com_github_google_go_cmp//cmp"],
 )

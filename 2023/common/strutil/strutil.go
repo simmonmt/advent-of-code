@@ -49,3 +49,16 @@ func StringDiff(a, b string) (bool, string) {
 
 	return false, ""
 }
+
+func ListOfNumbers(str string) ([]int, error) {
+	parts := strings.Fields(str)
+	out := make([]int, len(parts))
+	for i, part := range parts {
+		num, err := strconv.Atoi(part)
+		if err != nil {
+			return nil, fmt.Errorf("bad number %v: %v", part, err)
+		}
+		out[i] = num
+	}
+	return out, nil
+}
