@@ -59,7 +59,7 @@ func TestParseInput(t *testing.T) {
 		"1 2 3",
 	}
 
-	wantSeedNums := []int{79, 14, 55, 13}
+	wantSeedNums := []int64{79, 14, 55, 13}
 
 	wantGardenMaps := []*GardenMap{
 		&GardenMap{
