@@ -37,40 +37,27 @@ func AtoiOrDie(s string) int {
 	return val
 }
 
-var (
-	kPrimes = []int{
-		2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97,
+func gcd(a, b int64) int64 {
+	for b != 0 {
+		t := b
+		b = a % b
+		a = t
 	}
-)
+	return a
+}
 
-func GCD(vs ...int) int {
-	d := 1
-
-	for _, p := range kPrimes {
-		for {
-			all := true
-			for _, v := range vs {
-				if v < p || v%p != 0 {
-					all = false
-				}
-			}
-
-			if !all {
-				break
-			}
-
-			d *= p
-			for i := range vs {
-				vs[i] /= p
-			}
-		}
+func GCD(nums ...int64) int64 {
+	out := nums[0]
+	for i := 1; i < len(nums); i++ {
+		out = gcd(out, nums[i])
 	}
+	return out
+}
 
-	for _, v := range vs {
-		if v > kPrimes[len(kPrimes)-1] {
-			panic(fmt.Sprintf("%d too big", v))
-		}
+func LCM(nums ...int64) int64 {
+	out := int64(nums[0])
+	for i := 1; i < len(nums); i++ {
+		out = out * (int64(nums[i]) / gcd(out, int64(nums[i])))
 	}
-
-	return d
+	return out
 }

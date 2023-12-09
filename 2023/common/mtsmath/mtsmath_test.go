@@ -3,8 +3,6 @@ package mtsmath
 import (
 	"fmt"
 	"testing"
-
-	"github.com/simmonmt/aoc/2023/common/testutils"
 )
 
 func TestAbs(t *testing.T) {
@@ -28,15 +26,15 @@ func TestAbs(t *testing.T) {
 
 func TestGCD(t *testing.T) {
 	type TestCase struct {
-		vs []int
-		d  int
+		vs []int64
+		d  int64
 	}
 
 	testCases := []TestCase{
-		TestCase{[]int{4, 6}, 2},
-		TestCase{[]int{8, 12}, 4},
-		TestCase{[]int{12, 18}, 6},
-		TestCase{[]int{9, 9}, 9},
+		TestCase{[]int64{4, 6}, 2},
+		TestCase{[]int64{8, 12}, 4},
+		TestCase{[]int64{12, 18}, 6},
+		TestCase{[]int64{9, 9}, 9},
 	}
 
 	for _, tc := range testCases {
@@ -46,7 +44,26 @@ func TestGCD(t *testing.T) {
 			}
 		})
 	}
+}
 
-	// Make sure it lets us know when we need to add more primes
-	testutils.AssertPanic(t, "too big", func() { GCD(101*103, 107*109) })
+func TestLCM(t *testing.T) {
+	type TestCase struct {
+		vs []int64
+		d  int64
+	}
+
+	testCases := []TestCase{
+		TestCase{[]int64{4, 6}, 12},
+		TestCase{[]int64{8, 12}, 24},
+		TestCase{[]int64{5, 18}, 90},
+		TestCase{[]int64{9, 9}, 9},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("%v", tc.vs), func(t *testing.T) {
+			if got := LCM(tc.vs...); got != tc.d {
+				t.Errorf("LCM(%v) = %d, want %d", tc.vs, got, tc.d)
+			}
+		})
+	}
 }
