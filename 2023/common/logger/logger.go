@@ -100,7 +100,7 @@ func (h *logHandler) WithGroup(name string) slog.Handler {
 }
 
 func Init(log bool) {
-	level := slog.Level(0)
+	level := slog.Level(999)
 	if log {
 		level = slog.LevelDebug
 	}
