@@ -12,5 +12,4 @@ go_test(
     name = "mtsmath_test",
     srcs = ["mtsmath_test.go"],
     embed = [":mtsmath"],
-    deps = ["//common/testutils"],
 )
