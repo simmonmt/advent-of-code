@@ -17,10 +17,10 @@ package main
 import (
 	_ "embed"
 	"os"
-	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/simmonmt/aoc/2023/common/logger"
 )
 
@@ -36,9 +36,8 @@ func TestParseInput(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !reflect.DeepEqual(input, sampleLines) {
-		t.Errorf("parseInput(sampleLines) = %v, want %v",
-			input, sampleLines)
+	if diff := cmp.Diff(sampleLines, input); diff != "" {
+		t.Errorf("parseInput mismatch; -want,+got:\n%s\n", diff)
 	}
 }
 
