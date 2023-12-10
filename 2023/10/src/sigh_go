@@ -1,0 +1,133 @@
+import (
+	"strconv"
+
+	"github.com/simmonmt/aoc/2023/common/dir"
+	"github.com/simmonmt/aoc/2023/common/logger"
+	"github.com/simmonmt/aoc/2023/common/pos"
+)
+
+func ignore() {
+	// nodeIDPath started at A, so the first element is the position chosen
+	// *after* A. We therefore need to pre-add it.
+	pathPositions := map[pos.P2]bool{startNode.A: true}
+	for _, nid := range nodeIDPath {
+		p, _ := pos.P2FromString(string(nid))
+		pathPositions[p] = true
+	}
+
+	equivTo := map[int]int{}
+	components := map[pos.P2]int{}
+	componentSizes := map[int]int{}
+	edgeComponents := map[int]bool{}
+	nextComponent := 1
+
+	g.Walk(func(p pos.P2, node Node) {
+		if _, found := pathPositions[p]; found {
+			return // skip -- it's on the loop
+		}
+
+		isEdge := false
+		north := dir.DIR_NORTH.From(p)
+		northComponent := -1
+		if !g.IsValid(north) {
+			isEdge = true
+		} else {
+			if c, found := components[north]; found {
+				northComponent = c
+			}
+		}
+
+		west := dir.DIR_WEST.From(p)
+		westComponent := -1
+		if !g.IsValid(west) {
+			isEdge = true
+		} else {
+			if c, found := components[west]; found {
+				westComponent = c
+			}
+		}
+
+		if !g.IsValid(dir.DIR_EAST.From(p)) || !g.IsValid(dir.DIR_SOUTH.From(p)) {
+			isEdge = true
+		}
+
+		curComponent := -1
+
+		if northComponent == -1 && westComponent == -1 {
+			// No component neighbors
+			curComponent = nextComponent
+			nextComponent++
+		} else if (northComponent == -1) != (westComponent == -1) {
+			// One adjacent component
+			curComponent = max(northComponent, westComponent) // one is -1
+		} else if northComponent == westComponent {
+			// Both adjacent in same component
+			curComponent = northComponent // arbitrary choice
+		} else {
+			// Intersection between two components we thought were
+			// different but are actually the same. Continue
+			// labeling with the older component number and note the
+			// equivalence.
+			oldest, newest := min(northComponent, westComponent),
+				max(northComponent, westComponent)
+
+			curComponent = oldest
+			equivTo[newest] = oldest
+		}
+
+		components[p] = curComponent
+		componentSizes[curComponent]++
+		if isEdge {
+			edgeComponents[curComponent] = true
+		}
+	})
+
+	// We built equivalency relationships while we walked the graph and
+	// discovered components that unexpectedly turned out to be the
+	// same. Propagate sizes (newest to oldest) and edgeness (edge to
+	// interior).
+	changed := true
+	for changed {
+		changed = false
+
+		for from, to := range equivTo {
+			if sz, found := componentSizes[from]; found {
+				changed = true
+				componentSizes[to] += sz
+				delete(componentSizes, from)
+			}
+
+			if _, found := edgeComponents[to]; found {
+				if _, found := edgeComponents[from]; !found {
+					changed = true
+					edgeComponents[from] = true
+				}
+			}
+		}
+	}
+
+	if logger.IsVerbose() {
+		g.Dump(true, func(p pos.P2, node Node, _ bool) string {
+			if _, found := pathPositions[p]; found {
+				return "X"
+			}
+			if num, found := components[p]; found {
+				return strconv.Itoa(num)
+			}
+			return " "
+		})
+
+		logger.Infof("equiv %v", equivTo)
+		logger.Infof("edgeComponents %v", edgeComponents)
+		logger.Infof("componentSizes %v", componentSizes)
+	}
+
+	out := 0
+	for num, sz := range componentSizes {
+		if _, found := edgeComponents[num]; found {
+			continue
+		}
+		out += sz
+	}
+	return out
+}
