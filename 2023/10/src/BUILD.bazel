@@ -29,6 +29,5 @@ go_test(
     deps = [
         "//common/filereader",
         "//common/logger",
-        "@com_github_google_go_cmp//cmp",
     ],
 )
