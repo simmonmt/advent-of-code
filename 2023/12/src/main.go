@@ -234,7 +234,7 @@ func isExact(r Range, size int) bool {
 }
 
 func constrainSpring(spring *Spring) ([]CellState, []Range) {
-	logger.Infof("constrainSpring %v", spring)
+	//logger.Infof("constrainSpring %v", spring)
 
 	states := make([]CellState, len(spring.States))
 	copy(states, spring.States)
@@ -314,7 +314,7 @@ type RangeIterator struct {
 }
 
 func newRangeIterator(ranges []Range, sizes []int) *RangeIterator {
-	logger.Infof("new ri %v %v", ranges, sizes)
+	//logger.Infof("new ri %v %v", ranges, sizes)
 
 	rc := make([]Range, len(ranges))
 	copy(rc, ranges)
@@ -463,8 +463,8 @@ func isValid(states []CellState, ranges []Range) bool {
 func solveSpring(spring *Spring) int {
 	states, constraints := constrainSpring(spring)
 
-	logger.Infof("constrain results: states %s constraints %v sizes %v",
-		states, constraints, spring.Sizes)
+	//logger.Infof("constrain results: states %s constraints %v sizes %v",
+	//	states, constraints, spring.Sizes)
 
 	mine := solveSpringWithConstraints(states, constraints, spring.Sizes)
 
@@ -479,7 +479,7 @@ func solveSpring(spring *Spring) int {
 	// 	panic(fmt.Sprintf("mismatch, mine %d slow %d", mine, slow))
 	// }
 
-	logger.Infof("spring %v combinations %v", spring, mine)
+	//logger.Infof("spring %v combinations %v", spring, mine)
 	return mine
 }
 
@@ -563,14 +563,14 @@ func solveBSpring(spring *Spring) int {
 
 	states, constraints := constrainSpring(&ns)
 
-	logger.Infof("states %v", states)
-	logger.Infof("constraints %v", constraints)
+	//logger.Infof("states %v", states)
+	//logger.Infof("constraints %v", constraints)
 
 	v := make([]int, len(ns.States))
 
 	last := len(constraints) - 1
 	for _, r := range allPossibleRev(constraints[last], ns.Sizes[last]) {
-		logger.Infof("last rev %v", r)
+		//logger.Infof("last rev %v", r)
 		if isValid(states[r.Left:], []Range{Range{0, r.Right - r.Left}}) {
 			v[r.Left] = 1
 		}
@@ -579,7 +579,7 @@ func solveBSpring(spring *Spring) int {
 	for i := last - 1; i >= 0; i-- {
 		v2 := make([]int, len(ns.States))
 		for _, r := range allPossibleRev(constraints[i], ns.Sizes[i]) {
-			logger.Infof("prev rev %v", r)
+			//logger.Infof("prev rev %v", r)
 			for j := r.Right + 2; j < len(states); j++ {
 				if isValid(states[r.Left:j], []Range{Range{0, r.Right - r.Left}}) {
 					v2[r.Left] += v[j]
@@ -587,7 +587,7 @@ func solveBSpring(spring *Spring) int {
 			}
 		}
 
-		logger.Infof("i %v ct %v size %v v2 %v", i, constraints[i], ns.Sizes[i], v2)
+		//logger.Infof("i %v ct %v size %v v2 %v", i, constraints[i], ns.Sizes[i], v2)
 
 		v = v2
 	}

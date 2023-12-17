@@ -269,7 +269,7 @@ func TestSolveA(t *testing.T) {
 func TestSolveBSpring(t *testing.T) {
 	input := &Spring{States: CellStatesFromString(".??..??...?##."), Sizes: []int{1, 1, 3}}
 
-	if got, want := solveBSpring(input), 1; got != want {
+	if got, want := solveBSpring(input), 16384; got != want {
 		t.Errorf("solveBSpring = %d, want %d", got, want)
 	}
 }
