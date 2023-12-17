@@ -118,6 +118,14 @@ func NewFromLines[T any](lines []string, cellMapper func(p pos.P2, r rune) (T, e
 	return g, nil
 }
 
+func (g *Grid[T]) Clone() *Grid[T] {
+	ng := New[T](g.w, g.h)
+	g.Walk(func(p pos.P2, val T) {
+		ng.Set(p, val)
+	})
+	return ng
+}
+
 func (g *Grid[T]) Start() pos.P2 {
 	return pos.P2{X: 0, Y: 0}
 }
@@ -144,10 +152,10 @@ func (g *Grid[T]) Set(p pos.P2, v T) {
 }
 
 func (g *Grid[T]) Get(p pos.P2) (T, bool) {
-	off := p.Y*g.w + p.X
-	if off < 0 || off >= len(g.a) {
+	if !g.IsValid(p) {
 		return g.a[0], false
 	}
+	off := p.Y*g.w + p.X
 	return g.a[off], true
 }
 
