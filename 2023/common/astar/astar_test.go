@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/simmonmt/aoc/2023/common/logger"
@@ -76,6 +77,17 @@ func (h *aStarHelper) GoalReached(cand, goal string) bool {
 	return cand == goal
 }
 
+func (h *aStarHelper) Serialize(node string) string {
+	return "ZZ" + node
+}
+
+func (h *aStarHelper) Deserialize(val string) (string, error) {
+	if !strings.HasPrefix(val, "ZZ") {
+		return "", fmt.Errorf("no prefix")
+	}
+	return val[2:], nil
+}
+
 func TestAStar(t *testing.T) {
 	helper := aStarHelper{
 		nodes: map[string]helperNode{
@@ -92,7 +104,9 @@ func TestAStar(t *testing.T) {
 		},
 	}
 
-	result := AStar("start", "end", &helper)
+	solver := New("start", "end", &helper)
+	result := solver.Solve()
+
 	expected := []string{"end", "e", "d3", "d2", "d1", "d", "start"}
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("start->end, got %v, want %v", result, expected)

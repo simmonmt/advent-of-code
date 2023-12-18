@@ -8,6 +8,7 @@ go_library(
     deps = [
         "//common/collections",
         "//common/logger",
+        "//common/pos",
     ],
 )
 
