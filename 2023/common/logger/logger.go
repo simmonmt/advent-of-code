@@ -108,18 +108,24 @@ func Init(log bool) {
 	slog.SetDefault(slog.New(newLogHandler(os.Stderr, level)))
 }
 
-func Infof(format string, args ...any) {
+func doLog(level slog.Level, format string, args ...any) {
+	handler := slog.Default().Handler()
+	if !handler.Enabled(context.Background(), level) {
+		return
+	}
+
 	var pcs [1]uintptr
-	runtime.Callers(2, pcs[:]) // skip [Callers, Infof]
-	r := slog.NewRecord(time.Now(), slog.LevelInfo, fmt.Sprintf(format, args...), pcs[0])
-	_ = slog.Default().Handler().Handle(context.Background(), r)
+	runtime.Callers(3, pcs[:]) // skip [Callers, doLog, Infof]
+	r := slog.NewRecord(time.Now(), level, fmt.Sprintf(format, args...), pcs[0])
+	_ = handler.Handle(context.Background(), r)
+}
+
+func Infof(format string, args ...any) {
+	doLog(slog.LevelInfo, format, args...)
 }
 
 func Errorf(format string, args ...any) {
-	var pcs [1]uintptr
-	runtime.Callers(2, pcs[:]) // skip [Callers, Errorf]
-	r := slog.NewRecord(time.Now(), slog.LevelError, fmt.Sprintf(format, args...), pcs[0])
-	_ = slog.Default().Handler().Handle(context.Background(), r)
+	doLog(slog.LevelError, format, args...)
 }
 
 func Fatalf(format string, args ...any) {
