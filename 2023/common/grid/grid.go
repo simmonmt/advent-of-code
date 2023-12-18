@@ -69,6 +69,7 @@ func dumpTo[V any, T dumpableGrid[V]](g T, withCoords bool, mapper func(p pos.P2
 			fmt.Fprintln(bw)
 			div /= 10
 		}
+		fmt.Fprintln(bw)
 	}
 
 	for i := 0; i < len(rows); i++ {
