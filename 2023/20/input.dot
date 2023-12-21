@@ -1,0 +1,169 @@
+digraph {
+tx [label="%tx 8"]
+tx -> dx;
+nx [label="%nx"]
+nx -> fn;
+nx -> rn;
+nr [label="%nr"]
+nr -> cj;
+nr -> mh;
+nk [label="%nk"]
+nk -> jt;
+nk -> vk;
+mv [label="%mv"]
+mv -> fk;
+mv -> rn;
+pz [label="&pz >3760"]
+pz -> kt;
+pz -> pg;
+pz -> mb;
+pz -> vr;
+pz -> hp;
+pz -> jp;
+pz -> tx;
+jt [label="&jt"]
+jt -> fb;
+jt -> zb;
+jt -> jq;
+jt -> sv;
+jt -> lp;
+vp [label="%vp"]
+vp -> lp;
+vp -> jt;
+qs [label="&qs"]
+qs -> gf;
+lj [label="%lj"]
+lj -> jt;
+lj -> dt;
+jh [label="%jh"]
+jh -> mh;
+xc [label="%xc"]
+xc -> nx;
+hx [label="%hx"]
+hx -> xb;
+kd [label="%kd 1024"]
+kd -> pz;
+kd -> pp;
+jq [label="%jq"]
+jq -> jt;
+jq -> qt;
+lp [label="%lp"]
+lp -> jm;
+ph [label="%ph 32"]
+ph -> mb;
+ph -> pz;
+sv [label="&sv"]
+sv -> gf;
+ff [label="%ff"]
+ff -> xc;
+th [label="%th"]
+th -> mh;
+th -> hx;
+kt [label="%kt 256"]
+kt -> ct;
+ct [label="%ct 512"]
+ct -> kd;
+ct -> pz;
+mh [label="&mh"]
+mh -> bc;
+mh -> qs;
+mh -> hx;
+mh -> xb;
+mh -> nv;
+pg [label="&pg"]
+pg -> gf;
+fn [label="%fn"]
+fn -> kn;
+sk [label="%sk"]
+sk -> hr;
+nv [label="%nv"]
+nv -> mh;
+nv -> th;
+dx [label="%dx 16"]
+dx -> pz;
+dx -> ph;
+broadcaster [label="broadcaster"]
+broadcaster -> bx;
+broadcaster -> jq;
+broadcaster -> nv;
+broadcaster -> jp;
+dt [label="%dt"]
+dt -> jt;
+dt -> zb;
+fx [label="%fx"]
+fx -> sk;
+fx -> rn;
+rv [label="%rv"]
+rv -> rn;
+gv [label="%gv"]
+gv -> mh;
+gv -> nr;
+fk [label="%fk"]
+fk -> rn;
+fk -> rv;
+cj [label="%cj"]
+cj -> mh;
+cj -> vh;
+xk [label="%xk"]
+xk -> jt;
+xk -> nk;
+vh [label="%vh"]
+vh -> mh;
+vh -> jh;
+zb [label="%zb"]
+zb -> fb;
+mb [label="%mb 64"]
+mb -> jc;
+kn [label="%kn"]
+kn -> rn;
+kn -> mv;
+jc [label="%jc 128"]
+jc -> pz;
+jc -> kt;
+sp [label="&sp"]
+sp -> gf;
+hp [label="%hp 4"]
+hp -> tx;
+jf [label="%jf"]
+jf -> bc;
+jf -> mh;
+fb [label="%fb"]
+fb -> vp;
+xm [label="%xm"]
+xm -> mh;
+xm -> gv;
+jm [label="%jm"]
+jm -> jt;
+jm -> xk;
+vr [label="%vr 2"]
+vr -> hp;
+hr [label="%hr"]
+hr -> ff;
+jp [label="%jp 1"]
+jp -> pz;
+jp -> vr;
+rn [label="&rn"]
+rn -> fn;
+rn -> hr;
+rn -> bx;
+rn -> ff;
+rn -> xc;
+rn -> sp;
+rn -> sk;
+pp [label="%pp 2048"]
+pp -> pz;
+gf [label="&gf"]
+gf -> rx;
+xb [label="%xb"]
+xb -> jf;
+bx [label="%bx"]
+bx -> rn;
+bx -> fx;
+bc [label="%bc"]
+bc -> xm;
+qt [label="%qt"]
+qt -> lj;
+qt -> jt;
+vk [label="%vk"]
+vk -> jt;
+}
