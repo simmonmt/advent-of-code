@@ -26,8 +26,5 @@ go_test(
         "sample.txt",
         "sample2.txt",
     ],
-    deps = [
-        "//common/logger",
-        "@com_github_google_go_cmp//cmp",
-    ],
+    deps = ["//common/logger"],
 )
