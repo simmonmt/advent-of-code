@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_binary(
+    name = "solution",
+    embed = [":src_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "src_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/simmonmt/aoc/2023/22/src",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//common/filereader",
+        "//common/grid",
+        "//common/logger",
+        "//common/mtsmath",
+        "//common/pos",
+    ],
+)
+
+go_test(
+    name = "src_test",
+    srcs = ["main_test.go"],
+    embed = [":src_lib"],
+    embedsrcs = ["sample.txt"],
+    deps = [
+        "//common/logger",
+        "//common/pos",
+        "@com_github_google_go_cmp//cmp",
+    ],
+)
