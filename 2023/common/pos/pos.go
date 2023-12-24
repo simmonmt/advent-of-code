@@ -115,6 +115,16 @@ func (p *P3) Equals(o P3) bool {
 	return p.X == o.X && p.Y == o.Y && p.Z == o.Z
 }
 
+func (p P3) LessThan(o P3) bool {
+	if o.X != p.X {
+		return o.X < p.X
+	}
+	if o.Y != p.Y {
+		return o.Y < p.Y
+	}
+	return o.Z < p.Z
+}
+
 func P3FromString(str string) (P3, error) {
 	vs, err := fromString(str, 3)
 	if err != nil {
