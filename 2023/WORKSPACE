@@ -2,24 +2,24 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "io_bazel_rules_go",
-    sha256 = "d6ab6b57e48c09523e93050f13698f708428cfd5e619252e369d377af6597707",
+    integrity = "sha256-M6zErg9wUC20uJPJ/B3Xqb+ZjCPn/yxFF3QdQEmpdvg=",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.43.0/rules_go-v0.43.0.zip",
-        "https://github.com/bazelbuild/rules_go/releases/download/v0.43.0/rules_go-v0.43.0.zip",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.48.0/rules_go-v0.48.0.zip",
+        "https://github.com/bazelbuild/rules_go/releases/download/v0.48.0/rules_go-v0.48.0.zip",
     ],
 )
 
 http_archive(
     name = "bazel_gazelle",
-    sha256 = "b7387f72efb59f876e4daae42f1d3912d0d45563eac7cb23d1de0b094ab588cf",
+    integrity = "sha256-12v3pg/YsFBEQJDfooN6Tq+YKeEWVhjuNdzspcvfWNU=",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.34.0/bazel-gazelle-v0.34.0.tar.gz",
-        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.34.0/bazel-gazelle-v0.34.0.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.37.0/bazel-gazelle-v0.37.0.tar.gz",
+        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.37.0/bazel-gazelle-v0.37.0.tar.gz",
     ],
 )
 
-load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
+load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
 
 # Use gazelle to declare Go dependencies in Bazel.
 # gazelle:repository_macro go_repositories.bzl%go_repositories
@@ -35,50 +35,3 @@ go_register_toolchains(
 )
 
 gazelle_dependencies()
-
-http_archive(
-    name = "buildifier_prebuilt",
-    sha256 = "72b5bb0853aac597cce6482ee6c62513318e7f2c0050bc7c319d75d03d8a3875",
-    strip_prefix = "buildifier-prebuilt-6.3.3",
-    urls = [
-        "http://github.com/keith/buildifier-prebuilt/archive/6.3.3.tar.gz",
-    ],
-)
-
-load("@buildifier_prebuilt//:deps.bzl", "buildifier_prebuilt_deps")
-
-buildifier_prebuilt_deps()
-
-load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
-
-bazel_skylib_workspace()
-
-load("@buildifier_prebuilt//:defs.bzl", "buildifier_prebuilt_register_toolchains")
-
-buildifier_prebuilt_register_toolchains()
-
-http_archive(
-    name = "mypy_integration",
-    sha256 = "ffb9b0813e03f7147b1e182ab59cdd2e662c9566d91a4f97361e6db39185beaa",
-    strip_prefix = "bazel-mypy-integration-863fde2e91d9b4e3d9ba1c6b3a84d0a1fee2d1b5",
-    url = "https://github.com/thundergolfer/bazel-mypy-integration/archive/863fde2e91d9b4e3d9ba1c6b3a84d0a1fee2d1b5.zip",
-)
-
-load(
-    "@mypy_integration//repositories:repositories.bzl",
-    mypy_integration_repositories = "repositories",
-)
-
-mypy_integration_repositories()
-
-load("@mypy_integration//:config.bzl", "mypy_configuration")
-
-# Optionally pass a MyPy config file, otherwise pass no argument.
-# mypy_configuration("//tools/typing:mypy.ini")
-mypy_configuration()
-
-load("@mypy_integration//repositories:deps.bzl", mypy_integration_deps = "deps")
-
-mypy_integration_deps(
-    mypy_requirements_file = "//:mypy_version.txt",
-)
