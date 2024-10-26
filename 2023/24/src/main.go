@@ -20,6 +20,7 @@ import (
 	"strconv"
 	"strings"
 
+	z3 "github.com/aclements/go-z3/z3"
 	"github.com/simmonmt/aoc/2023/common/filereader"
 	"github.com/simmonmt/aoc/2023/common/logger"
 	"github.com/simmonmt/aoc/2023/common/pos"
@@ -94,7 +95,7 @@ func Intersects(a, b *Stone2D, lo, hi float64) bool {
 	bt := (x - float64(b.Spec.P.X)) / float64(b.Spec.V.X)
 
 	intersects := x >= lo && x <= hi && y >= lo && y <= hi
-	logger.Infof("%v and %v %v at %v bt %v pos %v,%v", *a, *b, intersects, at, bt, x, y)
+	//logger.Infof("%v and %v %v at %v bt %v pos %v,%v", *a, *b, intersects, at, bt, x, y)
 
 	return intersects && at >= 0 && bt >= 0
 }
@@ -120,8 +121,129 @@ func solveA(specs []StoneSpec, lo, hi float64) int {
 	return num
 }
 
-func solveB(stones []StoneSpec) int {
-	return -1
+func makeInt[K int | int64](ctx *z3.Context, num K) z3.Int {
+	return ctx.FromInt(int64(num), ctx.IntSort()).(z3.Int)
+}
+
+func modelInt(model *z3.Model, zi z3.Value) int64 {
+	v, isLiteral, ok := model.Eval(zi, true).(z3.Int).AsInt64()
+	if !ok || !isLiteral {
+		logger.Fatalf("eval %v => v %v isLiteral %v ok %v",
+			zi, v, isLiteral, ok)
+	}
+	return v
+}
+
+type Z3Pos struct {
+	X, Y, Z z3.Int
+}
+
+func verifyPath(stone StoneSpec, projPos, projVel [3]int64) error {
+	ctx := z3.NewContext(nil)
+	solver := z3.NewSolver(ctx)
+
+	t := ctx.IntConst("t")
+
+	solver.Assert(
+		makeInt(ctx, stone.P.X).Add(makeInt(ctx, stone.V.X).Mul(t)).Eq(
+			makeInt(ctx, projPos[0]).Add(makeInt(ctx, projVel[0]).Mul(t))))
+	solver.Assert(
+		makeInt(ctx, stone.P.Y).Add(makeInt(ctx, stone.V.Y).Mul(t)).Eq(
+			makeInt(ctx, projPos[1]).Add(makeInt(ctx, projVel[1]).Mul(t))))
+	solver.Assert(
+		makeInt(ctx, stone.P.Z).Add(makeInt(ctx, stone.V.Z).Mul(t)).Eq(
+			makeInt(ctx, projPos[2]).Add(makeInt(ctx, projVel[2]).Mul(t))))
+
+	if sat, err := solver.Check(); !sat || err != nil {
+		return fmt.Errorf("check failed: sat %v err %v", sat, err)
+	}
+	tVal := modelInt(solver.Model(), t)
+
+	logger.Infof("stone %v at t=%v", stone, tVal)
+	return nil
+}
+
+func verifyPaths(stones []StoneSpec, projPos, projVel [3]int64) error {
+	for i := 0; i < len(stones); i++ {
+		if err := verifyPath(stones[i], projPos, projVel); err != nil {
+			return fmt.Errorf("failed to verify stone %d %v: %v",
+				i, stones[i], err)
+		}
+	}
+	return nil
+}
+
+func solveB(stones []StoneSpec) int64 {
+	ctx := z3.NewContext(nil)
+
+	solver := z3.NewSolver(ctx)
+
+	projZ3Pos := Z3Pos{
+		X: ctx.IntConst("projPosX"),
+		Y: ctx.IntConst("projPosY"),
+		Z: ctx.IntConst("projPosZ"),
+	}
+
+	projZ3Vel := Z3Pos{
+		X: ctx.IntConst("projVelX"),
+		Y: ctx.IntConst("projVelY"),
+		Z: ctx.IntConst("projVelZ"),
+	}
+
+	tZ3 := [3]z3.Int{
+		ctx.IntConst("ta"),
+		ctx.IntConst("tb"),
+		ctx.IntConst("tc"),
+	}
+
+	for i := 0; i < 3; i++ {
+		stonePos := [3]z3.Int{
+			makeInt(ctx, stones[i].P.X),
+			makeInt(ctx, stones[i].P.Y),
+			makeInt(ctx, stones[i].P.Z),
+		}
+
+		stoneVel := [3]z3.Int{
+			makeInt(ctx, stones[i].V.X),
+			makeInt(ctx, stones[i].V.Y),
+			makeInt(ctx, stones[i].V.Z),
+		}
+
+		solver.Assert(
+			stonePos[0].Add(stoneVel[0].Mul(tZ3[i])).Eq(
+				projZ3Pos.X.Add(projZ3Vel.X.Mul(tZ3[i]))))
+		solver.Assert(
+			stonePos[1].Add(stoneVel[1].Mul(tZ3[i])).Eq(
+				projZ3Pos.Y.Add(projZ3Vel.Y.Mul(tZ3[i]))))
+		solver.Assert(
+			stonePos[2].Add(stoneVel[2].Mul(tZ3[i])).Eq(
+				projZ3Pos.Z.Add(projZ3Vel.Z.Mul(tZ3[i]))))
+	}
+
+	if sat, err := solver.Check(); !sat || err != nil {
+		logger.Fatalf("check failed: sat %v err %v", sat, err)
+	}
+	model := solver.Model()
+
+	projPos := [3]int64{
+		modelInt(model, projZ3Pos.X),
+		modelInt(model, projZ3Pos.Y),
+		modelInt(model, projZ3Pos.Z),
+	}
+
+	projVel := [3]int64{
+		modelInt(model, projZ3Vel.X),
+		modelInt(model, projZ3Vel.Y),
+		modelInt(model, projZ3Vel.Z),
+	}
+
+	if err := verifyPaths(stones, projPos, projVel); err != nil {
+		logger.Fatalf("bad verify: %v", err)
+	}
+
+	logger.Infof("result: pos %v, vel %v", projPos, projVel)
+
+	return projPos[0] + projPos[1] + projPos[2]
 }
 
 func main() {

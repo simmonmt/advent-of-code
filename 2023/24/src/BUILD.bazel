@@ -15,6 +15,7 @@ go_library(
         "//common/filereader",
         "//common/logger",
         "//common/pos",
+        "@com_github_aclements_go_z3//z3",
     ],
 )
 
