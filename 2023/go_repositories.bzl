@@ -14,3 +14,9 @@ def go_repositories():
         sum = "h1:Gvh4YaCaXNs6dKTlfgismwWZKyjVZXwOPfIyUaqU3No=",
         version = "v0.0.0-20231127185646-65229373498e",
     )
+
+    go_repository(
+        name = "com_github_aclements_go_z3",
+        importpath = "github.com/aclements/go-z3",
+        commit = "4675d5f90ca5778e64e8686b1f11401b9d16521e",
+    )
