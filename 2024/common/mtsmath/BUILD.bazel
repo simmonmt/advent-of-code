@@ -1,0 +1,15 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "mtsmath",
+    srcs = ["mtsmath.go"],
+    importpath = "github.com/simmonmt/aoc/2024/common/mtsmath",
+    visibility = ["//visibility:public"],
+    deps = ["@org_golang_x_exp//constraints"],
+)
+
+go_test(
+    name = "mtsmath_test",
+    srcs = ["mtsmath_test.go"],
+    embed = [":mtsmath"],
+)
