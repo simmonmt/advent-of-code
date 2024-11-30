@@ -79,7 +79,8 @@ func (h *logHandler) Handle(ctx context.Context, r slog.Record) error {
 	if r.PC != 0 {
 		fs := runtime.CallersFrames([]uintptr{r.PC})
 		f, _ := fs.Next()
-		buf = fmt.Appendf(buf, fmt.Sprintf(" %s:%d", filepath.Base(f.File), f.Line))
+		buf = fmt.Append(buf,
+			fmt.Sprintf(" %s:%d", filepath.Base(f.File), f.Line))
 	}
 	buf = append(buf, ' ')
 	buf = append(buf, []byte(r.Message)...)
