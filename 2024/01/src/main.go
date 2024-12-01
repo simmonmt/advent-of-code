@@ -4,8 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"sort"
-	"strconv"
-	"strings"
 
 	"github.com/simmonmt/aoc/2024/common/filereader"
 	"github.com/simmonmt/aoc/2024/common/logger"
@@ -21,20 +19,13 @@ func parseInput(lines []string) (as, bs []int, err error) {
 	as, bs = []int{}, []int{}
 
 	for i, line := range lines {
-		astr, rest, _ := strings.Cut(line, " ")
-		bstr := strings.TrimSpace(rest)
-
-		n, err := strconv.Atoi(astr)
-		if err != nil {
-			return nil, nil, fmt.Errorf("%d: bad a: %v", i+1, err)
+		var a, b int
+		if _, err := fmt.Sscanf(line, "%d %d\n", &a, &b); err != nil {
+			return nil, nil, fmt.Errorf("%d bad input: %v", i+1, err)
 		}
-		as = append(as, n)
 
-		n, err = strconv.Atoi(bstr)
-		if err != nil {
-			return nil, nil, fmt.Errorf("%d: bad b: %v", i+1, err)
-		}
-		bs = append(bs, n)
+		as = append(as, a)
+		bs = append(bs, b)
 	}
 
 	return as, bs, nil
