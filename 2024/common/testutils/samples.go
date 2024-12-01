@@ -13,7 +13,7 @@ import (
 type SampleTestCase struct {
 	File         string
 	Body         []string
-	WantInput    []string
+	WantInput    any
 	WantA, WantB int64
 }
 
