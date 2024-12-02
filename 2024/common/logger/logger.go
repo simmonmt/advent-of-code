@@ -131,5 +131,6 @@ func Errorf(format string, args ...any) {
 
 func Fatalf(format string, args ...any) {
 	Errorf(format, args...)
+	fmt.Fprintf(os.Stderr, format+"\n", args...)
 	os.Exit(1)
 }
