@@ -42,6 +42,10 @@ func TestParseInput(t *testing.T) {
 
 func TestSolveA(t *testing.T) {
 	for _, tc := range sampleTestCases {
+		if tc.WantA == -1 {
+			continue
+		}
+
 		t.Run(tc.File, func(t *testing.T) {
 			input, err := parseInput(tc.Body)
 			if err != nil {
@@ -57,6 +61,10 @@ func TestSolveA(t *testing.T) {
 
 func TestSolveB(t *testing.T) {
 	for _, tc := range sampleTestCases {
+		if tc.WantB == -1 {
+			continue
+		}
+
 		t.Run(tc.File, func(t *testing.T) {
 			input, err := parseInput(tc.Body)
 			if err != nil {
