@@ -30,6 +30,21 @@ var (
 	AllDirs = []Dir{DIR_NORTH, DIR_SOUTH, DIR_WEST, DIR_EAST}
 )
 
+func ParseIcon(r rune) (Dir, bool) {
+	switch r {
+	case '^':
+		return DIR_NORTH, true
+	case 'v':
+		return DIR_SOUTH, true
+	case '<':
+		return DIR_WEST, true
+	case '>':
+		return DIR_EAST, true
+	default:
+		return DIR_UNKNOWN, false
+	}
+}
+
 func Parse(str string) Dir {
 	switch str {
 	case "N":
