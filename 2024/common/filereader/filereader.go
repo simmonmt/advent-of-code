@@ -82,10 +82,10 @@ func blankSeparatedGroupsFromReader(r io.Reader) ([][]string, error) {
 		return nil, err
 	}
 
-	return BlankSeparatedGroupsFromLines(lines)
+	return BlankSeparatedGroupsFromLines(lines), nil
 }
 
-func BlankSeparatedGroupsFromLines(lines []string) ([][]string, error) {
+func BlankSeparatedGroupsFromLines(lines []string) [][]string {
 	// So we don't have to special-case the loop end
 	lines = lines[:]
 	lines = append(lines, "")
@@ -104,7 +104,7 @@ func BlankSeparatedGroupsFromLines(lines []string) ([][]string, error) {
 		curGroup = append(curGroup, line)
 	}
 
-	return groups, nil
+	return groups
 }
 
 func ParseNumbersFromLine(line string) ([]int, error) {

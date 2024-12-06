@@ -44,9 +44,9 @@ func TestBlankSeparatedGroupsFromReader(t *testing.T) {
 func TestBlankSeparatedGroupsFromLines(t *testing.T) {
 	in := []string{"a", "b", "", "d"}
 	want := [][]string{[]string{"a", "b"}, []string{"d"}}
-	if got, err := BlankSeparatedGroupsFromLines(in); err != nil || !reflect.DeepEqual(got, want) {
-		t.Errorf(`BlankSeparatedGroupsFromLines("%v") = %v, %v, want %v, nil`,
-			in, got, err, want)
+	if got := BlankSeparatedGroupsFromLines(in); !reflect.DeepEqual(got, want) {
+		t.Errorf(`BlankSeparatedGroupsFromLines("%v") = %v, want %v`,
+			in, got, want)
 	}
 }
 
