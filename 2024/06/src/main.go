@@ -3,6 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
+	"os"
+	"runtime/pprof"
 
 	"github.com/simmonmt/aoc/2024/common/dir"
 	"github.com/simmonmt/aoc/2024/common/filereader"
@@ -12,8 +15,9 @@ import (
 )
 
 var (
-	verbose = flag.Bool("verbose", false, "verbose")
-	input   = flag.String("input", "", "input file")
+	verbose    = flag.Bool("verbose", false, "verbose")
+	input      = flag.String("input", "", "input file")
+	cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 )
 
 type Input struct {
@@ -44,11 +48,6 @@ func parseInput(lines []string) (*Input, error) {
 	return input, err
 }
 
-type State struct {
-	p pos.P2
-	d dir.Dir
-}
-
 type Result int
 
 const (
@@ -56,17 +55,28 @@ const (
 	LOOP
 )
 
-func runMaze(input *Input, obs pos.P2) (map[pos.P2]bool, Result) {
-	states := map[State]bool{}
+func runMaze(input *Input, obs pos.P2, keepVisited bool) (map[pos.P2]bool, Result) {
+	// The run time of this function is dominated by access time to
+	// 'states'. If it's a map, depending on how complicated the key is, the
+	// runtime (A+B) can be close to 15s. Simpler keys and preallocated maps
+	// reduce the time somewhat, but hashing is still expensive. Nothing
+	// beats a preallocated array, which takes it down to 480ms (A+B).
+	w, h := input.G.Width(), input.G.Height()
+	states := make([]bool, w*h*5)
 	result := TERMINATED
+	visited := map[pos.P2]bool{}
 
 	for p, d := input.StartPos, input.StartDir; input.G.IsValid(p); {
-		s := State{p, d}
-		if _, found := states[s]; found {
+		i := int(d)*w*h + p.X*h + p.Y
+		if states[i] {
 			result = LOOP
 			break
 		}
-		states[s] = true
+		states[i] = true
+
+		if keepVisited {
+			visited[p] = true
+		}
 
 		nd := d
 		np := d.From(p)
@@ -94,16 +104,11 @@ func runMaze(input *Input, obs pos.P2) (map[pos.P2]bool, Result) {
 		p, d = np, nd
 	}
 
-	visited := map[pos.P2]bool{}
-	for s := range states {
-		visited[s.p] = true
-	}
-
 	return visited, result
 }
 
 func solveA(input *Input) int64 {
-	visited, result := runMaze(input, pos.P2{X: -99, Y: -99})
+	visited, result := runMaze(input, pos.P2{X: -99, Y: -99}, true)
 	if result != TERMINATED {
 		panic("not terminated")
 	}
@@ -112,7 +117,7 @@ func solveA(input *Input) int64 {
 }
 
 func solveB(input *Input) int64 {
-	visited, result := runMaze(input, pos.P2{X: -99, Y: -99})
+	visited, result := runMaze(input, pos.P2{X: -99, Y: -99}, true)
 	if result != TERMINATED {
 		panic("not terminated")
 	}
@@ -125,7 +130,7 @@ func solveB(input *Input) int64 {
 			continue
 		}
 
-		if _, result := runMaze(input, p); result == LOOP {
+		if _, result := runMaze(input, p, false); result == LOOP {
 			num++
 		}
 	}
@@ -136,6 +141,15 @@ func solveB(input *Input) int64 {
 func main() {
 	flag.Parse()
 	logger.Init(*verbose)
+
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
 
 	if *input == "" {
 		logger.Fatalf("--input is required")
