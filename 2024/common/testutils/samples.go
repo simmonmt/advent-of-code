@@ -2,9 +2,9 @@ package testutils
 
 import (
 	"bufio"
+	"fmt"
 	"iter"
 	"path"
-	"strconv"
 	"strings"
 
 	"github.com/simmonmt/aoc/2024/common/logger"
@@ -46,11 +46,13 @@ func (si *SampleIter) All() iter.Seq2[string, []string] {
 				return
 			}
 
-			numLines := -1
-			var err error
-			if nlStr, ok := nextLine(); !ok {
+			nlStr, ok := nextLine()
+			if !ok {
 				panic("missing num lines")
-			} else if numLines, err = strconv.Atoi(nlStr); err != nil {
+			}
+
+			var numLines int
+			if _, err := fmt.Sscanf(nlStr, "%d", &numLines); err != nil {
 				panic("bad num lines")
 			}
 
