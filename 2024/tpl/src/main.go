@@ -3,14 +3,18 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
+	"os"
+	"runtime/pprof"
 
 	"github.com/simmonmt/aoc/2024/common/filereader"
 	"github.com/simmonmt/aoc/2024/common/logger"
 )
 
 var (
-	verbose = flag.Bool("verbose", false, "verbose")
-	input   = flag.String("input", "", "input file")
+	verbose    = flag.Bool("verbose", false, "verbose")
+	input      = flag.String("input", "", "input file")
+	cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 )
 
 func parseInput(lines []string) ([]string, error) {
@@ -28,6 +32,15 @@ func solveB(input []string) int64 {
 func main() {
 	flag.Parse()
 	logger.Init(*verbose)
+
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
 
 	if *input == "" {
 		logger.Fatalf("--input is required")
