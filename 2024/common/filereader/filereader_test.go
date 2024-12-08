@@ -64,7 +64,7 @@ func TestParseNumbersFromLine(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			got, err := ParseNumbersFromLine(tc.in)
+			got, err := ParseNumbersFromLine(tc.in, ",")
 			if tc.want == nil {
 				if err == nil {
 					t.Errorf(`ParseNumbersFromLine("%v") = %v, %v, want _, non-nil`,

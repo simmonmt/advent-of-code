@@ -107,9 +107,9 @@ func BlankSeparatedGroupsFromLines(lines []string) [][]string {
 	return groups
 }
 
-func ParseNumbersFromLine(line string) ([]int, error) {
+func ParseNumbersFromLine(line string, sep string) ([]int, error) {
 	nums := []int{}
-	for _, str := range strings.Split(line, ",") {
+	for _, str := range strings.Split(line, sep) {
 		num, err := strconv.Atoi(str)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse %v: %v", str, err)
@@ -119,7 +119,7 @@ func ParseNumbersFromLine(line string) ([]int, error) {
 	return nums, nil
 }
 
-func OneRowOfNumbers(path string) ([]int, error) {
+func OneRowOfNumbers(path string, sep string) ([]int, error) {
 	lines, err := Lines(path)
 	if err != nil {
 		return nil, err
@@ -129,5 +129,5 @@ func OneRowOfNumbers(path string) ([]int, error) {
 		return nil, fmt.Errorf("expected one line, got %v", len(lines))
 	}
 
-	return ParseNumbersFromLine(lines[0])
+	return ParseNumbersFromLine(lines[0], sep)
 }

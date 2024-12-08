@@ -40,7 +40,7 @@ func parseUpdates(lines []string) (updates [][]int, err error) {
 	updates = [][]int{}
 
 	for _, line := range lines {
-		nums, err := filereader.ParseNumbersFromLine(line)
+		nums, err := filereader.ParseNumbersFromLine(line, ",")
 		if err != nil {
 			return nil, err
 		}
