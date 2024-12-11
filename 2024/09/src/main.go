@@ -54,7 +54,7 @@ func buildFS(input string) (fs []int, files, frees *list.List) {
 			id++
 		} else if n != 0 {
 			fill(cur, n, -1)
-			frees.PushBack(&Elem{ID: id, Start: cur, Size: n})
+			frees.PushBack(&Elem{ID: -1, Start: cur, Size: n})
 		}
 
 		cur += n
@@ -67,13 +67,37 @@ func buildFS(input string) (fs []int, files, frees *list.List) {
 func score(fs []int) int64 {
 	sum := int64(0)
 	for i := 0; i < len(fs); i++ {
-		if fs[i] == -1 {
-			break
+		if fs[i] != -1 {
+			sum += int64(i) * int64(fs[i])
 		}
-		sum += int64(i * fs[i])
 	}
 
 	return sum
+}
+
+func dumpFS(fs []int) {
+	maxID := -1
+	for _, id := range fs {
+		maxID = max(maxID, id)
+	}
+
+	digits := 0
+	for maxID > 0 {
+		digits++
+		maxID /= 10
+	}
+	if digits != 1 {
+		digits++
+	}
+
+	for _, id := range fs {
+		if id == -1 {
+			fmt.Print(".")
+		} else {
+			fmt.Printf("%*d", digits, id)
+		}
+	}
+	fmt.Println()
 }
 
 func doSolveA(fs []int, files, frees *list.List) {
@@ -117,8 +141,55 @@ func solveA(input string) int64 {
 	return score(fs)
 }
 
+func doSolveB(fs []int, files, frees *list.List) {
+	//dumpFS(fs)
+
+	for file := files.Back(); file != nil; {
+		fileElem := file.Value.(*Elem)
+
+		for free := frees.Front(); free != nil; free = free.Next() {
+			freeElem := free.Value.(*Elem)
+
+			if freeElem.Size < fileElem.Size {
+				continue // free elem is too small
+			}
+			if freeElem.Start > fileElem.Start {
+				break // free elem not to the left; give up
+			}
+
+			// Copy file to new home. We process files from right to
+			// left, evaluating each one once, so it's impossible
+			// for a later file to occupy the space this file is now
+			// vacating.
+			for i := 0; i < fileElem.Size; i++ {
+				fs[fileElem.Start+i] = -1
+				fs[freeElem.Start+i] = fileElem.ID
+			}
+
+			// Update free size
+			freeElem.Start += fileElem.Size
+			freeElem.Size -= fileElem.Size
+			if freeElem.Size == 0 {
+				frees.Remove(free)
+			}
+
+			break
+		}
+
+		// This file was handled -- either we found a new home or it
+		// won't fit. Remove it from files so we don't try again.
+		next := file.Prev()
+		files.Remove(file)
+		file = next
+	}
+
+	//dumpFS(fs)
+}
+
 func solveB(input string) int64 {
-	return -1
+	fs, files, frees := buildFS(input)
+	doSolveB(fs, files, frees)
+	return score(fs)
 }
 
 func main() {
