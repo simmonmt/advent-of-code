@@ -50,7 +50,7 @@ func P2FromString(str string) (P2, error) {
 	return P2{X: vs[0], Y: vs[1]}, nil
 }
 
-func (p *P2) Equals(o P2) bool {
+func (p P2) Equals(o P2) bool {
 	return p.X == o.X && p.Y == o.Y
 }
 
@@ -59,7 +59,7 @@ func (p *P2) Add(o P2) {
 	p.Y += o.Y
 }
 
-func (p *P2) LessThan(o P2) bool {
+func (p P2) LessThan(o P2) bool {
 	if p.X < o.X {
 		return true
 	} else if p.X > o.X {
