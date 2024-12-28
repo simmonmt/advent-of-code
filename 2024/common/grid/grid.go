@@ -160,6 +160,14 @@ func (g *Grid[T]) Get(p pos.P2) (T, bool) {
 	return g.a[off], true
 }
 
+func (g *Grid[T]) GetOr(p pos.P2, def T) T {
+	if !g.IsValid(p) {
+		return def
+	}
+	off := p.Y*g.w + p.X
+	return g.a[off]
+}
+
 func (g *Grid[T]) Walk(walker func(p pos.P2, v T)) {
 	for y := 0; y < g.h; y++ {
 		for x := 0; x < g.w; x++ {
