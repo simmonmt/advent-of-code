@@ -16,6 +16,7 @@ package pos
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -60,13 +61,14 @@ func (p *P2) Add(o P2) {
 }
 
 func (p P2) LessThan(o P2) bool {
-	if p.X < o.X {
-		return true
-	} else if p.X > o.X {
-		return false
-	} else {
-		return p.Y < o.Y
+	return p.Cmp(o) < 1
+}
+
+func (p P2) Cmp(o P2) int {
+	if p.X == o.X {
+		return p.Y - o.Y
 	}
+	return p.X - o.X
 }
 
 func (p P2) ManhattanDistance(o P2) int {
@@ -96,6 +98,13 @@ func (p P2) AllNeighbors(includeDiag bool) []P2 {
 		out[7] = P2{p.X + 1, p.Y + 1}
 	}
 
+	return out
+}
+
+func P2sSorted(in []P2) []P2 {
+	out := make([]P2, len(in))
+	copy(out, in)
+	slices.SortFunc(out, func(a, b P2) int { return a.Cmp(b) })
 	return out
 }
 

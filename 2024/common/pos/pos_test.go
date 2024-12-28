@@ -54,8 +54,8 @@ func TestP2(t *testing.T) {
 			if got := tc.p2.LessThan(tc.p1); got == tc.lessThan {
 				t.Errorf("want %v < %v, got %v", tc.p2, tc.p1, got)
 			}
-			if got := tc.p1.LessThan(tc.p1); got == true {
-				t.Errorf("want %v !< %v, got %v", tc.p1, tc.p1, got)
+			if got := tc.p1.Cmp(tc.p1); got != 0 {
+				t.Errorf("want %v <=> %v = 0, got %v", tc.p1, tc.p1, got)
 			}
 
 			if got := tc.p1.ManhattanDistance(tc.p2); got != tc.manhattanDistance {
