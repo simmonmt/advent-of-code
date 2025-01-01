@@ -75,6 +75,21 @@ func (d Dir) String() string {
 	}
 }
 
+func (d Dir) Icon() rune {
+	switch d {
+	case DIR_NORTH:
+		return '^'
+	case DIR_SOUTH:
+		return 'v'
+	case DIR_WEST:
+		return '<'
+	case DIR_EAST:
+		return '>'
+	default:
+		panic("bad dir")
+	}
+}
+
 func (d Dir) Reverse() Dir {
 	switch d {
 	case DIR_NORTH:
