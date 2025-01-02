@@ -6,8 +6,10 @@ import (
 	"reflect"
 	"slices"
 	"strconv"
+	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/simmonmt/aoc/2024/common/logger"
 	"github.com/simmonmt/aoc/2024/common/testutils"
 )
@@ -76,24 +78,72 @@ func TestDirPad(t *testing.T) {
 	}
 }
 
-// func TestBuildPathNodes(t *testing.T) {
-// 	got := buildPathNodes("289A", 1, nil, []Keypad{NewNumPad()})
+func TestMinCostsBase(t *testing.T) {
+	n1 := &Node{To: '0', Level: 1}
+	n2 := &Node{To: '2', Level: 1}
+	n1.Next = n2
 
-// 	for n := got; n != nil; n = n.Next {
-// 		fmt.Printf("%+v\n", n)
+	want := []*Cost{&Cost{To: "2", Cost: 2}}
+	got := findMinCosts(n1, "A")
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("findMinCosts mismatch; -want,+got:\n%s\n", diff)
+	}
+}
 
-// 		for k, nl := range collections.SortedMapIter(n.Paths) {
-// 			for _, n2 := range nl {
-// 				out := ""
-// 				for n3 := n2; n3 != nil; n3 = n3.Next {
-// 					out += fmt.Sprintf(" %d,%s", n3.Level, string(n3.To))
-// 				}
-// 				fmt.Printf("%c %s\n", k, out)
-// 			}
-// 		}
-// 	}
-// 	t.Errorf("no")
-// }
+func TestMinCostsSimple(t *testing.T) {
+	n21 := &Node{To: '<', Level: 2}
+	n22 := &Node{To: 'A', Level: 2}
+	n21.Next = n22
+
+	n1 := &Node{To: '0', Level: 1, Paths: map[rune][]*Node{'A': []*Node{n21}}}
+	n21.Parent = n1
+	n22.Parent = n1
+
+	want := []*Cost{&Cost{To: "0A", Cost: 2}}
+	got := findMinCosts(n1, "AA")
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("findMinCosts mismatch; -want,+got:\n%s\n", diff)
+	}
+}
+
+func TestMinCosts(t *testing.T) {
+	type TestCase struct {
+		Input string
+		Stack []Keypad
+		Want  []*Cost
+	}
+
+	testCases := []TestCase{
+		TestCase{
+			Input: "<",
+			Stack: []Keypad{NewDirPad()},
+			Want:  []*Cost{&Cost{To: "<A", Cost: 4}},
+		},
+		TestCase{
+			Input: "0",
+			Stack: []Keypad{NewNumPad()},
+			Want:  []*Cost{&Cost{To: "0A", Cost: 2}},
+		},
+		TestCase{
+			Input: "029A",
+			Stack: []Keypad{NewNumPad(), NewDirPad(), NewDirPad()},
+			Want:  []*Cost{&Cost{To: "AAAA", Cost: 68}},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			start := buildPathNodes(tc.Input, 1, nil, tc.Stack)
+
+			froms := strings.Repeat("A", len(tc.Stack)+1)
+
+			got := findMinCosts(start, froms)
+			if diff := cmp.Diff(tc.Want, got); diff != "" {
+				t.Errorf("findMinCosts mismatch; -want,+got:\n%s\n", diff)
+			}
+		})
+	}
+}
 
 func TestSolveA(t *testing.T) {
 	for _, tc := range sampleTestCases {

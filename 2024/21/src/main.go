@@ -7,7 +7,9 @@ import (
 	"os"
 	"regexp"
 	"runtime/pprof"
+	"strings"
 
+	"github.com/simmonmt/aoc/2024/common/collections"
 	"github.com/simmonmt/aoc/2024/common/dir"
 	"github.com/simmonmt/aoc/2024/common/filereader"
 	"github.com/simmonmt/aoc/2024/common/logger"
@@ -129,49 +131,37 @@ func parseInput(lines []string) ([]string, error) {
 	return lines, nil
 }
 
-// NP1   DP1   DP2  DP3
-// 789    ^A    ^A   ^A
-// 456   <v>   <v>  <v>
-// 123
-// _0A
-//
-// Last entered on NP1 was 3
-// Want to enter 5 on NP1
-// R1 (operating NP1) is
-//  - controlled by DP1
-//  - positioned over 3 on NP1
-// R2 (operating DP1) is
-//  - controlled by DP2
-//  - positioned over v on DP1
-// R3 (operating DP2) is
-//  - controlled by DP3
-//  - posiitoved over < on DP2
-// Human (operating DP3)
-//
-// To enter 5 on NP1
-//   - R1 has to move from 3 to 5, as directed by DP1/R2
-//   - R2 has to execute commands as directed by DP2/R3
-//   - R3 has to execute commands as directed by DP3/Human
-//
-// DP1: R1 was on 3/NP1, so R2 send <^A or ^<A             to activate 5/NP1
-// DP2: R2 was on v/DP1, so R3 send <A>^A>A                to enter <^A/DP1
-//                          or send ^Av<A>>^A or ^Av<A>^>A to enter ^<A/DP1
-// DP3: R3 was on </DP2, so H  send
-//
-//
-// node
-//   from, to rune
-//   pad
-//   parent
-//   next
-//   paths []*node
-//
-
 type Node struct {
 	To           rune
 	Level        int
 	Parent, Next *Node
 	Paths        map[rune][]*Node
+}
+
+func (n *Node) String() string {
+	yn := func(arg bool) rune {
+		if arg {
+			return 'y'
+		}
+		return 'n'
+	}
+
+	paths := []string{}
+	for r, pl := range n.Paths {
+		paths = append(paths, fmt.Sprintf("%s:%p", string(r), pl))
+	}
+
+	return fmt.Sprintf("{To:%c;L:%d;Par?%c;Nxt?%c;Paths:%s}",
+		n.To, n.Level, yn(n.Parent != nil), yn(n.Next != nil),
+		strings.Join(paths, ","))
+}
+
+func (n *Node) Nexts() string {
+	out := ""
+	for ; n != nil; n = n.Next {
+		out += string(n.To)
+	}
+	return out
 }
 
 func buildPathNodes(line string, level int, parent *Node, stack []Keypad) *Node {
@@ -216,15 +206,94 @@ func buildPathNodes(line string, level int, parent *Node, stack []Keypad) *Node 
 	return start
 }
 
-func walkNodesInOrder(start *Node) {
-	// begin with start, cur = A
+type Cost struct {
+	To   string
+	Cost int
+}
 
+func (c *Cost) String() string {
+	return fmt.Sprintf("/%v=%d", c.To, c.Cost)
+}
+
+func findMinCosts(start *Node, from string) []*Cost {
+	log := false
+
+	if from == "" {
+		panic("no from")
+	}
+
+	cookie := fmt.Sprintf("%sfindMinCosts L%d To %c from %s",
+		strings.Repeat(" ", (start.Level-1)*2), start.Level, start.To, from)
+	if log {
+		fmt.Println(cookie)
+	}
+
+	curCosts := []*Cost{&Cost{To: from, Cost: 0}}
+
+	for n := start; n != nil; n = n.Next {
+		// The costs from start through n. Keyed by the stack of 'to'
+		// values.
+		nCosts := map[string]*Cost{}
+
+		for _, preCost := range curCosts {
+			// The beginning positions used when evaluating n. These
+			// are the final positions from the previous n.
+			nFrom := rune(preCost.To[0])
+			subFrom := string(preCost.To[1:])
+
+			if n.Paths == nil {
+				// This is a leaf
+				if subFrom != "" {
+					panic("from too long")
+				}
+
+				to := string(n.To)
+				nCosts[to] = &Cost{To: to, Cost: preCost.Cost + 1}
+				continue
+			}
+
+			for i, subN := range n.Paths[nFrom] {
+				if log {
+					fmt.Printf("%s: sub %d evaluating %s\n", cookie, i, subN.Nexts())
+				}
+				for _, subCost := range findMinCosts(subN, subFrom) {
+					to := string(n.To) + subFrom
+					nCost := &Cost{To: to, Cost: preCost.Cost + subCost.Cost}
+					if existing := nCosts[to]; existing == nil || existing.Cost > nCost.Cost {
+						nCosts[to] = nCost
+					}
+				}
+			}
+		}
+
+		curCosts = collections.MapValues(nCosts)
+		if log {
+			fmt.Printf("%s: costs %v\n", cookie, curCosts)
+		}
+	}
+
+	if log {
+		fmt.Println(cookie, ": done")
+	}
+
+	return curCosts
 }
 
 func solveALine(line string, stack []Keypad) int {
-	// start := buildPathNodes(line, 1, nil, stack)
-	// fmt.Println(start)
-	return 0
+	start := buildPathNodes(line, 1, nil, stack)
+	costs := findMinCosts(start, strings.Repeat("A", len(stack)+1))
+
+	minCost := -1
+	for _, cost := range costs {
+		if minCost == -1 || cost.Cost < minCost {
+			minCost = cost.Cost
+		}
+	}
+
+	num := numericCodePart(line)
+	result := minCost * num
+	logger.Infof("line %v min %v numeric %v result %v", line, minCost, num, result)
+	return result
 }
 
 func solveA(lines []string) int64 {

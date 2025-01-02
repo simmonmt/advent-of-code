@@ -29,6 +29,7 @@ go_test(
     deps = [
         "//common/logger",
         "//common/testutils",
+        "@com_github_google_go_cmp//cmp",
     ],
 )
 
