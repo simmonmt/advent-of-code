@@ -17,6 +17,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//common/filereader",
+        "//common/lineio",
         "//common/logger",
     ],
 )

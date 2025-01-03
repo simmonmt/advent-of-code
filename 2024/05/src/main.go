@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/simmonmt/aoc/2024/common/filereader"
+	"github.com/simmonmt/aoc/2024/common/lineio"
 	"github.com/simmonmt/aoc/2024/common/logger"
 )
 
@@ -40,7 +41,7 @@ func parseUpdates(lines []string) (updates [][]int, err error) {
 	updates = [][]int{}
 
 	for _, line := range lines {
-		nums, err := filereader.ParseNumbersFromLine(line, ",")
+		nums, err := lineio.NumbersFromLine(line, ",")
 		if err != nil {
 			return nil, err
 		}
@@ -52,7 +53,7 @@ func parseUpdates(lines []string) (updates [][]int, err error) {
 }
 
 func parseInput(lines []string) (input *Input, err error) {
-	groups := filereader.BlankSeparatedGroupsFromLines(lines)
+	groups := lineio.BlankSeparatedGroups(lines)
 	if len(groups) != 2 {
 		return nil, fmt.Errorf("want two groups; found %d", len(groups))
 	}

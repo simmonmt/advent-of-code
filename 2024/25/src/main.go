@@ -9,6 +9,7 @@ import (
 
 	"github.com/simmonmt/aoc/2024/common/filereader"
 	"github.com/simmonmt/aoc/2024/common/grid"
+	"github.com/simmonmt/aoc/2024/common/lineio"
 	"github.com/simmonmt/aoc/2024/common/logger"
 	"github.com/simmonmt/aoc/2024/common/pos"
 )
@@ -41,7 +42,7 @@ func parseItem(lines []string) []int {
 }
 
 func parseInput(lines []string) (*Input, error) {
-	groups := filereader.BlankSeparatedGroupsFromLines(lines)
+	groups := lineio.BlankSeparatedGroups(lines)
 
 	locks := [][]int{}
 	keys := [][]int{}

@@ -10,6 +10,7 @@ import (
 	"github.com/simmonmt/aoc/2024/common/dir"
 	"github.com/simmonmt/aoc/2024/common/filereader"
 	"github.com/simmonmt/aoc/2024/common/grid"
+	"github.com/simmonmt/aoc/2024/common/lineio"
 	"github.com/simmonmt/aoc/2024/common/logger"
 	"github.com/simmonmt/aoc/2024/common/pos"
 )
@@ -44,7 +45,7 @@ func parseGrid(lines []string) (g *grid.Grid[rune], start pos.P2, err error) {
 }
 
 func parseInput(lines []string) (*Input, error) {
-	groups := filereader.BlankSeparatedGroupsFromLines(lines)
+	groups := lineio.BlankSeparatedGroups(lines)
 	if len(groups) != 2 {
 		return nil, fmt.Errorf("bad number of groups: %d", len(groups))
 	}

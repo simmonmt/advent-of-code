@@ -12,6 +12,7 @@ import (
 
 	"github.com/simmonmt/aoc/2024/common/collections"
 	"github.com/simmonmt/aoc/2024/common/filereader"
+	"github.com/simmonmt/aoc/2024/common/lineio"
 	"github.com/simmonmt/aoc/2024/common/logger"
 )
 
@@ -123,7 +124,7 @@ func parseGates(lines []string) ([]Gate, error) {
 }
 
 func parseInput(lines []string) (*Input, error) {
-	groups := filereader.BlankSeparatedGroupsFromLines(lines)
+	groups := lineio.BlankSeparatedGroups(lines)
 	if len(groups) != 2 {
 		return nil, fmt.Errorf("bad groups, want 2, got %d", len(groups))
 	}

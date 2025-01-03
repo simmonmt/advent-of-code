@@ -19,8 +19,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
-	"strings"
 )
 
 func Lines(path string) ([]string, error) {
@@ -46,88 +44,4 @@ func linesFromReader(r io.Reader) ([]string, error) {
 	}
 
 	return lines, nil
-}
-
-func Numbers(path string) ([]int, error) {
-	lines, err := Lines(path)
-	if err != nil {
-		return nil, err
-	}
-
-	nums := []int{}
-	for i, line := range lines {
-		num, err := strconv.Atoi(line)
-		if err != nil {
-			return nil, fmt.Errorf("%d: failed to parse %v: %v",
-				i, line, err)
-		}
-		nums = append(nums, num)
-	}
-	return nums, nil
-}
-
-func BlankSeparatedGroups(path string) ([][]string, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	return blankSeparatedGroupsFromReader(f)
-}
-
-func blankSeparatedGroupsFromReader(r io.Reader) ([][]string, error) {
-	lines, err := linesFromReader(r)
-	if err != nil {
-		return nil, err
-	}
-
-	return BlankSeparatedGroupsFromLines(lines), nil
-}
-
-func BlankSeparatedGroupsFromLines(lines []string) [][]string {
-	// So we don't have to special-case the loop end
-	lines = lines[:]
-	lines = append(lines, "")
-
-	groups := [][]string{}
-	curGroup := []string{}
-	for _, line := range lines {
-		if line == "" {
-			if len(curGroup) > 0 {
-				groups = append(groups, curGroup)
-			}
-			curGroup = []string{}
-			continue
-		}
-
-		curGroup = append(curGroup, line)
-	}
-
-	return groups
-}
-
-func ParseNumbersFromLine(line string, sep string) ([]int, error) {
-	nums := []int{}
-	for _, str := range strings.Split(line, sep) {
-		num, err := strconv.Atoi(str)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse %v: %v", str, err)
-		}
-		nums = append(nums, num)
-	}
-	return nums, nil
-}
-
-func OneRowOfNumbers(path string, sep string) ([]int, error) {
-	lines, err := Lines(path)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(lines) != 1 {
-		return nil, fmt.Errorf("expected one line, got %v", len(lines))
-	}
-
-	return ParseNumbersFromLine(lines[0], sep)
 }

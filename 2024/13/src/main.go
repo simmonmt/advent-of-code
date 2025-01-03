@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/simmonmt/aoc/2024/common/filereader"
+	"github.com/simmonmt/aoc/2024/common/lineio"
 	"github.com/simmonmt/aoc/2024/common/logger"
 	"github.com/simmonmt/aoc/2024/common/pos"
 )
@@ -69,7 +70,7 @@ func parsePrize(line string) (pos.P2, error) {
 }
 
 func parseInput(lines []string) ([]*Machine, error) {
-	groups := filereader.BlankSeparatedGroupsFromLines(lines)
+	groups := lineio.BlankSeparatedGroups(lines)
 	machines := make([]*Machine, len(groups))
 
 	for i, group := range groups {

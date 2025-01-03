@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/simmonmt/aoc/2024/common/filereader"
+	"github.com/simmonmt/aoc/2024/common/lineio"
 	"github.com/simmonmt/aoc/2024/common/logger"
 )
 
@@ -29,7 +30,7 @@ type Input struct {
 }
 
 func parseInput(lines []string) (*Input, error) {
-	groups := filereader.BlankSeparatedGroupsFromLines(lines)
+	groups := lineio.BlankSeparatedGroups(lines)
 	if len(groups) != 2 {
 		return nil, fmt.Errorf("bad num groups: %d", len(groups))
 	}
@@ -60,7 +61,7 @@ func parseInput(lines []string) (*Input, error) {
 		return nil, fmt.Errorf("bad program line")
 	}
 
-	memInt, err := filereader.ParseNumbersFromLine(nums, ",")
+	memInt, err := lineio.NumbersFromLine(nums, ",")
 	if err != nil {
 		return nil, fmt.Errorf("bad program line: %v", err)
 	}

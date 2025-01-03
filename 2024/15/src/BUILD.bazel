@@ -16,6 +16,7 @@ go_library(
         "//common/dir",
         "//common/filereader",
         "//common/grid",
+        "//common/lineio",
         "//common/logger",
         "//common/pos",
     ],

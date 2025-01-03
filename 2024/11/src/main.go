@@ -8,6 +8,7 @@ import (
 	"runtime/pprof"
 
 	"github.com/simmonmt/aoc/2024/common/filereader"
+	"github.com/simmonmt/aoc/2024/common/lineio"
 	"github.com/simmonmt/aoc/2024/common/logger"
 )
 
@@ -18,7 +19,7 @@ var (
 )
 
 func parseInput(lines []string) ([]int, error) {
-	nums, err := filereader.ParseNumbersFromLine(lines[0], " ")
+	nums, err := lineio.NumbersFromLine(lines[0], " ")
 	if err != nil {
 		return nil, err
 	}

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/simmonmt/aoc/2024/common/filereader"
+	"github.com/simmonmt/aoc/2024/common/lineio"
 	"github.com/simmonmt/aoc/2024/common/logger"
 )
 
@@ -37,7 +38,7 @@ func parseInput(lines []string) ([]Line, error) {
 			return nil, fmt.Errorf("%d: bad total: %v", i+1, err)
 		}
 
-		nums, err := filereader.ParseNumbersFromLine(rest, " ")
+		nums, err := lineio.NumbersFromLine(rest, " ")
 		if err != nil {
 			return nil, fmt.Errorf("%d: bad nums: %v", i+1, err)
 		}
