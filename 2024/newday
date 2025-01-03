@@ -14,6 +14,8 @@ function usage() {
 
 [[ $# -eq 1 ]] || usage
 
+YEAR=2024
+
 DAYDIR="$1"
 [[ -d "${DAYDIR}" ]] && die "daydir ${DAYDIR} already exists"
 
@@ -45,5 +47,6 @@ bazel test "${DAYDIR}/..."
 
 ../utils/get_input \
 	--session_file ~/keys/aoc_session_cookie \
+	--year ${YEAR} \
 	--day $(echo ${DAYDIR} |sed -e 's/^0//') \
 	>${DAYDIR}/input.txt || die "failed to get input"
