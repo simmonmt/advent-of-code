@@ -16,7 +16,7 @@ var (
 	sampleTestCases = []testutils.SampleTestCase{
 		testutils.SampleTestCase{
 			WantInput: &Input{Lines: []string{""}},
-			WantA:     -1, WantB: -1,
+			WantA:     nil, WantB: nil,
 		},
 	}
 )
@@ -42,7 +42,7 @@ func TestParseInput(t *testing.T) {
 
 func TestSolveA(t *testing.T) {
 	for _, tc := range sampleTestCases {
-		if tc.WantA == -1 {
+		if tc.WantA == nil {
 			continue
 		}
 
@@ -52,7 +52,8 @@ func TestSolveA(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if got := solveA(input); got != tc.WantA {
+			got := solveA(input)
+			if diff := cmp.Diff(tc.WantA, got); diff != "" {
 				t.Errorf("solveA(sample) = %v, want %v", got, tc.WantA)
 			}
 		})
@@ -61,7 +62,7 @@ func TestSolveA(t *testing.T) {
 
 func TestSolveB(t *testing.T) {
 	for _, tc := range sampleTestCases {
-		if tc.WantB == -1 {
+		if tc.WantB == nil {
 			continue
 		}
 
@@ -71,7 +72,8 @@ func TestSolveB(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if got := solveB(input); got != tc.WantB {
+			got := solveB(input)
+			if diff := cmp.Diff(tc.WantB, got); diff != "" {
 				t.Errorf("solveB(sample) = %v, want %v", got, tc.WantB)
 			}
 		})

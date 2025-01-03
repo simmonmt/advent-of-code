@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/simmonmt/aoc/2024/common/logger"
 	"github.com/simmonmt/aoc/2024/common/testutils"
 )
@@ -15,11 +16,9 @@ var (
 	sampleTestCases = []testutils.SampleTestCase{
 		testutils.SampleTestCase{
 			WantInput: []string{""},
-			WantA:     7, WantB: 4,
+			WantA:     7, WantB: "co,de,ka,ta",
 		},
 	}
-
-	sampleBWants = []string{"co,de,ka,ta"}
 )
 
 func TestSolveA(t *testing.T) {
@@ -34,7 +33,8 @@ func TestSolveA(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if got := solveA(input); got != tc.WantA {
+			got := solveA(input)
+			if diff := cmp.Diff(tc.WantA, got); diff != "" {
 				t.Errorf("solveA(sample) = %v, want %v", got, tc.WantA)
 			}
 		})
@@ -42,7 +42,7 @@ func TestSolveA(t *testing.T) {
 }
 
 func TestSolveB(t *testing.T) {
-	for i, tc := range sampleTestCases {
+	for _, tc := range sampleTestCases {
 		if tc.WantB == -1 {
 			continue
 		}
@@ -53,9 +53,9 @@ func TestSolveB(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			want := sampleBWants[i]
-			if got := solveB(input); got != want {
-				t.Errorf("solveB(sample) = %v, want %v", got, want)
+			got := solveB(input)
+			if diff := cmp.Diff(tc.WantB, got); diff != "" {
+				t.Errorf("solveB(sample) = %v, want %v", got, tc.WantB)
 			}
 		})
 	}
