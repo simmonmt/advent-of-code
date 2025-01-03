@@ -21,6 +21,9 @@ var (
 		testutils.SampleTestCase{
 			WantA: 126384, WantB: -1,
 		},
+		testutils.SampleTestCase{
+			WantA: 206798, WantB: -1,
+		},
 	}
 )
 
@@ -84,7 +87,7 @@ func TestMinCostsBase(t *testing.T) {
 	n1.Next = n2
 
 	want := []*Cost{&Cost{To: "2", Cost: 2}}
-	got := findMinCosts(n1, "A")
+	got := findMinCosts(n1, "A", []Keypad{}, map[CacheKey][]*Cost{})
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("findMinCosts mismatch; -want,+got:\n%s\n", diff)
 	}
@@ -100,7 +103,7 @@ func TestMinCostsSimple(t *testing.T) {
 	n22.Parent = n1
 
 	want := []*Cost{&Cost{To: "0A", Cost: 2}}
-	got := findMinCosts(n1, "AA")
+	got := findMinCosts(n1, "AA", []Keypad{NewNumPad()}, map[CacheKey][]*Cost{})
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("findMinCosts mismatch; -want,+got:\n%s\n", diff)
 	}
@@ -133,11 +136,10 @@ func TestMinCosts(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			start := buildPathNodes(tc.Input, 1, nil, tc.Stack)
-
+			start := makeTopNodes(tc.Input)
 			froms := strings.Repeat("A", len(tc.Stack)+1)
 
-			got := findMinCosts(start, froms)
+			got := findMinCosts(start, froms, tc.Stack, map[CacheKey][]*Cost{})
 			if diff := cmp.Diff(tc.Want, got); diff != "" {
 				t.Errorf("findMinCosts mismatch; -want,+got:\n%s\n", diff)
 			}

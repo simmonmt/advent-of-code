@@ -164,46 +164,32 @@ func (n *Node) Nexts() string {
 	return out
 }
 
-func buildPathNodes(line string, level int, parent *Node, stack []Keypad) *Node {
-	var start, last *Node
-	var pad Keypad
-	if len(stack) > 0 {
-		pad = stack[0]
-	}
-	cur := '?'
-
-	for _, r := range line {
-		node := &Node{To: r, Level: level, Parent: parent}
-
-		if start == nil {
-			start = node
-			last = node
-		} else {
-			last.Next = node
-			last = node
+func makeTopNodes(line string) *Node {
+	nodes := make([]*Node, len(line))
+	for i, r := range line {
+		n := &Node{To: r, Level: 1}
+		nodes[i] = n
+		if i > 0 {
+			nodes[i-1].Next = n
 		}
+	}
+	return nodes[0]
+}
 
-		if pad != nil {
-			starts := []rune{cur}
-			if cur == '?' {
-				starts = pad.AllButtons()
-			}
-
-			node.Paths = map[rune][]*Node{}
-			for _, start := range starts {
-				paths := pad.PressFrom(start, node.To)
-				pathNodes := make([]*Node, len(paths))
-				for i := range paths {
-					pathNodes[i] = buildPathNodes(paths[i], level+1, node, stack[1:])
-				}
-				node.Paths[start] = pathNodes
+func makeNodePaths(from, to rune, parent *Node, pad Keypad) []*Node {
+	paths := pad.PressFrom(from, to)
+	pathList := make([]*Node, len(paths))
+	for i, path := range paths {
+		pathNodes := make([]*Node, len(path))
+		for j := len(path) - 1; j >= 0; j-- {
+			pathNodes[j] = &Node{To: rune(path[j]), Level: parent.Level + 1, Parent: parent}
+			if j != len(path)-1 {
+				pathNodes[j].Next = pathNodes[j+1]
 			}
 		}
-
-		cur = r
+		pathList[i] = pathNodes[0]
 	}
-
-	return start
+	return pathList
 }
 
 type Cost struct {
@@ -215,8 +201,27 @@ func (c *Cost) String() string {
 	return fmt.Sprintf("/%v=%d", c.To, c.Cost)
 }
 
-func findMinCosts(start *Node, from string) []*Cost {
+type CacheKey struct {
+	Level int
+	From  string
+	Nexts string
+}
+
+var (
+	cacheHit  = 0
+	cacheMiss = 0
+)
+
+func findMinCosts(start *Node, from string, stack []Keypad, cache map[CacheKey][]*Cost) []*Cost {
 	log := false
+
+	key := CacheKey{Level: start.Level, From: from, Nexts: start.Nexts()}
+	if costs, found := cache[key]; found {
+		cacheHit++
+		return costs
+	} else {
+		cacheMiss++
+	}
 
 	if from == "" {
 		panic("no from")
@@ -241,22 +246,19 @@ func findMinCosts(start *Node, from string) []*Cost {
 			nFrom := rune(preCost.To[0])
 			subFrom := string(preCost.To[1:])
 
-			if n.Paths == nil {
-				// This is a leaf
-				if subFrom != "" {
-					panic("from too long")
-				}
-
+			if len(stack) == 0 {
 				to := string(n.To)
 				nCosts[to] = &Cost{To: to, Cost: preCost.Cost + 1}
 				continue
 			}
 
-			for i, subN := range n.Paths[nFrom] {
+			pathList := makeNodePaths(nFrom, n.To, n, stack[0])
+
+			for i, subN := range pathList {
 				if log {
 					fmt.Printf("%s: sub %d evaluating %s\n", cookie, i, subN.Nexts())
 				}
-				for _, subCost := range findMinCosts(subN, subFrom) {
+				for _, subCost := range findMinCosts(subN, subFrom, stack[1:], cache) {
 					to := string(n.To) + subFrom
 					nCost := &Cost{To: to, Cost: preCost.Cost + subCost.Cost}
 					if existing := nCosts[to]; existing == nil || existing.Cost > nCost.Cost {
@@ -276,12 +278,15 @@ func findMinCosts(start *Node, from string) []*Cost {
 		fmt.Println(cookie, ": done")
 	}
 
+	cache[key] = curCosts
+
 	return curCosts
 }
 
 func solveALine(line string, stack []Keypad) int {
-	start := buildPathNodes(line, 1, nil, stack)
-	costs := findMinCosts(start, strings.Repeat("A", len(stack)+1))
+	start := makeTopNodes(line)
+	cache := map[CacheKey][]*Cost{}
+	costs := findMinCosts(start, strings.Repeat("A", len(stack)+1), stack, cache)
 
 	minCost := -1
 	for _, cost := range costs {
@@ -294,6 +299,16 @@ func solveALine(line string, stack []Keypad) int {
 	result := minCost * num
 	logger.Infof("line %v min %v numeric %v result %v", line, minCost, num, result)
 	return result
+}
+
+func numericCodePart(line string) int {
+	num := 0
+	for _, r := range line {
+		if r >= '0' && r <= '9' {
+			num = num*10 + int(r-'0')
+		}
+	}
+	return num
 }
 
 func solveA(lines []string) int64 {
@@ -311,18 +326,18 @@ func solveA(lines []string) int64 {
 	return int64(sum)
 }
 
-func numericCodePart(line string) int {
-	num := 0
-	for _, r := range line {
-		if r >= '0' && r <= '9' {
-			num = num*10 + int(r-'0')
-		}
+func solveB(lines []string) int64 {
+	stack := []Keypad{NewNumPad()}
+	for range 25 {
+		stack = append(stack, NewDirPad())
 	}
-	return num
-}
 
-func solveB(input []string) int64 {
-	return -1
+	sum := 0
+	for _, line := range lines {
+		sum += solveALine(line, stack)
+	}
+
+	return int64(sum)
 }
 
 func main() {
