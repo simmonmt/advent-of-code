@@ -22,6 +22,13 @@ func MapValues[T comparable, U any](in map[T]U) []U {
 	return out
 }
 
+func OneMapKey[T comparable, U any](in map[T]U, def T) T {
+	for k := range in {
+		return k
+	}
+	return def
+}
+
 func SortedMapIter[T cmp.Ordered, U any](in map[T]U) iter.Seq2[T, U] {
 	keys := MapKeys(in)
 	slices.Sort(keys)
