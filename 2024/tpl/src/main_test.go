@@ -15,7 +15,7 @@ var (
 	rawSample       string
 	sampleTestCases = []testutils.SampleTestCase{
 		testutils.SampleTestCase{
-			WantInput: []string{""},
+			WantInput: &Input{Lines: []string{""}},
 			WantA:     -1, WantB: -1,
 		},
 	}

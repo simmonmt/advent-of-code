@@ -1,5 +1,4 @@
 * Remove file-based filereaders, rename package
-* Use input struct called Input everywhere
 * Handle string solutions in unit tests
 * Add a vetter for logging to flag log messages that end in \n
 * Remove int64

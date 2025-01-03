@@ -17,15 +17,19 @@ var (
 	cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 )
 
-func parseInput(lines []string) ([]string, error) {
-	return lines, nil
+type Input struct {
+	Lines []string
 }
 
-func solveA(input []string) int64 {
+func parseInput(lines []string) (*Input, error) {
+	return &Input{Lines: lines}, nil
+}
+
+func solveA(input *Input) int64 {
 	return -1
 }
 
-func solveB(input []string) int64 {
+func solveB(input *Input) int64 {
 	return -1
 }
 
