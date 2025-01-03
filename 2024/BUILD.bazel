@@ -30,5 +30,5 @@ gazelle(name = "gazelle_cmd")
 nogo(
     name = "nogo",
     visibility = ["//visibility:public"],
-    deps = TOOLS_NOGO,
+    deps = TOOLS_NOGO + ["//common/nogo:nogo"],
 )
