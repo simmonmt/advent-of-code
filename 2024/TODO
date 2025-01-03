@@ -1,0 +1,3 @@
+* Remove file-based filereaders, rename package
+* Handle string solutions in unit tests
+* Add a vetter for logging to flag log messages that end in \n
