@@ -59,7 +59,7 @@ func checkReport(report []int) bool {
 	return true
 }
 
-func solveA(reports [][]int) int64 {
+func solveA(reports [][]int) int {
 	sum := 0
 	for _, report := range reports {
 		if checkReport(report) {
@@ -67,11 +67,11 @@ func solveA(reports [][]int) int64 {
 		}
 	}
 
-	return int64(sum)
+	return sum
 }
 
 // 620 too low
-func solveB(reports [][]int) int64 {
+func solveB(reports [][]int) int {
 	sum := 0
 	for _, report := range reports {
 		if checkReport(report) {
@@ -102,7 +102,7 @@ func solveB(reports [][]int) int64 {
 		}
 	}
 
-	return int64(sum)
+	return sum
 }
 
 func main() {

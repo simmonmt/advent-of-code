@@ -23,8 +23,8 @@ var (
 
 func TestSplitDigits(t *testing.T) {
 	type TestCase struct {
-		in               int64
-		num, left, right int64
+		in               int
+		num, left, right int
 	}
 
 	testCases := []TestCase{
@@ -35,14 +35,14 @@ func TestSplitDigits(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(strconv.FormatInt(tc.in, 10), func(t *testing.T) {
+		t.Run(strconv.Itoa(tc.in), func(t *testing.T) {
 			num, left, right := splitDigits(tc.in)
 			if num != tc.num || (tc.left != -1 && left != tc.left) || (tc.right != -1 && right != tc.right) {
-				wantLeft := strconv.FormatInt(tc.left, 10)
+				wantLeft := strconv.Itoa(tc.left)
 				if tc.left == -1 {
 					wantLeft = "_"
 				}
-				wantRight := strconv.FormatInt(tc.right, 10)
+				wantRight := strconv.Itoa(tc.right)
 				if tc.right == -1 {
 					wantRight = "_"
 				}
@@ -56,17 +56,17 @@ func TestSplitDigits(t *testing.T) {
 
 func TestTransform(t *testing.T) {
 	type TestCase struct {
-		in, want []int64
+		in, want []int
 	}
 
-	seq := [][]int64{
-		[]int64{125, 17},
-		[]int64{253000, 1, 7},
-		[]int64{253, 0, 2024, 14168},
-		[]int64{512072, 1, 20, 24, 28676032},
-		[]int64{512, 72, 2024, 2, 0, 2, 4, 2867, 6032},
-		[]int64{1036288, 7, 2, 20, 24, 4048, 1, 4048, 8096, 28, 67, 60, 32},
-		[]int64{2097446912, 14168, 4048, 2, 0, 2, 4, 40, 48, 2024, 40, 48, 80, 96, 2, 8, 6, 7, 6, 0, 3, 2},
+	seq := [][]int{
+		[]int{125, 17},
+		[]int{253000, 1, 7},
+		[]int{253, 0, 2024, 14168},
+		[]int{512072, 1, 20, 24, 28676032},
+		[]int{512, 72, 2024, 2, 0, 2, 4, 2867, 6032},
+		[]int{1036288, 7, 2, 20, 24, 4048, 1, 4048, 8096, 28, 67, 60, 32},
+		[]int{2097446912, 14168, 4048, 2, 0, 2, 4, 40, 48, 2024, 40, 48, 80, 96, 2, 8, 6, 7, 6, 0, 3, 2},
 	}
 
 	testCases := []TestCase{}

@@ -46,7 +46,7 @@ func parseInput(lines []string) (*Input, error) {
 	return &Input{out}, nil
 }
 
-func solveA(input *Input) int64 {
+func solveA(input *Input) int {
 	triples := map[string]bool{}
 
 	for host1, connMap := range input.Map {
@@ -72,7 +72,7 @@ func solveA(input *Input) int64 {
 			num++
 		}
 	}
-	return int64(num)
+	return num
 }
 
 func solveB(input *Input) string {

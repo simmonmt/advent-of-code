@@ -87,7 +87,7 @@ func isSorted(in []int, befores map[int]map[int]bool) bool {
 	return true
 }
 
-func solveA(input *Input) int64 {
+func solveA(input *Input) int {
 	sum := 0
 	for _, update := range input.Updates {
 		if isSorted(update, input.Befores) {
@@ -96,7 +96,7 @@ func solveA(input *Input) int64 {
 		}
 	}
 
-	return int64(sum)
+	return sum
 }
 
 func resort(in []int, befores map[int]map[int]bool) []int {
@@ -127,7 +127,7 @@ func resort(in []int, befores map[int]map[int]bool) []int {
 	return out
 }
 
-func solveB(input *Input) int64 {
+func solveB(input *Input) int {
 	sum := 0
 	for _, update := range input.Updates {
 		if isSorted(update, input.Befores) {
@@ -138,7 +138,7 @@ func solveB(input *Input) int64 {
 		sum += sorted[len(sorted)/2]
 	}
 
-	return int64(sum)
+	return sum
 }
 
 func main() {

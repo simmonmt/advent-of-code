@@ -123,7 +123,7 @@ func outputSame(got, want []byte) bool {
 	return true
 }
 
-func solveB(input *Input) int64 {
+func solveB(input *Input) int {
 	cands := []int{0}
 
 	for i := len(input.Mem) - 1; i >= 0; i-- {
@@ -153,7 +153,7 @@ func solveB(input *Input) int64 {
 	}
 
 	sort.Ints(cands)
-	return int64(cands[0])
+	return cands[0]
 }
 
 func main() {

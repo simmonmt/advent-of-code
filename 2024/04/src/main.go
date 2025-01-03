@@ -64,7 +64,7 @@ func findFrom(g *grid.Grid[rune], p, rel pos.P2, cur rune, toFind []rune) bool {
 	return findFrom(g, np, rel, cur, toFind)
 }
 
-func solveA(g *grid.Grid[rune]) int64 {
+func solveA(g *grid.Grid[rune]) int {
 	total := 0
 	g.Walk(func(p pos.P2, r rune) {
 		for _, rel := range allDirs {
@@ -74,10 +74,10 @@ func solveA(g *grid.Grid[rune]) int64 {
 		}
 	})
 
-	return int64(total)
+	return total
 }
 
-func solveB(g *grid.Grid[rune]) int64 {
+func solveB(g *grid.Grid[rune]) int {
 	as := map[pos.P2]int{}
 	total := 0
 
@@ -99,7 +99,7 @@ func solveB(g *grid.Grid[rune]) int64 {
 		}
 	})
 
-	return int64(total)
+	return total
 }
 
 func main() {

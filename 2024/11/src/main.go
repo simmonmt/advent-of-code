@@ -17,27 +17,27 @@ var (
 	cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 )
 
-func parseInput(lines []string) ([]int64, error) {
+func parseInput(lines []string) ([]int, error) {
 	nums, err := filereader.ParseNumbersFromLine(lines[0], " ")
 	if err != nil {
 		return nil, err
 	}
 
-	out := make([]int64, len(nums))
+	out := make([]int, len(nums))
 	for i := 0; i < len(nums); i++ {
-		out[i] = int64(nums[i])
+		out[i] = int(nums[i])
 	}
 	return out, nil
 }
 
-func splitDigits(in int64) (num, left, right int64) {
+func splitDigits(in int) (num, left, right int) {
 	if in == 0 {
 		panic("shouldn't happen")
 	}
 
 	v := in
 	num, left, right = 0, 0, 0
-	div := int64(1)
+	div := 1
 	for v > 0 {
 		v /= 10
 		num++
@@ -51,8 +51,8 @@ func splitDigits(in int64) (num, left, right int64) {
 	return
 }
 
-func transform(in []int64) []int64 {
-	out := []int64{}
+func transform(in []int) []int {
+	out := []int{}
 	for _, n := range in {
 		if n == 0 {
 			out = append(out, 1)
@@ -69,23 +69,23 @@ func transform(in []int64) []int64 {
 	return out
 }
 
-func solveA(input []int64) int64 {
-	in := make([]int64, len(input))
+func solveA(input []int) int {
+	in := make([]int, len(input))
 	copy(in, input)
 
 	for i := 0; i < 25; i++ {
 		new := transform(in)
 		in = new
 	}
-	return int64(len(in))
+	return len(in)
 }
 
 type Pair struct {
-	Num   int64
+	Num   int
 	Level int
 }
 
-func solveMemo(in int64, level, maxLevel int, memo map[Pair]int64) int64 {
+func solveMemo(in int, level, maxLevel int, memo map[Pair]int) int {
 	p := Pair{in, level}
 	if v, found := memo[p]; found {
 		return v
@@ -96,7 +96,7 @@ func solveMemo(in int64, level, maxLevel int, memo map[Pair]int64) int64 {
 		return 1
 	}
 
-	desc := []int64{}
+	desc := []int{}
 	if in == 0 {
 		desc = append(desc, 1)
 	} else if num, left, right := splitDigits(in); num%2 == 0 {
@@ -105,7 +105,7 @@ func solveMemo(in int64, level, maxLevel int, memo map[Pair]int64) int64 {
 		desc = append(desc, in*2024)
 	}
 
-	sum := int64(0)
+	sum := 0
 	for _, d := range desc {
 		sum += solveMemo(d, level+1, maxLevel, memo)
 	}
@@ -113,9 +113,9 @@ func solveMemo(in int64, level, maxLevel int, memo map[Pair]int64) int64 {
 	return sum
 }
 
-func solveB(input []int64) int64 {
-	sum := int64(0)
-	memo := map[Pair]int64{}
+func solveB(input []int) int {
+	sum := 0
+	memo := map[Pair]int{}
 	for _, n := range input {
 		sum += solveMemo(n, 0, 75, memo)
 	}

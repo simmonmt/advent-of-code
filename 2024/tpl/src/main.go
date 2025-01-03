@@ -25,11 +25,11 @@ func parseInput(lines []string) (*Input, error) {
 	return &Input{Lines: lines}, nil
 }
 
-func solveA(input *Input) int64 {
+func solveA(input *Input) int {
 	return -1
 }
 
-func solveB(input *Input) int64 {
+func solveB(input *Input) int {
 	return -1
 }
 

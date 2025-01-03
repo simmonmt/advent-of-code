@@ -130,7 +130,7 @@ func solve(line string, avail map[byte][]string, quickStop bool) int {
 	return sum
 }
 
-func solveA(input *Input) int64 {
+func solveA(input *Input) int {
 	solveable := 0
 	for _, line := range input.Lines {
 		fmt.Println(line)
@@ -138,17 +138,17 @@ func solveA(input *Input) int64 {
 			solveable++
 		}
 	}
-	return int64(solveable)
+	return solveable
 }
 
-func solveB(input *Input) int64 {
+func solveB(input *Input) int {
 	solutions := 0
 	for _, line := range input.Lines {
 		num := solve(line, input.Avail, false)
 		fmt.Println(line, num)
 		solutions += num
 	}
-	return int64(solutions)
+	return solutions
 }
 
 func main() {

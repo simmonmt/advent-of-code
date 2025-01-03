@@ -55,7 +55,7 @@ func (h *GraphHelper) NeighborDistance(from, to graph.NodeID) int {
 	return p1.ManhattanDistance(p2)
 }
 
-func solveA(input []pos.P2, num int) int64 {
+func solveA(input []pos.P2, num int) int {
 	if len(input) > num {
 		input = input[0:num]
 	}
@@ -85,7 +85,7 @@ func solveA(input []pos.P2, num int) int64 {
 		graph.NodeID(start.String()),
 		graph.NodeID(end.String()), helper)
 
-	return int64(len(path))
+	return len(path)
 }
 
 func solveB(input []pos.P2, num int) string {

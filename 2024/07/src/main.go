@@ -20,7 +20,7 @@ var (
 )
 
 type Line struct {
-	Total int64
+	Total int
 	Nums  []int
 }
 
@@ -42,7 +42,7 @@ func parseInput(lines []string) ([]Line, error) {
 			return nil, fmt.Errorf("%d: bad nums: %v", i+1, err)
 		}
 
-		out = append(out, Line{Total: total, Nums: nums})
+		out = append(out, Line{Total: int(total), Nums: nums})
 	}
 
 	return out, nil
@@ -56,14 +56,14 @@ const (
 	OP_CONCAT
 )
 
-func canSolve(want, cur int64, ops []Op, left []int) bool {
+func canSolve(want, cur int, ops []Op, left []int) bool {
 	for _, op := range ops {
-		nextCur := int64(-1)
+		nextCur := -1
 		switch op {
 		case OP_ADD:
-			nextCur = cur + int64(left[0])
+			nextCur = cur + left[0]
 		case OP_MUL:
-			nextCur = cur * int64(left[0])
+			nextCur = cur * left[0]
 		case OP_CONCAT:
 			nextCur = cur
 			shift := 0
@@ -73,7 +73,7 @@ func canSolve(want, cur int64, ops []Op, left []int) bool {
 			for i := 0; i < shift; i++ {
 				nextCur *= 10
 			}
-			nextCur += int64(left[0])
+			nextCur += left[0]
 		default:
 			panic("bad op")
 		}
@@ -94,10 +94,10 @@ func canSolve(want, cur int64, ops []Op, left []int) bool {
 	return false
 }
 
-func solve(input []Line, ops []Op) int64 {
-	sum := int64(0)
+func solve(input []Line, ops []Op) int {
+	sum := 0
 	for _, line := range input {
-		if canSolve(line.Total, int64(line.Nums[0]), ops, line.Nums[1:]) {
+		if canSolve(line.Total, line.Nums[0], ops, line.Nums[1:]) {
 			sum += line.Total
 		}
 	}
@@ -105,11 +105,11 @@ func solve(input []Line, ops []Op) int64 {
 	return sum
 }
 
-func solveA(input []Line) int64 {
+func solveA(input []Line) int {
 	return solve(input, []Op{OP_ADD, OP_MUL})
 }
 
-func solveB(input []Line) int64 {
+func solveB(input []Line) int {
 	return solve(input, []Op{OP_ADD, OP_MUL, OP_CONCAT})
 }
 

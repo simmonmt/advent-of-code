@@ -311,7 +311,7 @@ func numericCodePart(line string) int {
 	return num
 }
 
-func solveA(lines []string) int64 {
+func solveA(lines []string) int {
 	stack := []Keypad{
 		NewNumPad(),
 		NewDirPad(),
@@ -323,10 +323,10 @@ func solveA(lines []string) int64 {
 		sum += solveALine(line, stack)
 	}
 
-	return int64(sum)
+	return sum
 }
 
-func solveB(lines []string) int64 {
+func solveB(lines []string) int {
 	stack := []Keypad{NewNumPad()}
 	for range 25 {
 		stack = append(stack, NewDirPad())
@@ -337,7 +337,7 @@ func solveB(lines []string) int64 {
 		sum += solveALine(line, stack)
 	}
 
-	return int64(sum)
+	return sum
 }
 
 func main() {

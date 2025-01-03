@@ -56,7 +56,7 @@ func parseInput(lines []string) (*Input, error) {
 	return &Input{Locks: locks, Keys: keys, Height: len(groups[0]) - 2}, nil
 }
 
-func solveA(input *Input) int64 {
+func solveA(input *Input) int {
 	num := 0
 	for _, lock := range input.Locks {
 		for _, key := range input.Keys {
@@ -74,10 +74,10 @@ func solveA(input *Input) int64 {
 		}
 	}
 
-	return int64(num)
+	return num
 }
 
-func solveB(input *Input) int64 {
+func solveB(input *Input) int {
 	return -1
 }
 

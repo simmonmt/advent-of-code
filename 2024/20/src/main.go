@@ -118,21 +118,21 @@ func findSolutions(input *Input, maxDist int) map[int]int {
 	return diffs
 }
 
-func solve(input *Input, maxDist int) int64 {
+func solve(input *Input, maxDist int) int {
 	sum := 0
 	for savings, num := range findSolutions(input, maxDist) {
 		if savings >= 100 {
 			sum += num
 		}
 	}
-	return int64(sum)
+	return sum
 }
 
-func solveA(input *Input) int64 {
+func solveA(input *Input) int {
 	return solve(input, 2)
 }
 
-func solveB(input *Input) int64 {
+func solveB(input *Input) int {
 	return solve(input, 20)
 }
 

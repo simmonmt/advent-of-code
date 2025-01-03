@@ -94,7 +94,7 @@ func findRegions(g *grid.Grid[rune]) []*Region {
 	return regions
 }
 
-func solveA(g *grid.Grid[rune]) int64 {
+func solveA(g *grid.Grid[rune]) int {
 	regions := findRegions(g)
 
 	score := 0
@@ -103,7 +103,7 @@ func solveA(g *grid.Grid[rune]) int64 {
 		perimeter := len(region.Borders)
 		score += area * perimeter
 	}
-	return int64(score)
+	return score
 }
 
 func clearBorders(start Border, travel dir.Dir, left map[Border]bool) {
@@ -116,7 +116,7 @@ func clearBorders(start Border, travel dir.Dir, left map[Border]bool) {
 	}
 }
 
-func solveB(g *grid.Grid[rune]) int64 {
+func solveB(g *grid.Grid[rune]) int {
 	regions := findRegions(g)
 
 	score := 0
@@ -148,7 +148,7 @@ func solveB(g *grid.Grid[rune]) int64 {
 		score += area * perimeter
 	}
 
-	return int64(score)
+	return score
 }
 
 func main() {

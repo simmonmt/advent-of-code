@@ -132,7 +132,7 @@ func checkGrid(g *grid.Grid[rune]) {
 	})
 }
 
-func solveA(input *Input) int64 {
+func solveA(input *Input) int {
 	cur := input.Start
 	g := input.G.Clone()
 	for _, cmd := range input.Cmds {
@@ -146,7 +146,7 @@ func solveA(input *Input) int64 {
 		}
 	})
 
-	return int64(sum)
+	return sum
 }
 
 func get(g *grid.Grid[rune], p pos.P2) rune {
@@ -334,7 +334,7 @@ func doMoveB(g *grid.Grid[rune], boxes map[pos.P2]*Box, cur pos.P2, cmd dir.Dir)
 	return next
 }
 
-func solveB(input *Input) int64 {
+func solveB(input *Input) int {
 	g := grid.New[rune](input.G.Width()*2, input.G.Height())
 	input.G.Walk(func(p pos.P2, r rune) {
 		var out []rune
@@ -374,7 +374,7 @@ func solveB(input *Input) int64 {
 		}
 	})
 
-	return int64(sum)
+	return sum
 }
 
 func main() {

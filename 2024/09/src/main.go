@@ -64,11 +64,11 @@ func buildFS(input string) (fs []int, files, frees *list.List) {
 	return
 }
 
-func score(fs []int) int64 {
-	sum := int64(0)
+func score(fs []int) int {
+	sum := 0
 	for i := 0; i < len(fs); i++ {
 		if fs[i] != -1 {
-			sum += int64(i) * int64(fs[i])
+			sum += i * fs[i]
 		}
 	}
 
@@ -135,7 +135,7 @@ func doSolveA(fs []int, files, frees *list.List) {
 	}
 }
 
-func solveA(input string) int64 {
+func solveA(input string) int {
 	fs, files, frees := buildFS(input)
 	doSolveA(fs, files, frees)
 	return score(fs)
@@ -186,7 +186,7 @@ func doSolveB(fs []int, files, frees *list.List) {
 	//dumpFS(fs)
 }
 
-func solveB(input string) int64 {
+func solveB(input string) int {
 	fs, files, frees := buildFS(input)
 	doSolveB(fs, files, frees)
 	return score(fs)

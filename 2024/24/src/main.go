@@ -168,7 +168,7 @@ func executeGate(gate *Gate, in1, in2 State) State {
 	}
 }
 
-func calculateSolution(wires map[string]State) int64 {
+func calculateSolution(wires map[string]State) int {
 	zWires := collections.FilterMap(wires, func(name string, _ State) bool {
 		return name[0] == 'z'
 	})
@@ -176,9 +176,9 @@ func calculateSolution(wires map[string]State) int64 {
 	zNames := collections.MapKeys(zWires)
 	sort.Strings(zNames)
 
-	var out int64
+	var out int
 	for i := len(zNames) - 1; i >= 0; i-- {
-		var bit int64
+		var bit int
 		if zWires[zNames[i]] == ST_ON {
 			bit = 1
 		}
@@ -188,7 +188,7 @@ func calculateSolution(wires map[string]State) int64 {
 	return out
 }
 
-func solve(wiresIn map[string]State, gates []Gate) int64 {
+func solve(wiresIn map[string]State, gates []Gate) int {
 	solvedGates := map[*Gate]bool{}
 	wires := collections.CloneMap(wiresIn)
 
@@ -213,7 +213,7 @@ func solve(wiresIn map[string]State, gates []Gate) int64 {
 	return calculateSolution(wires)
 }
 
-func solveA(input *Input) int64 {
+func solveA(input *Input) int {
 	return solve(input.Wires, input.Gates)
 }
 

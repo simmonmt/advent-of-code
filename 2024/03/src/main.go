@@ -30,7 +30,7 @@ func parseInput(lines []string) (string, error) {
 	return out, nil
 }
 
-func solveA(input string) int64 {
+func solveA(input string) int {
 	results := mulPattern.FindAllStringSubmatch(input, -1)
 
 	sum := 0
@@ -40,10 +40,10 @@ func solveA(input string) int64 {
 		sum += a * b
 	}
 
-	return int64(sum)
+	return sum
 }
 
-func solveB(input string) int64 {
+func solveB(input string) int {
 	in := []byte(input)
 	do := true
 
@@ -95,7 +95,7 @@ func solveB(input string) int64 {
 		}
 	}
 
-	return int64(sum)
+	return sum
 }
 
 func main() {

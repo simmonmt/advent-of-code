@@ -112,13 +112,13 @@ func findBestPaths(g *grid.Grid[rune], start State, end pos.P2) (best map[State]
 	return best, bestEnd
 }
 
-func solveA(input *Input) int64 {
+func solveA(input *Input) int {
 	start := State{D: dir.DIR_EAST, P: input.Start}
 	best, bestEnd := findBestPaths(input.Grid, start, input.End)
-	return int64(best[bestEnd].Cost)
+	return best[bestEnd].Cost
 }
 
-func solveB(input *Input) int64 {
+func solveB(input *Input) int {
 	start := State{P: input.Start, D: dir.DIR_EAST}
 	best, bestEnd := findBestPaths(input.Grid, start, input.End)
 
@@ -153,7 +153,7 @@ func solveB(input *Input) int64 {
 	// 	}
 	// })
 
-	return int64(len(touched))
+	return len(touched)
 }
 
 func main() {

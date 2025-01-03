@@ -45,7 +45,7 @@ func round(secret int) int {
 	return secret
 }
 
-func solveA(input []int) int64 {
+func solveA(input []int) int {
 	sum := 0
 	for _, in := range input {
 		num := in
@@ -54,7 +54,7 @@ func solveA(input []int) int64 {
 		}
 		sum += num
 	}
-	return int64(sum)
+	return sum
 }
 
 type Elem struct {
@@ -88,7 +88,7 @@ func makeSeq(secret int) map[Elem]int {
 	return out
 }
 
-func solveB(input []int) int64 {
+func solveB(input []int) int {
 	maxNum := -1
 
 	market := map[Elem]int{}
@@ -101,7 +101,7 @@ func solveB(input []int) int64 {
 			market[elem] = num
 		}
 	}
-	return int64(maxNum)
+	return maxNum
 }
 
 func main() {

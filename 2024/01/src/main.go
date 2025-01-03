@@ -37,7 +37,7 @@ func dup(in []int) []int {
 	return out
 }
 
-func solveA(as, bs []int) int64 {
+func solveA(as, bs []int) int {
 	as, bs = dup(as), dup(bs)
 
 	sort.Slice(as, func(i, j int) bool { return as[i] < as[j] })
@@ -50,10 +50,10 @@ func solveA(as, bs []int) int64 {
 		sum += diff
 	}
 
-	return int64(sum)
+	return sum
 }
 
-func solveB(as, bs []int) int64 {
+func solveB(as, bs []int) int {
 	bMap := map[int]int{}
 	for _, b := range bs {
 		bMap[b]++
@@ -64,7 +64,7 @@ func solveB(as, bs []int) int64 {
 		sum += a * bMap[a]
 	}
 
-	return int64(sum)
+	return sum
 }
 
 func main() {

@@ -107,16 +107,16 @@ func runMaze(input *Input, obs pos.P2, keepVisited bool) (map[pos.P2]bool, Resul
 	return visited, result
 }
 
-func solveA(input *Input) int64 {
+func solveA(input *Input) int {
 	visited, result := runMaze(input, pos.P2{X: -99, Y: -99}, true)
 	if result != TERMINATED {
 		panic("not terminated")
 	}
 
-	return int64(len(visited))
+	return len(visited)
 }
 
-func solveB(input *Input) int64 {
+func solveB(input *Input) int {
 	visited, result := runMaze(input, pos.P2{X: -99, Y: -99}, true)
 	if result != TERMINATED {
 		panic("not terminated")
@@ -124,7 +124,7 @@ func solveB(input *Input) int64 {
 
 	// We only need to put obstacles on positions the guard visited as those
 	// are the only ones that'll cause him to change direction.
-	num := int64(0)
+	num := 0
 	for p := range visited {
 		if p.Equals(input.StartPos) {
 			continue

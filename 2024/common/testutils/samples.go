@@ -14,7 +14,7 @@ type SampleTestCase struct {
 	File         string
 	Body         []string
 	WantInput    any
-	WantA, WantB int64
+	WantA, WantB int
 }
 
 type SampleIter struct {

@@ -57,7 +57,7 @@ func moveRobot(r *Robot, dims pos.P2) {
 	r.P.Y = (r.P.Y + dims.Y + r.V.Y) % dims.Y
 }
 
-func solveA(input []*Robot, dims pos.P2) int64 {
+func solveA(input []*Robot, dims pos.P2) int {
 	robots := make([]Robot, len(input))
 	for i, in := range input {
 		robots[i] = *in
@@ -99,7 +99,7 @@ func solveA(input []*Robot, dims pos.P2) int64 {
 	}
 
 	score := quads[0][0] * quads[0][1] * quads[1][0] * quads[1][1]
-	return int64(score)
+	return score
 }
 
 func dumpRobots(robots []Robot, dims pos.P2) {
@@ -118,7 +118,7 @@ func dumpRobots(robots []Robot, dims pos.P2) {
 }
 
 // 7051
-func solveB(input []*Robot, dims pos.P2) int64 {
+func solveB(input []*Robot, dims pos.P2) int {
 	robots := make([]Robot, len(input))
 	for i, in := range input {
 		robots[i] = *in

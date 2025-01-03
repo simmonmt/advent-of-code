@@ -338,7 +338,7 @@ func cheapSolveMachine(machine *Machine, lim int) int {
 	return numA*3 + numB
 }
 
-func solveA(machines []*Machine) int64 {
+func solveA(machines []*Machine) int {
 	sum := 0
 	for _, machine := range machines {
 		exp := expensiveSolveMachine(machine)
@@ -352,11 +352,11 @@ func solveA(machines []*Machine) int64 {
 		}
 	}
 
-	return int64(sum)
+	return sum
 }
 
-func solveB(machines []*Machine) int64 {
-	sum := int64(0)
+func solveB(machines []*Machine) int {
+	sum := 0
 	for i, mp := range machines {
 		machine := *mp
 		machine.Prize.X += 10000000000000
@@ -364,10 +364,10 @@ func solveB(machines []*Machine) int64 {
 		logger.Infof("B %d %v", i, machine)
 		if cost := cheapSolveMachine(&machine, -1); cost > 0 {
 			logger.Infof("solution")
-			sum += int64(cost)
+			sum += cost
 		}
 	}
-	return int64(sum)
+	return sum
 	//return -1
 }
 

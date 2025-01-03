@@ -55,7 +55,7 @@ func scoreTrailheadDFS(input *grid.Grid[byte], p pos.P2, peaks map[pos.P2]bool, 
 	return sum
 }
 
-func solveA(input *grid.Grid[byte]) int64 {
+func solveA(input *grid.Grid[byte]) int {
 	sum := 0
 	input.Walk(func(p pos.P2, b byte) {
 		if b == 0 {
@@ -64,10 +64,10 @@ func solveA(input *grid.Grid[byte]) int64 {
 			sum += len(peaks)
 		}
 	})
-	return int64(sum)
+	return sum
 }
 
-func solveB(input *grid.Grid[byte]) int64 {
+func solveB(input *grid.Grid[byte]) int {
 	sum := 0
 	input.Walk(func(p pos.P2, b byte) {
 		if b == 0 {
@@ -75,7 +75,7 @@ func solveB(input *grid.Grid[byte]) int64 {
 				map[pos.P2]bool{}, map[pos.P2]bool{})
 		}
 	})
-	return int64(sum)
+	return sum
 }
 
 func main() {

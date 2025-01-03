@@ -26,7 +26,7 @@ func parseInput(lines []string) (*grid.Grid[rune], error) {
 	})
 }
 
-func solveA(g *grid.Grid[rune]) int64 {
+func solveA(g *grid.Grid[rune]) int {
 	allAnts := map[rune][]pos.P2{}
 	g.Walk(func(p pos.P2, r rune) {
 		if r != '.' {
@@ -56,7 +56,7 @@ func solveA(g *grid.Grid[rune]) int64 {
 		}
 	}
 
-	return int64(len(allPodes))
+	return len(allPodes)
 }
 
 func simplify(n, d int) (int, int) {
@@ -82,7 +82,7 @@ func extend(g *grid.Grid[rune], p pos.P2, slx, sly int, podes map[pos.P2]bool) {
 	}
 }
 
-func solveB(g *grid.Grid[rune]) int64 {
+func solveB(g *grid.Grid[rune]) int {
 	allAnts := map[rune][]pos.P2{}
 	g.Walk(func(p pos.P2, r rune) {
 		if r != '.' {
@@ -112,7 +112,7 @@ func solveB(g *grid.Grid[rune]) int64 {
 		}
 	}
 
-	return int64(len(allPodes))
+	return len(allPodes)
 }
 
 func main() {
