@@ -13,7 +13,6 @@ go_library(
     importpath = "github.com/simmonmt/aoc/2024/21/src",
     visibility = ["//visibility:private"],
     deps = [
-        "//common/collections",
         "//common/dir",
         "//common/filereader",
         "//common/logger",

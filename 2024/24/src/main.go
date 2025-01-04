@@ -4,9 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"maps"
 	"os"
 	"regexp"
 	"runtime/pprof"
+	"slices"
 	"sort"
 	"strings"
 
@@ -174,8 +176,7 @@ func calculateSolution(wires map[string]State) int {
 		return name[0] == 'z'
 	})
 
-	zNames := collections.MapKeys(zWires)
-	sort.Strings(zNames)
+	zNames := slices.Sorted(maps.Keys(zWires))
 
 	var out int
 	for i := len(zNames) - 1; i >= 0; i-- {
@@ -191,7 +192,7 @@ func calculateSolution(wires map[string]State) int {
 
 func solve(wiresIn map[string]State, gates []Gate) int {
 	solvedGates := map[*Gate]bool{}
-	wires := collections.CloneMap(wiresIn)
+	wires := maps.Clone(wiresIn)
 
 	for len(solvedGates) != len(gates) {
 		for i := range len(gates) {

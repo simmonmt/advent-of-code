@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"maps"
 	"os"
 	"runtime/pprof"
 	"slices"
@@ -50,7 +51,7 @@ func solveA(input *Input) int {
 	triples := map[string]bool{}
 
 	for host1, connMap := range input.Map {
-		conns := collections.MapKeys(connMap)
+		conns := slices.Collect(maps.Keys(connMap))
 		for i := 0; i < len(conns)-1; i++ {
 			host2 := conns[i]
 			h2Conns := input.Map[host2]

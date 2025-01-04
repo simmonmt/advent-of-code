@@ -4,12 +4,13 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"maps"
 	"os"
 	"regexp"
 	"runtime/pprof"
+	"slices"
 	"strings"
 
-	"github.com/simmonmt/aoc/2024/common/collections"
 	"github.com/simmonmt/aoc/2024/common/dir"
 	"github.com/simmonmt/aoc/2024/common/filereader"
 	"github.com/simmonmt/aoc/2024/common/logger"
@@ -268,7 +269,7 @@ func findMinCosts(start *Node, from string, stack []Keypad, cache map[CacheKey][
 			}
 		}
 
-		curCosts = collections.MapValues(nCosts)
+		curCosts = slices.Collect(maps.Values(nCosts))
 		if log {
 			fmt.Printf("%s: costs %v\n", cookie, curCosts)
 		}
