@@ -1,0 +1,15 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "pos",
+    srcs = ["pos.go"],
+    importpath = "github.com/simmonmt/aoc/2025/common/pos",
+    visibility = ["//visibility:public"],
+    deps = ["//common/mtsmath"],
+)
+
+go_test(
+    name = "pos_test",
+    srcs = ["pos_test.go"],
+    embed = [":pos"],
+)

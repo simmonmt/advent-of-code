@@ -1,0 +1,34 @@
+load("@gazelle//:def.bzl", "gazelle")
+load("@rules_go//go:def.bzl", "TOOLS_NOGO", "nogo")
+
+# gazelle:prefix github.com/simmonmt/aoc/2025
+gazelle(
+    name = "gazelle",
+    command = "fix",
+    extra_args = [
+        "--mode=diff",
+    ],
+)
+
+gazelle(
+    name = "gazelle_fix",
+    command = "fix",
+)
+
+# Run as:
+#   bazel run :gazelle_updaterepos -- -args github.com/whatever
+gazelle(
+    name = "gazelle_updaterepos",
+    command = "update-repos",
+    extra_args = [
+        "--to_macro=go_repositories.bzl%go_repositories",
+    ],
+)
+
+gazelle(name = "gazelle_cmd")
+
+nogo(
+    name = "nogo",
+    visibility = ["//visibility:public"],
+    deps = TOOLS_NOGO + ["//common/nogo"],
+)
