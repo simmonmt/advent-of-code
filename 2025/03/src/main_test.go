@@ -16,7 +16,7 @@ var (
 	sampleTestCases = []testutils.SampleTestCase{
 		testutils.SampleTestCase{
 			WantInput: nil,
-			WantA:     357, WantB: nil,
+			WantA:     357, WantB: 3121910778619,
 		},
 	}
 )

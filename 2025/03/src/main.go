@@ -25,37 +25,59 @@ func parseInput(lines []string) (*Input, error) {
 	return &Input{Lines: lines}, nil
 }
 
-func findJoltage(line string) int {
-	h1 := '0'
-	h1i := -1
-	for i, r := range line[0 : len(line)-1] {
-		if r > h1 {
-			h1 = r
-			h1i = i
+func findJoltage(line string, n int) int {
+	//logger.Infof("in line %v len %d n %d", line, len(line), n)
+	digits := make([]rune, n)
+	idx := make([]int, n)
+
+	for i := range n {
+		start := 0
+		if i > 0 {
+			start = idx[i-1] + 1
 		}
+		lim := len(line) - (n - i - 1)
+		//logger.Infof("highest among %v", line[start:lim])
+
+		h := '0'
+		hi := -1
+		for j, r := range line[start:lim] {
+			if r > h {
+				h = r
+				hi = j
+			}
+		}
+
+		hi += start
+		//logger.Infof("found highest %v at %v", string(h), hi)
+		digits[i] = h
+		idx[i] = hi
 	}
 
-	h2 := '0'
-	for _, r := range line[h1i+1:] {
-		if r > h2 {
-			h2 = r
-		}
+	out := 0
+	for i := range n {
+		out = 10*out + int(digits[i]-'0')
 	}
-
-	return int((byte(h1)-'0')*10 + (byte(h2) - '0'))
+	return out
 }
 
 func solveA(input *Input) int {
 	out := 0
 	for _, line := range input.Lines {
-		j := findJoltage(line)
+		j := findJoltage(line, 2)
+		//logger.Infof("line %v j %v", line, j)
 		out += j
 	}
 	return out
 }
 
 func solveB(input *Input) int {
-	return -1
+	out := 0
+	for _, line := range input.Lines {
+		j := findJoltage(line, 12)
+		//logger.Infof("line %v j %v", line, j)
+		out += j
+	}
+	return out
 }
 
 func main() {
