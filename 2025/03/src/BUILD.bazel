@@ -1,0 +1,37 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+load("//bzl:common.bzl", "combine_samples")
+
+go_binary(
+    name = "solution",
+    embed = [":src_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "src_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/simmonmt/aoc/2025/03/src",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//common/filereader",
+        "//common/logger",
+    ],
+)
+
+go_test(
+    name = "src_test",
+    srcs = ["main_test.go"],
+    embed = [":src_lib"],
+    embedsrcs = ["combined_samples.txt"],
+    deps = [
+        "//common/logger",
+        "//common/testutils",
+        "@com_github_google_go_cmp//cmp",
+    ],
+)
+
+combine_samples(
+    name = "make_samples",
+    srcs = glob(["sample*.txt"]),
+    out = "combined_samples.txt",
+)
