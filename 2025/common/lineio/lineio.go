@@ -44,6 +44,9 @@ func BlankSeparatedGroups(lines []string) [][]string {
 func NumbersFromLine(line string, sep string) ([]int, error) {
 	nums := []int{}
 	for _, str := range strings.Split(line, sep) {
+		if str == "" {
+			continue
+		}
 		num, err := strconv.Atoi(str)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse %v: %v", str, err)
