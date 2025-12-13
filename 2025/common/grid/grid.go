@@ -98,6 +98,10 @@ func New[T any](w, h int) *Grid[T] {
 	}
 }
 
+func RuneMapper(p pos.P2, r rune) (rune, error) {
+	return r, nil
+}
+
 func NewFromLines[T any](lines []string, cellMapper func(p pos.P2, r rune) (T, error)) (*Grid[T], error) {
 	g := New[T](len(lines[0]), len(lines))
 	for y, line := range lines {
@@ -190,6 +194,10 @@ func (g *Grid[T]) AllNeighbors(p pos.P2, includeDiag bool) []pos.P2 {
 		out = append(out, n)
 	}
 	return out
+}
+
+func RuneDumper(p pos.P2, r rune, found bool) string {
+	return string(r)
 }
 
 func (g *Grid[T]) DumpTo(withCoords bool, mapper func(p pos.P2, v T, found bool) string, w io.Writer) {
