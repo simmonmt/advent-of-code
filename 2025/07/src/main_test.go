@@ -15,7 +15,7 @@ var (
 	rawSample       string
 	sampleTestCases = []testutils.SampleTestCase{
 		testutils.SampleTestCase{
-			WantA: 21, WantB: nil,
+			WantA: 21, WantB: 40,
 		},
 	}
 )

@@ -80,8 +80,52 @@ func solveA(input *Input) int {
 	return numSplits
 }
 
+func findScore(p pos.P2, nextSplitter map[pos.P2]pos.P2, scores map[pos.P2]int) int {
+	if score, found := scores[p]; found {
+		//fmt.Println(p, "found in cache", score)
+		return score
+	}
+
+	sp, found := nextSplitter[p]
+	if !found {
+		//fmt.Println(p, "fell off", 1)
+		scores[p] = 1
+		return 1
+	}
+
+	left := findScore(dir.DIR_WEST.From(sp), nextSplitter, scores)
+	right := findScore(dir.DIR_EAST.From(sp), nextSplitter, scores)
+	//fmt.Println(p, "splitter", left, right)
+	tot := left + right
+	scores[p] = tot
+	return tot
+}
+
 func solveB(input *Input) int {
-	return -1
+	splitters := []pos.P2{}
+	nextSplitter := map[pos.P2]pos.P2{}
+	scores := map[pos.P2]int{}
+
+	g := input.Grid
+	for x := 0; x < g.Width(); x++ {
+		q := []pos.P2{}
+		for y := 0; y < g.Height(); y++ {
+			p := pos.P2{X: x, Y: y}
+			if r := g.GetOr(p, 'X'); r == '.' || r == 'S' {
+				q = append(q, p)
+			} else if r == '^' {
+				splitters = append(splitters, p)
+				for _, qp := range q {
+					nextSplitter[qp] = p
+				}
+				q = []pos.P2{}
+			}
+		}
+	}
+
+	score := findScore(input.Start, nextSplitter, scores)
+
+	return score
 }
 
 func main() {
