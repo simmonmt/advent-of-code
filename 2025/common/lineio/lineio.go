@@ -53,5 +53,10 @@ func NumbersFromLine(line string, sep string) ([]int, error) {
 		}
 		nums = append(nums, num)
 	}
+
+	if len(nums) == 0 {
+		return nil, fmt.Errorf("no numbers")
+	}
+
 	return nums, nil
 }
