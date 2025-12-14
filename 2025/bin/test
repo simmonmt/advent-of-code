@@ -1,0 +1,3 @@
+#!/bin/bash
+
+ibazel --run_output_interactive=false test "$@"
